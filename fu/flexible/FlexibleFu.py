@@ -60,7 +60,6 @@ class FlexibleFu( Component ):
       s.to_mem_waddr[i]   //= s.fu[i].to_mem_waddr
       s.to_mem_wdata[i]   //= s.fu[i].to_mem_wdata
 
-
     @s.update
     def comb_logic():
 
@@ -80,6 +79,8 @@ class FlexibleFu( Component ):
         s.recv_opt.rdy       = s.fu[i].recv_opt.rdy or s.recv_opt.rdy
 
         # recv_in connection
+        for j in range( num_inports ):
+          s.recv_in[j].rdy = b1( 0 )
         for j in range( num_inports ):
           s.fu[i].recv_in[j].msg = s.recv_in[j].msg
           s.fu[i].recv_in[j].en  = s.recv_in[j].en

@@ -18,7 +18,7 @@ from ...fu.single.AdderRTL   import AdderRTL
 class FlexibleFuRTL( Component ):
 
   def construct( s, DataType, CtrlType, num_inports, num_outports,
-                 data_mem_size, FuList ):
+                 data_mem_size, FuList):#=[MemUnitRTL,AdderRTL] ):
 
     # Constant
     s.fu_list_size = len( FuList )

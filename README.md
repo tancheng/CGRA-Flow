@@ -120,6 +120,14 @@ We can now use git to clone the OpenCGRA repo.
  % git clone https://github.com/tancheng/OpenCGRA.git
 ```
 
+### Run an example to generate Verilog
+
+In [folder](https://github.com/tancheng/OpenCGRA/tree/master/cgra/translate), just type:
+
+```
+ % pytest --tb=short -sv CGRARTL_test.py
+```
+
 When you're done testing/developing, you can deactivate the virtualenv::
 
 ```

@@ -114,6 +114,8 @@ def test_cgra_universal():
   FunctionUnit = FlexibleFuRTL
   FuList       = [ SeqMulAdderRTL, MemUnitRTL ]#AdderRTL, MulRTL, LogicRTL, ShifterRTL, PhiRTL, CompRTL, BranchRTL, MemUnitRTL ]
   DataType     = mk_data( 32, 1 )
+#  FuList       = [ SeqMulAdderRTL, AdderRTL, MulRTL, LogicRTL, ShifterRTL, PhiRTL, CompRTL, BranchRTL, MemUnitRTL ]
+#  DataType     = mk_data( 16, 1 )
   CtrlType     = mk_ctrl( num_fu_in, num_xbar_inports, num_xbar_outports )
   FuInType      = mk_bits( clog2( num_fu_in + 1 ) )
   pickRegister  = [ FuInType( x+1 ) for x in range( num_fu_in ) ]

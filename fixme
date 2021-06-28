@@ -1,0 +1,158 @@
+diff --git a/cgra/CGRARTL.py b/cgra/CGRARTL.py
+index b0198d7..a54f6dc 100644
+--- a/cgra/CGRARTL.py
++++ b/cgra/CGRARTL.py
+@@ -39,7 +39,8 @@ class CGRARTL( Component ):
+
+     # Components
+     s.tile = [ TileRTL( DataType, CtrlType, ctrl_mem_size, data_mem_size,
+-               num_ctrl, 4, 2, s.num_mesh_ports, s.num_mesh_ports )
++               num_ctrl, 4, 2, s.num_mesh_ports, s.num_mesh_ports,
++               FunctionUnit, FuList )
+                for _ in range( s.num_tiles ) ]
+     s.data_mem = DataMemRTL( DataType, data_mem_size, height, height )
+
+diff --git a/cgra/test/CGRARTL_test.py b/cgra/test/CGRARTL_test.py
+index 1ab8d24..9a77fda 100644
+--- a/cgra/test/CGRARTL_test.py
++++ b/cgra/test/CGRARTL_test.py
+@@ -171,6 +171,6 @@ def test_hetero_2x2():
+                     width, height, ctrl_mem_size, data_mem_size,
+                     src_opt, ctrl_waddr )
+   th.set_param("top.dut.tile[1].construct", FuList=[ShifterRTL])
+-  #th.set_param("top.dut.tile[1].construct", FuList=[MemUnit,Shifter])
++  #th.set_param("top.dut.tile[1].construct", FuList=[MemUnitRTL,ShifterRTL])
+   run_sim( th )
+
+diff --git a/cgra/translate/CGRARTL_test.py b/cgra/translate/CGRARTL_test.py
+index 3a26f6f..f821329 100644
+--- a/cgra/translate/CGRARTL_test.py
++++ b/cgra/translate/CGRARTL_test.py
+@@ -20,10 +20,12 @@ from ...fu.flexible.FlexibleFuRTL   import FlexibleFuRTL
+ from ...fu.single.AdderRTL          import AdderRTL
+ from ...fu.single.MemUnitRTL        import MemUnitRTL
+ from ...fu.single.MulRTL            import MulRTL
++from ...fu.single.SelRTL            import SelRTL
+ from ...fu.single.ShifterRTL        import ShifterRTL
+ from ...fu.single.LogicRTL          import LogicRTL
+ from ...fu.single.PhiRTL            import PhiRTL
+ from ...fu.single.CompRTL           import CompRTL
++from ...fu.double.SeqMulAdderRTL    import SeqMulAdderRTL
+ from ...fu.single.BranchRTL         import BranchRTL
+ from ..CGRARTL                      import CGRARTL
+
+@@ -110,8 +112,8 @@ def test_cgra_universal():
+   num_fu_in     = 4
+   DUT          = CGRARTL
+   FunctionUnit = FlexibleFuRTL
+-  FuList       = [ AdderRTL, MulRTL, LogicRTL, ShifterRTL, PhiRTL, CompRTL, BranchRTL, MemUnitRTL ]
+-  DataType     = mk_data( 16, 1 )
++  FuList       = [ SeqMulAdderRTL, MemUnitRTL ]#AdderRTL, MulRTL, LogicRTL, ShifterRTL, PhiRTL, CompRTL, BranchRTL, MemUnitRTL ]
++  DataType     = mk_data( 32, 1 )
+   CtrlType     = mk_ctrl( num_fu_in, num_xbar_inports, num_xbar_outports )
+   FuInType      = mk_bits( clog2( num_fu_in + 1 ) )
+   pickRegister  = [ FuInType( x+1 ) for x in range( num_fu_in ) ]
+diff --git a/fu/basic/TwoSeqCombo.py b/fu/basic/TwoSeqCombo.py
+index 33f942f..0b5ca01 100644
+--- a/fu/basic/TwoSeqCombo.py
++++ b/fu/basic/TwoSeqCombo.py
+@@ -35,8 +35,8 @@ class TwoSeqCombo( Component ):
+     s.to_mem_wdata   = SendIfcRTL( DataType )
+
+     # Components
+-    s.Fu0 = Fu0( DataType, CtrlType, 2, 1, data_mem_size )
+-    s.Fu1 = Fu1( DataType, CtrlType, 2, 1, data_mem_size )
++    s.Fu0 = Fu0( DataType, CtrlType, 4, 2, data_mem_size )
++    s.Fu1 = Fu1( DataType, CtrlType, 4, 2, data_mem_size )
+
+     # Connections
+     s.recv_in[0].msg     //= s.Fu0.recv_in[0].msg
+diff --git a/fu/double/SeqMulAdderRTL.py b/fu/double/SeqMulAdderRTL.py
+index f29013b..123d8ee 100644
+--- a/fu/double/SeqMulAdderRTL.py
++++ b/fu/double/SeqMulAdderRTL.py
+@@ -24,13 +24,15 @@ class SeqMulAdderRTL( TwoSeqCombo ):
+     super( SeqMulAdderRTL, s ).construct( DataType, CtrlType, MulRTL, AdderRTL,
+            num_inports, num_outports, data_mem_size )
+
++    FuInType = mk_bits( clog2( num_inports + 1 ) )
++
+     @s.update
+     def update_opt():
+
+-      s.Fu0.recv_opt.msg.fu_in[0] = Bits2(1)
+-      s.Fu0.recv_opt.msg.fu_in[1] = Bits2(2)
+-      s.Fu1.recv_opt.msg.fu_in[0] = Bits2(1)
+-      s.Fu1.recv_opt.msg.fu_in[1] = Bits2(2)
++      s.Fu0.recv_opt.msg.fu_in[0] = FuInType(1)
++      s.Fu0.recv_opt.msg.fu_in[1] = FuInType(2)
++      s.Fu1.recv_opt.msg.fu_in[0] = FuInType(1)
++      s.Fu1.recv_opt.msg.fu_in[1] = FuInType(2)
+
+       if s.recv_opt.msg.ctrl == OPT_MUL_ADD:
+         s.Fu0.recv_opt.msg.ctrl = OPT_MUL
+diff --git a/fu/flexible/translate/FlexibleFuRTL_test.py b/fu/flexible/translate/FlexibleFuRTL_test.py
+index 5ee8f28..9b1be85 100644
+--- a/fu/flexible/translate/FlexibleFuRTL_test.py
++++ b/fu/flexible/translate/FlexibleFuRTL_test.py
+@@ -20,6 +20,7 @@ from ....lib.messages               import *
+ from ...single.AdderRTL             import AdderRTL
+ from ...single.MulRTL               import MulRTL
+ from ...single.ShifterRTL           import ShifterRTL
++from ...single.SelRTL               import SelRTL
+ from ...single.LogicRTL             import LogicRTL
+ from ...single.PhiRTL               import PhiRTL
+ from ...single.MemUnitRTL           import MemUnitRTL
+@@ -103,12 +104,12 @@ import pytest
+                     reason="requires linux (gcc)")
+ def test_flexible_mul():
+   FU = FlexibleFuRTL
+-  FuList = [AdderRTL, MulRTL]
+-  DataType = mk_data( 16, 1 )
+-  CtrlType = mk_ctrl()
++  FuList = [AdderRTL, MulRTL, LogicRTL, ShifterRTL, PhiRTL, CompRTL, BranchRTL, MemUnitRTL, SelRTL]
++  DataType = mk_data( 32, 1 )
+   data_mem_size = 8
+-  num_inports   = 2
++  num_inports   = 4
+   num_outports  = 2
++  CtrlType = mk_ctrl(num_inports)
+   FuInType = mk_bits( clog2( num_inports + 1 ) )
+   pickRegister = [ FuInType( x+1 ) for x in range( num_inports ) ]
+   src_in0  = [ DataType(1, 1), DataType(2, 1), DataType(9, 1) ]
+diff --git a/fu/single/MulRTL.py b/fu/single/MulRTL.py
+index 6a56edf..8d1fad7 100644
+--- a/fu/single/MulRTL.py
++++ b/fu/single/MulRTL.py
+@@ -21,7 +21,7 @@ class MulRTL( Fu ):
+     super( MulRTL, s ).construct( DataType, ConfigType, num_inports, num_outports,
+            data_mem_size )
+
+-    FuInType = mk_bits( clog2( num_inports + 1 ) )
++    FuInType = mk_bits( clog2( num_inports + 1) )
+
+     @s.update
+     def comb_logic():
+diff --git a/tile/translate/TileRTL_test.py b/tile/translate/TileRTL_test.py
+index 09aefb1..3464229 100644
+--- a/tile/translate/TileRTL_test.py
++++ b/tile/translate/TileRTL_test.py
+@@ -21,6 +21,7 @@ from ...fu.flexible.FlexibleFuRTL         import FlexibleFuRTL
+ from ...fu.single.AdderRTL                import AdderRTL
+ from ...fu.single.MemUnitRTL              import MemUnitRTL
+ from ...fu.single.MulRTL                  import MulRTL
++from ...fu.single.SelRTL                  import SelRTL
+ from ...fu.single.ShifterRTL              import ShifterRTL
+ from ...fu.single.LogicRTL                import LogicRTL
+ from ...fu.single.PhiRTL                  import PhiRTL
+@@ -126,8 +127,8 @@ def test_tile_alu():
+   AddrType     = mk_bits( clog2( ctrl_mem_size ) )
+   DUT          = TileRTL
+   FunctionUnit = FlexibleFuRTL
+-#  FuList      = [ AdderRTL, MulRTL, LogicRTL, ShifterRTL, PhiRTL, CompRTL, BranchRTL, MemUnitRTL, ThreeMulAdderShifterRTL ]
+-  FuList       = [AdderRTL]
++  FuList      = [ AdderRTL, MulRTL, LogicRTL, ShifterRTL, PhiRTL, CompRTL, BranchRTL, MemUnitRTL, SelRTL ]#ThreeMulAdderShifterRTL ]
++#  FuList       = [AdderRTL]
+ #  FuList      = [ThreeMulAdderShifterRTL]
+   DataType     = mk_data( 32, 1 )
+   CtrlType     = mk_ctrl( num_fu_in, num_xbar_inports, num_xbar_outports )

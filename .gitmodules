@@ -1,3 +1,6 @@
 [submodule "CGRA-Mapper"]
 	path = CGRA-Mapper
 	url = https://github.com/tancheng/CGRA-Mapper
+[submodule "CGRA-Benchmark"]
+	path = CGRA-Benchmark
+	url = https://github.com/tancheng/CGRA-Benchmark

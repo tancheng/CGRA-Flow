@@ -23,12 +23,14 @@ class FlexibleFuRTL( Component ):
     # Constant
     s.fu_list_size = len( FuList )
     AddrType = mk_bits( clog2( data_mem_size ) )
+    PredicateType = mk_bits( 1 )
 
     # Interface
-    s.recv_in    = [ RecvIfcRTL( DataType ) for _ in range( num_inports  ) ]
-    s.recv_const = RecvIfcRTL( DataType )
-    s.recv_opt   = RecvIfcRTL( CtrlType )
-    s.send_out   = [ SendIfcRTL( DataType ) for _ in range( num_outports ) ]
+    s.recv_in        = [ RecvIfcRTL( DataType ) for _ in range( num_inports  ) ]
+    s.recv_predicate = RecvIfcRTL( PredicateType )
+    s.recv_const     = RecvIfcRTL( DataType )
+    s.recv_opt       = RecvIfcRTL( CtrlType )
+    s.send_out       = [ SendIfcRTL( DataType ) for _ in range( num_outports ) ]
 
     s.to_mem_raddr   = [ SendIfcRTL( AddrType ) for _ in range( s.fu_list_size ) ]
     s.from_mem_rdata = [ RecvIfcRTL( DataType ) for _ in range( s.fu_list_size ) ]
@@ -71,6 +73,7 @@ class FlexibleFuRTL( Component ):
           s.fu[i].recv_in[j].msg = s.recv_in[j].msg
           s.fu[i].recv_in[j].en  = s.recv_in[j].en
           s.recv_in[j].rdy       = s.fu[i].recv_in[j].rdy or s.recv_in[j].rdy
+        s.recv_predicate.rdy     = s.fu[i].recv_predicate.rdy or s.recv_predicate.rdy
 
         # send_out connection
         for j in range( num_outports ):

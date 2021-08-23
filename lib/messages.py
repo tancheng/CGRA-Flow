@@ -42,11 +42,12 @@ def mk_data( payload_nbits=16, predicate_nbits=1, bypass_nbits=1,
 
 def mk_ctrl( num_fu_in=2, num_inports=5, num_outports=5, prefix="CGRAConfig" ):
 
-  ctrl_nbits   = 6
-  CtrlType     = mk_bits( ctrl_nbits )
-  InportsType  = mk_bits( clog2( num_inports  + 1 ) )
-  OutportsType = mk_bits( clog2( num_outports + 1 ) )
-  FuInType     = mk_bits( clog2( num_fu_in + 1 ) )
+  ctrl_nbits    = 6
+  CtrlType      = mk_bits( ctrl_nbits )
+  InportsType   = mk_bits( clog2( num_inports  + 1 ) )
+  OutportsType  = mk_bits( clog2( num_outports + 1 ) )
+  FuInType      = mk_bits( clog2( num_fu_in + 1 ) )
+  PredicateType = mk_bits( 1 )
 
   new_name = f"{prefix}_{ctrl_nbits}_{num_fu_in}_{num_inports}_{num_outports}"
 
@@ -59,17 +60,40 @@ def mk_ctrl( num_fu_in=2, num_inports=5, num_outports=5, prefix="CGRAConfig" ):
       out_str += str(int(s.fu_in[i]))
 
     out_str += '|'
+    out_str += str(int(s.predicate))
+
+    out_str += '|'
     for i in range( num_outports ):
       if i != 0:
         out_str += '-'
       out_str += str(int(s.outport[i]))
 
+    out_str += '|'
+    for i in range( num_inports ):
+      if i != 0:
+        out_str += '-'
+      out_str += str(int(s.predicate_in[i]))
+
     return f"{s.ctrl}|{out_str}"
 
   field_dict = {}
-  field_dict[ 'ctrl' ] = CtrlType
-  field_dict[ 'fu_in' ] = [ FuInType for _ in range( num_fu_in ) ]
-  field_dict[ 'outport' ] = [ InportsType for _ in range( num_outports ) ]
+  field_dict[ 'ctrl' ]         = CtrlType
+  # The 'predicate' indicates whether the current operation is based on the partial
+  # predication or not. Note that 'predicate' is different from the following
+  # 'predicate_in', which contributes to the 'predicate' at the next cycle.
+  field_dict[ 'predicate' ]    = PredicateType
+  # The fu_in indicates the input port (i.e., ordering the oprands).
+  field_dict[ 'fu_in' ]        = [ FuInType for _ in range( num_fu_in ) ]
+  field_dict[ 'outport' ]      = [ InportsType for _ in range( num_outports ) ]
+  # I assume one tile supports single predicate at the entire execution time, as
+  # it is hard to distinguish predication for different operations (we automatically
+  # update, i.e., 'or', the predicate stored in the predicate register). This should
+  # be guaranteed by the compiler.
+  field_dict[ 'predicate_in' ] = [ PredicateType for _ in range( num_inports ) ]
+
+  # TODO: to support multiple predicate
+  # field_dict[ 'predicate_in0' ] = ...
+  # field_dict[ 'predicate_in1' ] = ...
 
   return mk_bitstruct( new_name, field_dict,
     namespace = { '__str__': str_func }

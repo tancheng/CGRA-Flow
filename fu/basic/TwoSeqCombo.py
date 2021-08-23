@@ -19,14 +19,16 @@ class TwoSeqCombo( Component ):
                  data_mem_size ):
 
     # Constant
-    AddrType = mk_bits( clog2( data_mem_size ) )
-    s.const_zero = DataType(0, 0)
+    AddrType      = mk_bits( clog2( data_mem_size ) )
+    s.const_zero  = DataType(0, 0)
+    PredicateType = mk_bits( 1 )
 
     # Interface
-    s.recv_in  = [ RecvIfcRTL( DataType ) for _ in range( num_inports  ) ]
-    s.recv_const = RecvIfcRTL( DataType )
-    s.recv_opt = RecvIfcRTL( CtrlType )
-    s.send_out = [ SendIfcRTL( DataType ) for _ in range( num_outports ) ]
+    s.recv_in        = [ RecvIfcRTL( DataType ) for _ in range( num_inports  ) ]
+    s.recv_predicate = RecvIfcRTL( PredicateType )
+    s.recv_const     = RecvIfcRTL( DataType )
+    s.recv_opt       = RecvIfcRTL( CtrlType )
+    s.send_out       = [ SendIfcRTL( DataType ) for _ in range( num_outports ) ]
 
     # Redundant interfaces for MemUnit
     s.to_mem_raddr   = SendIfcRTL( AddrType )

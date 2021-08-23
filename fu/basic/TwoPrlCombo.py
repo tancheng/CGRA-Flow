@@ -18,10 +18,14 @@ class TwoPrlCombo( Component ):
   def construct( s, DataType, CtrlType, Fu0, Fu1, num_inports, num_outports,
                  data_mem_size ):
 
+    # Cosntant
+    PredicateType = mk_bits( 1 )
+
     # Interface
-    s.recv_in  = [ RecvIfcRTL( DataType ) for _ in range( num_inports  ) ]
-    s.recv_opt = RecvIfcRTL( CtrlType )
-    s.send_out = [ SendIfcRTL( DataType ) for _ in range( num_outports ) ]
+    s.recv_in        = [ RecvIfcRTL( DataType ) for _ in range( num_inports  ) ]
+    s.recv_predicate = RecvIfcRTL( PredicateType )
+    s.recv_opt       = RecvIfcRTL( CtrlType )
+    s.send_out       = [ SendIfcRTL( DataType ) for _ in range( num_outports ) ]
 
     # Components
     s.Fu0 = Fu0( DataType, CtrlType, 2, 1, data_mem_size )

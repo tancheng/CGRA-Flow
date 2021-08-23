@@ -22,9 +22,10 @@ class CrossbarRTL( Component ):
 
     # Interface
 
-    s.recv_opt  = RecvIfcRTL( CtrlType )
-    s.recv_data = [ RecvIfcRTL( DataType ) for _ in range ( num_inports  ) ]
-    s.send_data = [ SendIfcRTL( DataType ) for _ in range ( num_outports ) ]
+    s.recv_opt       = RecvIfcRTL( CtrlType )
+    s.recv_data      = [ RecvIfcRTL( DataType ) for _ in range ( num_inports  ) ]
+    s.send_data      = [ SendIfcRTL( DataType ) for _ in range ( num_outports ) ]
+    s.send_predicate = SendIfcRTL( Bits1 )
 
     # TODO: should include position information or not?
     # s.pos  = InPort( PositionType )
@@ -33,7 +34,16 @@ class CrossbarRTL( Component ):
     @s.update
     def update_signal():
       out_rdy = b1( 0 )
+      predicate_out_rdy = b1( 0 )
+      # For predication register update.
+      if s.recv_opt.msg.predicate == b1( 1 ):
+        s.send_predicate.msg = b1( 0 )
       if s.recv_opt.msg.ctrl != OPT_START:
+        for i in range( num_inports ):
+          if s.recv_opt.msg.predicate_in[i] == b1( 1 ):
+            s.send_predicate.en  = b1( 1 )
+            s.send_predicate.msg = s.send_predicate.msg | s.recv_data[i].msg.predicate
+            predicate_out_rdy = b1( 1 )
         for i in range( num_outports ):
           in_dir  = s.recv_opt.msg.outport[i]
           out_rdy = out_rdy | s.send_data[i].rdy
@@ -68,11 +78,12 @@ class CrossbarRTL( Component ):
         for i in range( num_outports ):
 #          s.send_data[i].msg.bypass = b1( 0 ) 
           s.send_data[i].en = b1( 0 )
-      s.recv_opt.rdy = out_rdy
+      s.recv_opt.rdy = out_rdy | predicate_out_rdy
 
   # Line trace
   def line_trace( s ):
     recv_str = "|".join([ str(x.msg) for x in s.recv_data ])
     out_str  = "|".join([ str(x.msg) for x in s.send_data ])
-    return f"{recv_str} [{s.recv_opt.msg}] {out_str}"
+    pred_str = str( s.send_predicate.msg )
+    return f"{recv_str} [{s.recv_opt.msg}] {out_str}-{pred_str}"
 

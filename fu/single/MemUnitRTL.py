@@ -20,14 +20,16 @@ class MemUnitRTL( Component ):
                  data_mem_size ):
 
     # Constant
-    AddrType = mk_bits( clog2( data_mem_size ) )
-    FuInType = mk_bits( clog2( num_inports + 1 ) )
+    AddrType      = mk_bits( clog2( data_mem_size ) )
+    FuInType      = mk_bits( clog2( num_inports + 1 ) )
+    PredicateType = mk_bits( 1 )
 
     # Interface
-    s.recv_in  = [ RecvIfcRTL( DataType ) for _ in range( num_inports  ) ]
-    s.recv_const = RecvIfcRTL( DataType )
-    s.recv_opt = RecvIfcRTL( CtrlType )
-    s.send_out = [ SendIfcRTL( DataType ) for _ in range( num_outports ) ]
+    s.recv_in        = [ RecvIfcRTL( DataType ) for _ in range( num_inports  ) ]
+    s.recv_predicate = RecvIfcRTL( PredicateType )
+    s.recv_const     = RecvIfcRTL( DataType )
+    s.recv_opt       = RecvIfcRTL( CtrlType )
+    s.send_out       = [ SendIfcRTL( DataType ) for _ in range( num_outports ) ]
 
     # Interface to the data sram, need to interface them with
     # the data memory module in top level

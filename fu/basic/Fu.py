@@ -17,16 +17,18 @@ class Fu( Component ):
   def construct( s, DataType, CtrlType, num_inports, num_outports,
                  data_mem_size=4 ):
 
-    AddrType = mk_bits( clog2( data_mem_size ) )
-    s.const_zero = DataType(0, 0)
-    FuInType = mk_bits( clog2( num_inports + 1 ) )
+    # Constant
+    AddrType      = mk_bits( clog2( data_mem_size ) )
+    s.const_zero  = DataType(0, 0)
+    FuInType      = mk_bits( clog2( num_inports + 1 ) )
+    PredicateType = mk_bits( 1 )
 
     # Interface
-
-    s.recv_in    = [ RecvIfcRTL( DataType ) for _ in range( num_inports ) ]
-    s.recv_const = RecvIfcRTL( DataType )
-    s.recv_opt   = RecvIfcRTL( CtrlType )
-    s.send_out   = [ SendIfcRTL( DataType ) for _ in range( num_outports ) ]
+    s.recv_in        = [ RecvIfcRTL( DataType ) for _ in range( num_inports ) ]
+    s.recv_predicate = RecvIfcRTL( PredicateType )
+    s.recv_const     = RecvIfcRTL( DataType )
+    s.recv_opt       = RecvIfcRTL( CtrlType )
+    s.send_out       = [ SendIfcRTL( DataType ) for _ in range( num_outports ) ]
 
     # Redundant interfaces for MemUnit
     s.to_mem_raddr   = SendIfcRTL( AddrType )

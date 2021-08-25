@@ -53,7 +53,7 @@ class PhiRTL( Fu ):
         elif s.recv_in[in1].msg.predicate == Bits1( 1 ):
           s.send_out[0].msg.payload   = s.recv_in[in1].msg.payload
           s.send_out[0].msg.predicate = Bits1( 1 )
-        else:
+        else: # By default recv_in[0] is used as the initial input.
           s.send_out[0].msg.payload   = s.recv_in[in0].msg.payload
           s.send_out[0].msg.predicate = Bits1( 1 )
 

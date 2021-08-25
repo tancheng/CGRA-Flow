@@ -29,25 +29,25 @@ class BranchRTL( Fu ):
 
       # For pick input register
       in0 = FuInType( 0 )
-      in1 = FuInType( 0 )
+      # in1 = FuInType( 0 )
       for i in range( num_inports ):
         s.recv_in[i].rdy = b1( 0 )
       if s.recv_opt.en:
         if s.recv_opt.msg.fu_in[0] != FuInType( 0 ):
           in0 = s.recv_opt.msg.fu_in[0] - FuInType( 1 )
           s.recv_in[in0].rdy = b1( 1 )
-        if s.recv_opt.msg.fu_in[1] != FuInType( 0 ):
-          in1 = s.recv_opt.msg.fu_in[1] - FuInType( 1 )
-          s.recv_in[in1].rdy = b1( 1 )
+#        if s.recv_opt.msg.fu_in[1] != FuInType( 0 ):
+#          in1 = s.recv_opt.msg.fu_in[1] - FuInType( 1 )
+#          s.recv_in[in1].rdy = b1( 1 )
         if s.recv_opt.msg.predicate == b1( 1 ):
           s.recv_predicate.rdy = b1( 1 )
 
       for j in range( num_outports ):
         s.send_out[j].en = s.recv_opt.en
       if s.recv_opt.msg.ctrl == OPT_BRH:
-        s.send_out[0].msg.payload = s.recv_in[in0].msg.payload
-        s.send_out[1].msg.payload = s.recv_in[in0].msg.payload
-        if s.recv_in[1].msg.payload == s.const_zero.payload:
+        # Branch is only used to set predication rather than delivering value.
+        # s.send_out[0].msg.payload = s.recv_in[in0].msg.payload
+        if s.recv_in[0].msg.payload == s.const_zero.payload:
           s.send_out[0].msg.predicate = Bits1( 1 )
           s.send_out[1].msg.predicate = Bits1( 0 )
         else:
@@ -67,9 +67,9 @@ class BranchRTL( Fu ):
     if s.send_out[0].msg.predicate == Bits1(1):
       symbol0 = "*"
       symbol1 = " "
-      winner  = " if "
+      winner  = "false "
     elif s.send_out[1].msg.predicate == Bits1(1):
       symbol0 = " "
       symbol1 = "*"
-      winner  = "else"
-    return f'[{s.recv_in[0].msg}][{s.recv_in[1].msg}] => [{s.send_out[0].msg} {symbol0}] ({winner}) [{s.send_out[1].msg} {symbol1}]'
+      winner  = " true "
+    return f'[{s.recv_in[0].msg}] => ([{s.send_out[0].msg} {symbol0}] ({winner}) [{s.send_out[1].msg} {symbol1}])'

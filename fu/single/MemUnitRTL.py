@@ -53,6 +53,8 @@ class MemUnitRTL( Component ):
         if s.recv_opt.msg.fu_in[1] != FuInType( 0 ):
           in1 = s.recv_opt.msg.fu_in[1] - FuInType( 1 )
           s.recv_in[in1].rdy = b1( 1 )
+        if s.recv_opt.msg.predicate == b1( 1 ):
+          s.recv_predicate.rdy = b1( 1 )
 
       for j in range( num_outports ):
         s.recv_const.rdy = s.send_out[j].rdy or s.recv_const.rdy
@@ -76,6 +78,7 @@ class MemUnitRTL( Component ):
         s.from_mem_rdata.rdy = s.send_out[0].rdy
         s.send_out[0].msg    = s.from_mem_rdata.msg
         s.send_out[0].en     = s.recv_opt.en
+        s.send_out[0].msg.predicate = s.recv_in[in0].msg.predicate
 
       elif s.recv_opt.msg.ctrl == OPT_LD_CONST:
         for i in range( num_inports):
@@ -86,6 +89,8 @@ class MemUnitRTL( Component ):
         s.from_mem_rdata.rdy = s.send_out[0].rdy
         s.send_out[0].msg    = s.from_mem_rdata.msg
         s.send_out[0].en     = s.recv_opt.en
+        # Const's predicate will always be true.
+        s.send_out[0].msg.predicate = b1( 1 )
 
       elif s.recv_opt.msg.ctrl == OPT_STR:
         s.send_out[0].en   = s.from_mem_rdata.en and s.recv_in[in0].en and s.recv_in[in1].en
@@ -97,9 +102,15 @@ class MemUnitRTL( Component ):
         s.to_mem_wdata.en  = s.recv_in[in1].en
         s.send_out[0].en   = b1( 0 )
         s.send_out[0].msg  = s.from_mem_rdata.msg
+        s.send_out[0].msg.predicate = s.recv_in[in0].msg.predicate and\
+                                      s.recv_in[in1].msg.predicate
+
       else:
         for j in range( num_outports ):
           s.send_out[j].en = b1( 0 )
+
+      if s.recv_opt.msg.predicate == b1( 1 ):
+        s.send_out[0].msg.predicate = s.send_out[0].msg.predicate and s.recv_predicate.msg
 
   def line_trace( s ):
     opt_str = " #"

@@ -67,6 +67,8 @@ class SelRTL( Component ):
         if s.recv_opt.msg.fu_in[2] != FuInType( 0 ):
           in2 = s.recv_opt.msg.fu_in[2] - FuInType( 1 )
           s.recv_in[in2].rdy = b1( 1 )
+        if s.recv_opt.msg.predicate == b1( 1 ):
+          s.recv_predicate.rdy = b1( 1 )
 
       for j in range( num_outports ):
         s.recv_const.rdy = s.send_out[j].rdy or s.recv_const.rdy
@@ -83,10 +85,13 @@ class SelRTL( Component ):
         for j in range( num_outports ):
           s.send_out[j].en = b1( 0 )
 
+      if s.recv_opt.msg.predicate == b1( 1 ):
+        s.send_out[0].msg.predicate = s.send_out[0].msg.predicate and s.recv_predicate.msg
+
   def line_trace( s ):
     opt_str = " #"
     if s.recv_opt.en:
       opt_str = OPT_SYMBOL_DICT[s.recv_opt.msg.ctrl]
     out_str = ",".join([str(x.msg) for x in s.send_out])
     recv_str = ",".join([str(x.msg) for x in s.recv_in])
-    return f'[recv: {recv_str}] {opt_str} (const: {s.recv_const.msg}) ] = [out: {out_str}] (s.recv_opt.rdy: {s.recv_opt.rdy}, {OPT_SYMBOL_DICT[s.recv_opt.msg.ctrl]}, send[0].en: {s.send_out[0].en}) '
+    return f'[recv: {recv_str}] {opt_str}(P{s.recv_opt.msg.predicate}) (const_reg: {s.recv_const.msg}, predicate_reg: {s.recv_predicate.msg}) ] = [out: {out_str}] (s.recv_opt.rdy: {s.recv_opt.rdy}, {OPT_SYMBOL_DICT[s.recv_opt.msg.ctrl]}, send[0].en: {s.send_out[0].en}) '

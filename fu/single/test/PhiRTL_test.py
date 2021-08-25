@@ -23,21 +23,24 @@ from ....lib.messages             import *
 
 class TestHarness( Component ):
 
-  def construct( s, FunctionUnit, DataType, CtrlType, num_inports, num_outports,
-                 data_mem_size, src0_msgs, src1_msgs, src_opt, sink_msgs ):
+  def construct( s, FunctionUnit, DataType, CtrlType, num_inports,
+                 num_outports, data_mem_size, src0_msgs, src1_msgs,
+                 src_predicate, src_opt, sink_msgs ):
 
-    s.src_in0   = TestSrcRTL( DataType, src0_msgs )
-    s.src_in1   = TestSrcRTL( DataType, src1_msgs )
-    s.src_opt   = TestSrcRTL( CtrlType, src_opt   )
-    s.sink_out  = TestSinkCL( DataType, sink_msgs )
+    s.src_in0       = TestSrcRTL( DataType, src0_msgs     )
+    s.src_in1       = TestSrcRTL( DataType, src1_msgs     )
+    s.src_predicate = TestSrcRTL( b1,       src_predicate )
+    s.src_opt       = TestSrcRTL( CtrlType, src_opt       )
+    s.sink_out      = TestSinkCL( DataType, sink_msgs     )
 
     s.dut = FunctionUnit( DataType, CtrlType, num_inports, num_outports,
                           data_mem_size )
 
-    connect( s.src_in0.send,    s.dut.recv_in[0] )
-    connect( s.src_in1.send,    s.dut.recv_in[1] )
-    connect( s.src_opt.send,    s.dut.recv_opt   )
-    connect( s.dut.send_out[0], s.sink_out.recv  )
+    connect( s.src_in0.send,       s.dut.recv_in[0]     )
+    connect( s.src_in1.send,       s.dut.recv_in[1]     )
+    connect( s.src_predicate.send, s.dut.recv_predicate )
+    connect( s.src_opt.send,       s.dut.recv_opt       )
+    connect( s.dut.send_out[0],    s.sink_out.recv      )
 
   def done( s ):
     return s.src_in0.done() and s.src_in1.done() and\
@@ -78,11 +81,13 @@ def test_Phi():
   pickRegister = [ FuInType( x+1 ) for x in range( num_inports ) ]
   src_in0  = [ DataType(1, 0), DataType(3, 1), DataType(6, 0) ]
   src_in1  = [ DataType(0, 0), DataType(5, 0), DataType(2, 1) ]
-  src_opt  = [ CtrlType( OPT_PHI, pickRegister ),
-               CtrlType( OPT_PHI, pickRegister ),
-               CtrlType( OPT_PHI, pickRegister ) ]
-  sink_out = [ DataType(1, 1), DataType(3, 1), DataType(2, 1) ]
+  src_predicate = [ b1( 1 ), b1( 0 ), b1( 1 ) ]
+  src_opt  = [ CtrlType( OPT_PHI, b1( 1 ), pickRegister ),
+               CtrlType( OPT_PHI, b1( 1 ), pickRegister ),
+               CtrlType( OPT_PHI, b1( 1 ), pickRegister ) ]
+  sink_out = [ DataType(1, 1), DataType(3, 0), DataType(2, 1) ]
   th = TestHarness( FU, DataType, CtrlType, num_inports, num_outports,
-                    data_mem_size, src_in0, src_in1, src_opt, sink_out )
+                    data_mem_size, src_in0, src_in1, src_predicate,
+                    src_opt, sink_out )
   run_sim( th )
 

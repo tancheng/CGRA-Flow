@@ -43,6 +43,8 @@ class CompRTL( Fu ):
         if s.recv_opt.msg.fu_in[1] != FuInType( 0 ):
           in1 = s.recv_opt.msg.fu_in[1] - FuInType( 1 )
           s.recv_in[in1].rdy = b1( 1 )
+        if s.recv_opt.msg.predicate == b1( 1 ):
+          s.recv_predicate.rdy = b1( 1 )
 
       predicate = s.recv_in[in0].msg.predicate & s.recv_in[in1].msg.predicate
       s.send_out[0].msg = s.const_one
@@ -78,3 +80,5 @@ class CompRTL( Fu ):
         for j in range( num_outports ):
           s.send_out[j].en = b1( 0 )
 
+      if s.recv_opt.msg.predicate == b1( 1 ):
+        s.send_out[0].msg.predicate = s.send_out[0].msg.predicate and s.recv_predicate.msg

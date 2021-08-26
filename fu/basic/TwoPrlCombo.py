@@ -32,10 +32,10 @@ class TwoPrlCombo( Component ):
     s.Fu1 = Fu1( DataType, CtrlType, 2, 1, data_mem_size )
 
     # Connections
-    s.recv_in[0].msg //= s.Fu0.recv_in[0].msg
-    s.recv_in[1].msg //= s.Fu0.recv_in[1].msg
-    s.recv_in[2].msg //= s.Fu1.recv_in[0].msg
-    s.recv_in[3].msg //= s.Fu1.recv_in[1].msg
+    s.recv_in[0].msg      //= s.Fu0.recv_in[0].msg
+    s.recv_in[1].msg      //= s.Fu0.recv_in[1].msg
+    s.recv_in[2].msg      //= s.Fu1.recv_in[0].msg
+    s.recv_in[3].msg      //= s.Fu1.recv_in[1].msg
 
     s.Fu0.send_out[0].msg //= s.send_out[0].msg
     s.Fu1.send_out[0].msg //= s.send_out[1].msg
@@ -46,6 +46,7 @@ class TwoPrlCombo( Component ):
       s.recv_in[1].rdy  = s.send_out[0].rdy and s.send_out[1].rdy
       s.recv_in[2].rdy  = s.send_out[0].rdy and s.send_out[1].rdy
       s.recv_in[3].rdy  = s.send_out[0].rdy and s.send_out[1].rdy
+
       s.Fu0.recv_opt.en = s.recv_opt.en
       s.Fu1.recv_opt.en = s.recv_opt.en
       s.recv_opt.rdy    = s.send_out[0].rdy and s.send_out[1].rdy
@@ -56,6 +57,18 @@ class TwoPrlCombo( Component ):
                           s.recv_in[2].en   and s.recv_in[3].en   and\
                           s.recv_opt.en
 
+      # Note that the predication for a combined FU should be identical/shareable,
+      # which means the computation in different basic block cannot be combined.
+      s.Fu0.recv_opt.msg.predicate = s.recv_opt.msg.predicate
+      s.Fu1.recv_opt.msg.predicate = s.recv_opt.msg.predicate
+
+      s.recv_predicate.rdy     = s.Fu0.recv_predicate.rdy and\
+                                 s.Fu1.recv_predicate.rdy
+      s.Fu0.recv_predicate.en  = s.recv_predicate.en
+      s.Fu1.recv_predicate.en  = s.recv_predicate.en
+
+      s.Fu0.recv_predicate.msg = s.recv_predicate.msg
+      s.Fu1.recv_predicate.msg = s.recv_predicate.msg
+
   def line_trace( s ):
     return s.Fu0.line_trace() + " ; " + s.Fu1.line_trace()
-

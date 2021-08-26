@@ -27,11 +27,11 @@ class PrlMulAdderRTL( TwoPrlCombo ):
     @s.update
     def update_opt():
       if s.recv_opt.msg.ctrl == OPT_MUL_ADD:
-        s.Fu0.recv_opt.msg = CtrlType( OPT_MUL, [ Bits2(1), Bits2(2) ] )
-        s.Fu1.recv_opt.msg = CtrlType( OPT_ADD, [ Bits2(1), Bits2(2) ] )
+        s.Fu0.recv_opt.msg = CtrlType( OPT_MUL, s.recv_opt.msg.predicate, [ Bits2(1), Bits2(2) ] )
+        s.Fu1.recv_opt.msg = CtrlType( OPT_ADD, s.recv_opt.msg.predicate, [ Bits2(1), Bits2(2) ] )
       elif s.recv_opt.msg.ctrl == OPT_MUL_SUB:
-        s.Fu0.recv_opt.msg = CtrlType( OPT_MUL, [ Bits2(1), Bits2(2) ] )
-        s.Fu1.recv_opt.msg = CtrlType( OPT_SUB, [ Bits2(1), Bits2(2) ] )
+        s.Fu0.recv_opt.msg = CtrlType( OPT_MUL, s.recv_opt.msg.predicate, [ Bits2(1), Bits2(2) ] )
+        s.Fu1.recv_opt.msg = CtrlType( OPT_SUB, s.recv_opt.msg.predicate, [ Bits2(1), Bits2(2) ] )
 
-      # TODO: need to handle the other cases
+      # TODO: can handle the customized cases if there are.
 

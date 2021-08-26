@@ -72,6 +72,24 @@ class ThreeCombo( Component ):
 #                          s.recv_in[2].en  and s.recv_in[3].en  and\
 #                          s.recv_opt.en
 
+      # Note that the predication for a combined FU should be identical/shareable,
+      # which means the computation in different basic block cannot be combined.
+      s.Fu0.recv_opt.msg.predicate = s.recv_opt.msg.predicate
+      s.Fu1.recv_opt.msg.predicate = s.recv_opt.msg.predicate
+      s.Fu2.recv_opt.msg.predicate = s.recv_opt.msg.predicate
+
+      s.recv_predicate.rdy     = s.Fu0.recv_predicate.rdy and\
+                                 s.Fu1.recv_predicate.rdy and\
+                                 s.Fu2.recv_predicate.rdy
+
+      s.Fu0.recv_predicate.en  = s.recv_predicate.en
+      s.Fu1.recv_predicate.en  = s.recv_predicate.en
+      s.Fu2.recv_predicate.en  = s.recv_predicate.en
+
+      s.Fu0.recv_predicate.msg = s.recv_predicate.msg
+      s.Fu1.recv_predicate.msg = s.recv_predicate.msg
+      s.Fu2.recv_predicate.msg = s.recv_predicate.msg
+
     @s.update
     def update_mem():
       s.to_mem_waddr.en    = b1( 0 )

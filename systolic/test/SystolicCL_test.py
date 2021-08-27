@@ -104,87 +104,87 @@ def test_systolic_2x2():
   FuInType          = mk_bits( clog2( num_fu_in + 1 ) )
   pickRegister      = [ FuInType( x+1 ) for x in range( num_fu_in ) ]
   
-  src_opt       = [[CtrlType( OPT_LD_CONST, pickRegister, [ 
+  src_opt       = [[CtrlType( OPT_LD_CONST, b1( 0 ), pickRegister, [ 
                     RouteType(5), RouteType(0), RouteType(0), RouteType(0),
                     RouteType(0), RouteType(0), RouteType(0), RouteType(0)] ),
-                    CtrlType( OPT_LD_CONST, pickRegister, [
+                    CtrlType( OPT_LD_CONST, b1( 0 ), pickRegister, [
                     RouteType(5), RouteType(0), RouteType(0), RouteType(0),
                     RouteType(0), RouteType(0), RouteType(0), RouteType(0)] ),
-                    CtrlType( OPT_LD_CONST, pickRegister, [
+                    CtrlType( OPT_LD_CONST, b1( 0 ), pickRegister, [
                     RouteType(5), RouteType(0), RouteType(0), RouteType(0),
                     RouteType(0), RouteType(0), RouteType(0), RouteType(0)] ),
-                    CtrlType( OPT_LD_CONST, pickRegister, [
-                    RouteType(5), RouteType(0), RouteType(0), RouteType(0),
-                    RouteType(0), RouteType(0), RouteType(0), RouteType(0)] ),
-                   ],
-                   [CtrlType( OPT_NAH, pickRegister, [ 
-                    RouteType(5), RouteType(0), RouteType(0), RouteType(0),
-                    RouteType(0), RouteType(0), RouteType(0), RouteType(0)] ),
-                    CtrlType( OPT_LD_CONST, pickRegister, [ 
-                    RouteType(5), RouteType(0), RouteType(0), RouteType(0),
-                    RouteType(0), RouteType(0), RouteType(0), RouteType(0)] ),
-                    CtrlType( OPT_LD_CONST, pickRegister, [
-                    RouteType(5), RouteType(0), RouteType(0), RouteType(0),
-                    RouteType(0), RouteType(0), RouteType(0), RouteType(0)] ),
-                    CtrlType( OPT_LD_CONST, pickRegister, [
-                    RouteType(5), RouteType(0), RouteType(0), RouteType(0),
-                    RouteType(0), RouteType(0), RouteType(0), RouteType(0)] ),
-                    CtrlType( OPT_LD_CONST, pickRegister, [
+                    CtrlType( OPT_LD_CONST, b1( 0 ), pickRegister, [
                     RouteType(5), RouteType(0), RouteType(0), RouteType(0),
                     RouteType(0), RouteType(0), RouteType(0), RouteType(0)] ),
                    ],
-                   [CtrlType( OPT_NAH, pickRegister, [ 
+                   [CtrlType( OPT_NAH, b1( 0 ), pickRegister, [ 
+                    RouteType(5), RouteType(0), RouteType(0), RouteType(0),
+                    RouteType(0), RouteType(0), RouteType(0), RouteType(0)] ),
+                    CtrlType( OPT_LD_CONST, b1( 0 ), pickRegister, [ 
+                    RouteType(5), RouteType(0), RouteType(0), RouteType(0),
+                    RouteType(0), RouteType(0), RouteType(0), RouteType(0)] ),
+                    CtrlType( OPT_LD_CONST, b1( 0 ), pickRegister, [
+                    RouteType(5), RouteType(0), RouteType(0), RouteType(0),
+                    RouteType(0), RouteType(0), RouteType(0), RouteType(0)] ),
+                    CtrlType( OPT_LD_CONST, b1( 0 ), pickRegister, [
+                    RouteType(5), RouteType(0), RouteType(0), RouteType(0),
+                    RouteType(0), RouteType(0), RouteType(0), RouteType(0)] ),
+                    CtrlType( OPT_LD_CONST, b1( 0 ), pickRegister, [
+                    RouteType(5), RouteType(0), RouteType(0), RouteType(0),
+                    RouteType(0), RouteType(0), RouteType(0), RouteType(0)] ),
+                   ],
+                   [CtrlType( OPT_NAH, b1( 0 ), pickRegister, [ 
                     RouteType(2), RouteType(0), RouteType(0), RouteType(0),
                     RouteType(2), RouteType(0), RouteType(0), RouteType(0)] ),
-                    CtrlType( OPT_MUL_CONST, pickRegister, [
+                    CtrlType( OPT_MUL_CONST, b1( 0 ), pickRegister, [
                     RouteType(2), RouteType(0), RouteType(0), RouteType(5),
                     RouteType(2), RouteType(0), RouteType(0), RouteType(0)] ),
-                    CtrlType( OPT_MUL_CONST, pickRegister, [
+                    CtrlType( OPT_MUL_CONST, b1( 0 ), pickRegister, [
                     RouteType(2), RouteType(0), RouteType(0), RouteType(5),
                     RouteType(2), RouteType(0), RouteType(0), RouteType(0)] ),
-                    CtrlType( OPT_MUL_CONST, pickRegister, [
+                    CtrlType( OPT_MUL_CONST, b1( 0 ), pickRegister, [
                     RouteType(2), RouteType(0), RouteType(0), RouteType(5),
                     RouteType(2), RouteType(0), RouteType(0), RouteType(0)] ),
                    ],
-                   [CtrlType( OPT_NAH, pickRegister, [ 
+                   [CtrlType( OPT_NAH, b1( 0 ), pickRegister, [ 
                     RouteType(2), RouteType(0), RouteType(0), RouteType(0),
                     RouteType(2), RouteType(0), RouteType(0), RouteType(0)] ),
-                    CtrlType( OPT_NAH, pickRegister, [ 
+                    CtrlType( OPT_NAH, b1( 0 ), pickRegister, [ 
                     RouteType(2), RouteType(0), RouteType(0), RouteType(0),
                     RouteType(2), RouteType(0), RouteType(3), RouteType(0)] ),
-                    CtrlType( OPT_MUL_CONST_ADD, pickRegister, [ 
+                    CtrlType( OPT_MUL_CONST_ADD, b1( 0 ), pickRegister, [ 
                     RouteType(2), RouteType(0), RouteType(0), RouteType(5),
                     RouteType(2), RouteType(0), RouteType(3), RouteType(0)] ),
-                    CtrlType( OPT_MUL_CONST_ADD, pickRegister, [
+                    CtrlType( OPT_MUL_CONST_ADD, b1( 0 ), pickRegister, [
                     RouteType(2), RouteType(0), RouteType(0), RouteType(5),
                     RouteType(2), RouteType(0), RouteType(3), RouteType(0)] ),
                    ],
-                   [CtrlType( OPT_NAH, pickRegister, [
+                   [CtrlType( OPT_NAH, b1( 0 ), pickRegister, [
                     RouteType(0), RouteType(0), RouteType(0), RouteType(0),
                     RouteType(2), RouteType(0), RouteType(0), RouteType(0)] ),
-                    CtrlType( OPT_NAH, pickRegister, [
+                    CtrlType( OPT_NAH, b1( 0 ), pickRegister, [
                     RouteType(0), RouteType(0), RouteType(0), RouteType(0),
                     RouteType(2), RouteType(0), RouteType(0), RouteType(0)] ),
-                    CtrlType( OPT_MUL_CONST, pickRegister, [
+                    CtrlType( OPT_MUL_CONST, b1( 0 ), pickRegister, [
                     RouteType(0), RouteType(0), RouteType(0), RouteType(5),
                     RouteType(2), RouteType(0), RouteType(0), RouteType(0)] ),
-                    CtrlType( OPT_MUL_CONST, pickRegister, [
+                    CtrlType( OPT_MUL_CONST, b1( 0 ), pickRegister, [
                     RouteType(0), RouteType(0), RouteType(0), RouteType(5),
                     RouteType(2), RouteType(0), RouteType(0), RouteType(0)] ),
                    ],
-                   [CtrlType( OPT_NAH, pickRegister, [
+                   [CtrlType( OPT_NAH, b1( 0 ), pickRegister, [
                     RouteType(0), RouteType(0), RouteType(0), RouteType(0),
                     RouteType(2), RouteType(0), RouteType(3), RouteType(0)] ),
-                    CtrlType( OPT_NAH, pickRegister, [
+                    CtrlType( OPT_NAH, b1( 0 ), pickRegister, [
                     RouteType(0), RouteType(0), RouteType(0), RouteType(0),
                     RouteType(2), RouteType(0), RouteType(3), RouteType(0)] ),
-                    CtrlType( OPT_NAH, pickRegister, [
+                    CtrlType( OPT_NAH, b1( 0 ), pickRegister, [
                     RouteType(0), RouteType(0), RouteType(0), RouteType(0),
                     RouteType(2), RouteType(0), RouteType(3), RouteType(0)] ),
-                    CtrlType( OPT_MUL_CONST_ADD, pickRegister, [
+                    CtrlType( OPT_MUL_CONST_ADD, b1( 0 ), pickRegister, [
                     RouteType(0), RouteType(0), RouteType(0), RouteType(5),
                     RouteType(2), RouteType(0), RouteType(3), RouteType(0)] ),
-                    CtrlType( OPT_MUL_CONST_ADD, pickRegister, [
+                    CtrlType( OPT_MUL_CONST_ADD, b1( 0 ), pickRegister, [
                     RouteType(0), RouteType(0), RouteType(0), RouteType(5),
                     RouteType(2), RouteType(0), RouteType(3), RouteType(0)] ),
                    ]

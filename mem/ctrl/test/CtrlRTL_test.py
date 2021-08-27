@@ -93,10 +93,10 @@ def test_Ctrl():
   src_data1 = [ DataType(6,1),DataType(1,1),DataType(2,1),DataType(3,1) ]
   src_raddr = [ AddrType( 0 ),AddrType( 0 ),AddrType( 1 ),AddrType( 2 ),AddrType( 3 ) ]
   src_waddr = [ AddrType( 0 ),AddrType( 1 ),AddrType( 2 ),AddrType( 3 )]
-  src_wdata = [ CtrlType( OPT_ADD, pickRegister ),
-                CtrlType( OPT_SUB, pickRegister ),
-                CtrlType( OPT_SUB, pickRegister ),
-                CtrlType( OPT_ADD, pickRegister ) ]
+  src_wdata = [ CtrlType( OPT_ADD, b1( 0 ), pickRegister ),
+                CtrlType( OPT_SUB, b1( 0 ), pickRegister ),
+                CtrlType( OPT_SUB, b1( 0 ), pickRegister ),
+                CtrlType( OPT_ADD, b1( 0 ), pickRegister ) ]
   sink_out  = [ DataType(7,1), DataType(4,1), DataType(5,1), DataType(9,1) ]
   th = TestHarness( MemUnit, DataType, CtrlType, ctrl_mem_size, data_mem_size,
                     src_data0, src_data1, src_raddr, src_waddr, src_wdata, sink_out )

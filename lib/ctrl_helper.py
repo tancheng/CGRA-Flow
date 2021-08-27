@@ -31,7 +31,7 @@ class TileCtrl:
     pickRegister = [ FuInType( 0 ) for x in range( num_fu_in ) ]
 #    pickRegister[2] = FuInType( 0 )
 #    pickRegister[3] = FuInType( 0 )
-    s.ctrl   = [ CtrlType( OPT_NAH, pickRegister, [ RouteType( 0 ) ] * num_outports ) ] * II
+    s.ctrl   = [ CtrlType( OPT_NAH, b1( 0 ), pickRegister, [ RouteType( 0 ) ] * num_outports ) ] * II
 
   def update_ctrl( s, cycle, ctrl ):
 #    s.opts[cycle]   = opt
@@ -89,7 +89,7 @@ class CGRACtrl:
             fu_in = ctrl['fu_in_'+str(i)]
             reg[i] = FuInType( fu_in )
 
-        tile.update_ctrl( ctrl['cycle']%II, CtrlType( opt_map[ ctrl['opt'] ], reg, route ) )
+        tile.update_ctrl( ctrl['cycle']%II, CtrlType( opt_map[ ctrl['opt'] ], ctrl['predicate'], reg, route ) )
 #          print( tile.ctrl )
 
   def get_ctrl( s ):

@@ -17,17 +17,21 @@ import json
 
 class Node:
 
-  def __init__( s, id, FuType, opt, const_index, input_node, output_node ):
-    s.id          = id
-    s.fu_type     = FuType
-    s.opt         = opt
-    s.layer       = 0
-    s.const_index = const_index
-    s.num_const   = len( const_index )
-    s.num_input   = len( input_node  )
-    DataType      = mk_data( 16, 1 )
-    s.input_node  = input_node
-    s.input_value = [ DataType( 0, 0 ) ] * s.num_input
+  def __init__( s, id, FuType, opt, opt_predicate, const_index, input_node,
+                input_predicate_node, output_node ):
+    s.id              = id
+    s.fu_type         = FuType
+    s.opt             = opt
+    s.opt_predicate   = opt_predicate
+    s.layer           = 0
+    s.const_index     = const_index
+    s.num_const       = len( const_index )
+    s.num_input       = len( input_node  )
+    DataType          = mk_data( 16, 1 )
+    s.input_node      = input_node
+    s.input_predicate_node = input_predicate_node
+    s.input_value     = [ DataType( 0, 0 ) ] * s.num_input
+    s.input_predicate = 1
 
     # 2D array for output since there will be multiple results generated,
     # and each of them will route to different successors.
@@ -60,6 +64,9 @@ class Node:
     if s.current_input_index == s.num_input:
       s.current_input_index = 0
 
+  def updatePredicate( s, predicate ):
+    s.input_predicate = predicate
+
 def get_node( node_id, nodes ):
   for node in nodes:
     if node.id == node_id:
@@ -80,15 +87,18 @@ class DFG:
     with open(json_file_name) as json_file:
       dfg = json.load(json_file)
       for i in range( len(dfg) ):
-        node = Node( i,
+        node = Node( dfg[i]['id'],
                      getUnitType(dfg[i]['fu']),
                      getOptType(dfg[i]['opt']),
+                     dfg[i]['opt_predicate'],
                      dfg[i]['in_const'],
                      dfg[i]['in'],
+                     dfg[i]['in_predicate'],
                      dfg[i]['out'] )
         s.nodes.append( node )
         max_layer = -1
-        for input_node in node.input_node:
+        print("cur_node: ", node.id, " pre: ", (node.input_node+node.input_predicate_node))
+        for input_node in (node.input_node+node.input_predicate_node):
           pre_node = get_node( input_node, s.nodes )
           if( pre_node != None ):
             if pre_node.layer > max_layer:
@@ -111,4 +121,7 @@ class DFG:
         else:
           s.layer_diff_list[channel_index] = 1
         channel_index += 1
+
+  def get_node( s, node_id ):
+    return get_node( node_id, s.nodes)
 

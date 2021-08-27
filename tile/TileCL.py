@@ -11,6 +11,7 @@ from pymtl3                      import *
 from pymtl3.stdlib.ifcs          import SendIfcRTL, RecvIfcRTL
 from ..noc.CrossbarRTL           import CrossbarRTL
 from ..noc.ChannelRTL            import ChannelRTL
+from ..noc.RegisterRTL           import RegisterRTL
 from ..mem.ctrl.CtrlMemCL        import CtrlMemCL
 from ..fu.flexible.FlexibleFuRTL import FlexibleFuRTL
 from ..mem.const.ConstQueueRTL   import ConstQueueRTL
@@ -28,9 +29,9 @@ class TileCL( Component ):
     num_fu_outports   = 2
     num_mesh_ports    = 4
     bypass_point      = 4
-
-    CtrlAddrType = mk_bits( clog2( ctrl_mem_size ) )
-    DataAddrType = mk_bits( clog2( data_mem_size ) )
+    CtrlAddrType      = mk_bits( clog2( ctrl_mem_size ) )
+    DataAddrType      = mk_bits( clog2( data_mem_size ) )
+    PredicateType     = mk_bits( 1 )
 
     # Interfaces
     s.recv_data    = [ RecvIfcRTL( DataType ) for _ in range ( num_mesh_ports ) ]
@@ -50,6 +51,9 @@ class TileCL( Component ):
                                  num_xbar_outports, bypass_point )
     s.ctrl_mem    = CtrlMemCL( CtrlType, ctrl_mem_size, num_ctrl, opt_list )
     s.channel     = [ ChannelRTL ( DataType ) for _ in range( num_xbar_outports ) ]
+
+    # Additional one register for partial predication
+    s.reg_predicate = RegisterRTL( PredicateType )
 
     # Connections
 
@@ -74,6 +78,10 @@ class TileCL( Component ):
 
     for i in range( num_xbar_outports ):
       s.crossbar.send_data[i] //= s.channel[i].recv
+
+    # One partial predication register for flow control.
+    s.crossbar.send_predicate //= s.reg_predicate.recv
+    s.reg_predicate.send //= s.element.recv_predicate
 
     for i in range( num_mesh_ports ):
       s.channel[i].send //= s.send_data[i]

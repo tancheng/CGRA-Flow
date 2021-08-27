@@ -100,22 +100,22 @@ def test_homo_2x2():
   CtrlType      = mk_ctrl( num_fu_in, num_xbar_inports, num_xbar_outports )
   FuInType      = mk_bits( clog2( num_fu_in + 1 ) )
   pickRegister  = [ FuInType( x+1 ) for x in range( num_fu_in ) ]
-  src_opt       = [[ CtrlType( OPT_INC, pickRegister, [
+  src_opt       = [[ CtrlType( OPT_INC, b1( 0 ), pickRegister, [
                      RouteType(4), RouteType(3), RouteType(2), RouteType(1),
                      RouteType(5), RouteType(5), RouteType(5), RouteType(5)] ),
-                     CtrlType( OPT_INC, pickRegister, [
+                     CtrlType( OPT_INC, b1( 0 ), pickRegister, [
                      RouteType(4),RouteType(3), RouteType(2), RouteType(1),
                      RouteType(5), RouteType(5), RouteType(5), RouteType(5)] ),
-                     CtrlType( OPT_ADD, pickRegister, [
+                     CtrlType( OPT_ADD, b1( 0 ), pickRegister, [
                      RouteType(4),RouteType(3), RouteType(2), RouteType(1),
                      RouteType(5), RouteType(5), RouteType(5), RouteType(5)] ),
-                     CtrlType( OPT_STR, pickRegister, [
+                     CtrlType( OPT_STR, b1( 0 ), pickRegister, [
                      RouteType(4),RouteType(3), RouteType(2), RouteType(1),
                      RouteType(5), RouteType(5), RouteType(5), RouteType(5)] ),
-                     CtrlType( OPT_ADD, pickRegister, [
+                     CtrlType( OPT_ADD, b1( 0 ), pickRegister, [
                      RouteType(4),RouteType(3), RouteType(2), RouteType(1),
                      RouteType(5), RouteType(5), RouteType(5), RouteType(5)] ),
-                     CtrlType( OPT_ADD, pickRegister, [
+                     CtrlType( OPT_ADD, b1( 0 ), pickRegister, [
                      RouteType(4),RouteType(3), RouteType(2), RouteType(1),
                      RouteType(5), RouteType(5), RouteType(5), RouteType(5)] ) ]
                      for _ in range( num_tiles ) ]
@@ -146,22 +146,22 @@ def test_hetero_2x2():
   CtrlType      = mk_ctrl( num_fu_in, num_xbar_inports, num_xbar_outports )
   FuInType      = mk_bits( clog2( num_fu_in + 1 ) )
   pickRegister  = [ FuInType( x+1 ) for x in range( num_fu_in ) ]
-  src_opt       = [[ CtrlType( OPT_INC, pickRegister, [
+  src_opt       = [[ CtrlType( OPT_INC, b1( 0 ), pickRegister, [
                      RouteType(4), RouteType(3), RouteType(2), RouteType(1),
                      RouteType(5), RouteType(5), RouteType(5), RouteType(5)] ),
-                     CtrlType( OPT_INC, pickRegister, [
+                     CtrlType( OPT_INC, b1( 0 ), pickRegister, [
                      RouteType(4),RouteType(3), RouteType(2), RouteType(1),
                      RouteType(5), RouteType(5), RouteType(5), RouteType(5)] ),
-                     CtrlType( OPT_ADD, pickRegister, [
+                     CtrlType( OPT_ADD, b1( 0 ), pickRegister, [
                      RouteType(4),RouteType(3), RouteType(2), RouteType(1),
                      RouteType(5), RouteType(5), RouteType(5), RouteType(5)] ),
-                     CtrlType( OPT_STR, pickRegister, [
+                     CtrlType( OPT_STR, b1( 0 ), pickRegister, [
                      RouteType(4),RouteType(3), RouteType(2), RouteType(1),
                      RouteType(5), RouteType(5), RouteType(5), RouteType(5)] ),
-                     CtrlType( OPT_ADD, pickRegister, [
+                     CtrlType( OPT_ADD, b1( 0 ), pickRegister, [
                      RouteType(4),RouteType(3), RouteType(2), RouteType(1),
                      RouteType(5), RouteType(5), RouteType(5), RouteType(5)] ),
-                     CtrlType( OPT_ADD, pickRegister, [
+                     CtrlType( OPT_ADD, b1( 0 ), pickRegister, [
                      RouteType(4),RouteType(3), RouteType(2), RouteType(1),
                      RouteType(5), RouteType(5), RouteType(5), RouteType(5)] ) ]
                      for _ in range( num_tiles ) ]

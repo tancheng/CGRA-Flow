@@ -10,27 +10,25 @@ Author : Cheng Tan
 
 """
 
-from pymtl3                 import *
-from pymtl3.stdlib.ifcs     import SendIfcRTL, RecvIfcRTL
+from pymtl3                   import *
+from pymtl3.stdlib.ifcs       import SendIfcRTL, RecvIfcRTL
 
-from ..fu.single.Alu        import Alu
-from ..mem.const.ConstQueue import ConstQueue
-from ..noc.Channel          import Channel
-from ..noc.Multicaster      import Multicaster
+from ..fu.single.Alu          import Alu
+from ..mem.const.ConstQueue   import ConstQueue
+from ..noc.Channel            import Channel
+from ..noc.Multicaster        import Multicaster
 from ..mem.data.PseudoDataMem import PseudoDataMem
-from ..lib.opt_type         import *
+from ..lib.opt_type           import *
 
 class AccRTL( Component ):
 
   def construct( s, FuDFG, DataType, CtrlType ): 
 
     # Interfaces
-
 #    s.recv_data    = [ RecvIfcRTL( DataType ) for _ in range( FuDFG.num_const  ) ]
     s.send_data    = SendIfcRTL( DataType )
 
     # Components
-
     preload_data = [ DataType( 1, 1 ), DataType( 1, 1 ), DataType( 1, 1 ),
                      DataType( 1, 1 ), DataType( 1, 1 ), DataType( 1, 1 ),
                      DataType( 1, 1 ), DataType( 1, 1 ), DataType( 1, 1 ),

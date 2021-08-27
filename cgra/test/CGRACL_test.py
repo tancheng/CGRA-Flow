@@ -87,16 +87,16 @@ def test_cgra_2x2_universal():
   CtrlType      = mk_ctrl( num_fu_in, num_xbar_inports, num_xbar_outports )
   FuInType      = mk_bits( clog2( num_fu_in + 1 ) )
   pickRegister  = [ FuInType( x+1 ) for x in range( num_fu_in ) ]
-  src_opt       = [[CtrlType( OPT_ADD_CONST, pickRegister, [ 
+  src_opt       = [[CtrlType( OPT_ADD_CONST, b1( 0 ), pickRegister, [ 
                     RouteType(3), RouteType(2), RouteType(1), RouteType(0),
                     RouteType(4), RouteType(4), RouteType(4), RouteType(4)] ),
-                    CtrlType( OPT_ADD, pickRegister, [
+                    CtrlType( OPT_ADD, b1( 0 ), pickRegister, [
                     RouteType(3),RouteType(2), RouteType(1), RouteType(0),
                     RouteType(4), RouteType(4), RouteType(4), RouteType(4)] ), 
-                    CtrlType( OPT_STR, pickRegister, [
+                    CtrlType( OPT_STR, b1( 0 ), pickRegister, [
                     RouteType(3),RouteType(2), RouteType(1), RouteType(0),
                     RouteType(4), RouteType(4), RouteType(4), RouteType(4)] ),
-                    CtrlType( OPT_SUB, pickRegister, [
+                    CtrlType( OPT_SUB, b1( 0 ), pickRegister, [
                     RouteType(3),RouteType(2), RouteType(1), RouteType(0),
                     RouteType(4), RouteType(4), RouteType(4), RouteType(4)] ) ] 
                     for _ in range( num_tiles ) ]
@@ -130,7 +130,7 @@ def test_cgra_4x4_universal_fir():
   num_fu_in         = 4
   DUT               = CGRACL
   FunctionUnit      = FlexibleFuRTL
-  FuList            = [AdderRTL, MemUnitRTL]
+  FuList            = [ AdderRTL, MemUnitRTL ]
   DataType          = mk_data( 16, 1 )
   CtrlType          = mk_ctrl( num_fu_in, num_xbar_inports, num_xbar_outports )
 

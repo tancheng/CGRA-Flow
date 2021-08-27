@@ -53,8 +53,8 @@ class TileRTL( Component ):
     s.crossbar = CrossbarRTL( DataType, CtrlType, num_xbar_inports,
                               num_xbar_outports )
     s.ctrl_mem = CtrlMemRTL( CtrlType, ctrl_mem_size, num_ctrl )
-
     s.channel  = [ ChannelRTL( DataType ) for _ in range( num_xbar_outports ) ]
+
     # Additional one register for partial predication
     s.reg_predicate = RegisterRTL( PredicateType )
 

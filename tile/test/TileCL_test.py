@@ -97,8 +97,7 @@ def test_tile_alu():
   num_xbar_outports = 8
   ctrl_mem_size     = 8
   data_mem_size     = 8
-  # number of inputs of FU is fixed inside the tile
-  num_fu_in         = 4
+  num_fu_in         = 4 # number of inputs of FU is fixed inside the tile
   RouteType    = mk_bits( clog2( num_xbar_inports + 1 ) )
   AddrType     = mk_bits( clog2( ctrl_mem_size ) )
   FuInType     = mk_bits( clog2( num_fu_in + 1 ) )
@@ -108,13 +107,13 @@ def test_tile_alu():
   FuList       = [AdderRTL, MemUnitRTL]
   DataType     = mk_data( 16, 1 )
   CtrlType     = mk_ctrl( num_fu_in, num_xbar_inports, num_xbar_outports )
-  src_opt      = [ CtrlType( OPT_NAH, pickRegister, [
+  src_opt      = [ CtrlType( OPT_NAH, b1( 0 ), pickRegister, [
                    RouteType(0), RouteType(0), RouteType(0), RouteType(0),
                    RouteType(4), RouteType(3), RouteType(0), RouteType(0)] ),
-                   CtrlType( OPT_ADD, pickRegister, [
+                   CtrlType( OPT_ADD, b1( 0 ), pickRegister, [
                    RouteType(0), RouteType(0), RouteType(0), RouteType(5),
                    RouteType(4), RouteType(1), RouteType(0), RouteType(0)] ),
-                   CtrlType( OPT_SUB, pickRegister, [
+                   CtrlType( OPT_SUB, b1( 0 ), pickRegister, [
                    RouteType(5), RouteType(0), RouteType(0), RouteType(5),
                    RouteType(0), RouteType(0), RouteType(0), RouteType(0)] ) ]
   src_data     = [ [DataType(2, 1)],# DataType( 3, 1)],

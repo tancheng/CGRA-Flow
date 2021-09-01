@@ -15,13 +15,12 @@ from ...lib.opt_type    import *
 
 class TwoSeqCombo( Component ):
 
-  def construct( s, DataType, CtrlType, Fu0, Fu1, num_inports, num_outports,
-                 data_mem_size ):
+  def construct( s, DataType, PredicateType, CtrlType, Fu0, Fu1,
+                 num_inports, num_outports, data_mem_size ):
 
     # Constant
     AddrType      = mk_bits( clog2( data_mem_size ) )
     s.const_zero  = DataType(0, 0)
-    PredicateType = mk_bits( 1 )
 
     # Interface
     s.recv_in        = [ RecvIfcRTL( DataType ) for _ in range( num_inports  ) ]
@@ -37,8 +36,8 @@ class TwoSeqCombo( Component ):
     s.to_mem_wdata   = SendIfcRTL( DataType )
 
     # Components
-    s.Fu0 = Fu0( DataType, CtrlType, 4, 2, data_mem_size )
-    s.Fu1 = Fu1( DataType, CtrlType, 4, 2, data_mem_size )
+    s.Fu0 = Fu0( DataType, PredicateType, CtrlType, 4, 2, data_mem_size )
+    s.Fu1 = Fu1( DataType, PredicateType, CtrlType, 4, 2, data_mem_size )
 
     # Connections
     s.recv_in[0].msg     //= s.Fu0.recv_in[0].msg
@@ -75,6 +74,7 @@ class TwoSeqCombo( Component ):
       s.Fu0.recv_predicate.en  = s.recv_predicate.en
       s.Fu1.recv_predicate.en  = s.recv_predicate.en
 
+      # FIXME:should work, though two fields...
       s.Fu0.recv_predicate.msg = s.recv_predicate.msg
       s.Fu1.recv_predicate.msg = s.recv_predicate.msg
 

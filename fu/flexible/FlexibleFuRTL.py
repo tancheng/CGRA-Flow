@@ -17,13 +17,12 @@ from ...fu.single.AdderRTL   import AdderRTL
 
 class FlexibleFuRTL( Component ):
 
-  def construct( s, DataType, CtrlType, num_inports, num_outports,
-                 data_mem_size, FuList):#=[MemUnitRTL,AdderRTL] ):
+  def construct( s, DataType, PredicateType, CtrlType,
+                 num_inports, num_outports, data_mem_size, FuList ):#=[MemUnitRTL,AdderRTL] ):
 
     # Constant
     s.fu_list_size = len( FuList )
     AddrType = mk_bits( clog2( data_mem_size ) )
-    PredicateType = mk_bits( 1 )
 
     # Interface
     s.recv_in        = [ RecvIfcRTL( DataType ) for _ in range( num_inports  ) ]
@@ -38,8 +37,8 @@ class FlexibleFuRTL( Component ):
     s.to_mem_wdata   = [ SendIfcRTL( DataType ) for _ in range( s.fu_list_size ) ]
 
     # Components
-    s.fu = [ FuList[i]( DataType, CtrlType, num_inports, num_outports,
-             data_mem_size ) for i in range( s.fu_list_size ) ]
+    s.fu = [ FuList[i]( DataType, PredicateType, CtrlType, num_inports, num_outports,
+                        data_mem_size ) for i in range( s.fu_list_size ) ]
 
     # Connection
     for i in range( len( FuList ) ):

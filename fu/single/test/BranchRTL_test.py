@@ -23,18 +23,18 @@ from ....lib.messages             import *
 
 class TestHarness( Component ):
 
-  def construct( s, FunctionUnit, DataType, CtrlType, num_inports,
-                 num_outports, data_mem_size, src_comp, src_predicate,
-                 src_opt, sink_if, sink_else ):
+  def construct( s, FunctionUnit, DataType, PredicateType, CtrlType,
+                 num_inports, num_outports, data_mem_size,
+                 src_comp, src_predicate, src_opt, sink_if, sink_else ):
 
-    s.src_comp      = TestSrcRTL( DataType, src_comp      )
-    s.src_predicate = TestSrcRTL( b1,       src_predicate )
-    s.src_opt       = TestSrcRTL( CtrlType, src_opt       )
-    s.sink_if       = TestSinkCL( DataType, sink_if       )
-    s.sink_else     = TestSinkCL( DataType, sink_else     )
+    s.src_comp      = TestSrcRTL( DataType,      src_comp      )
+    s.src_predicate = TestSrcRTL( PredicateType, src_predicate )
+    s.src_opt       = TestSrcRTL( CtrlType,      src_opt       )
+    s.sink_if       = TestSinkCL( DataType,      sink_if       )
+    s.sink_else     = TestSinkCL( DataType,      sink_else     )
 
-    s.dut = FunctionUnit( DataType, CtrlType, num_inports, num_outports,
-                          data_mem_size )
+    s.dut = FunctionUnit( DataType, PredicateType, CtrlType,
+                          num_inports, num_outports, data_mem_size )
 
     connect( s.src_comp.send,      s.dut.recv_in[0]     )
     connect( s.src_predicate.send, s.dut.recv_predicate )
@@ -75,20 +75,21 @@ def run_sim( test_harness, max_cycles=100 ):
 def test_Branch():
   FU            = BranchRTL
   DataType      = mk_data( 16, 1 )
+  PredicateType = mk_predicate( 1, 1 )
   CtrlType      = mk_ctrl()
   num_inports   = 2
   num_outports  = 2
   data_mem_size = 8
   FuInType      = mk_bits( clog2( num_inports + 1 ) )
   src_comp      = [ DataType(0, 1), DataType(1, 1), DataType(0, 1) ]
-  src_predicate = [ b1( 0 ), b1( 0 ), b1( 1 ) ]
+  src_predicate = [ PredicateType(1, 0), PredicateType(1,0), PredicateType(1,1) ]
   src_opt       = [ CtrlType( OPT_BRH, b1( 1 ), [FuInType(1), FuInType(2)] ),
                     CtrlType( OPT_BRH, b1( 0 ), [FuInType(1), FuInType(2)] ),
                     CtrlType( OPT_BRH, b1( 0 ), [FuInType(1), FuInType(2)] ) ]
   sink_if       = [ DataType(0, 0), DataType(0, 0), DataType(0, 1) ]
   sink_else     = [ DataType(0, 0), DataType(0, 1), DataType(0, 0) ]
-  th = TestHarness( FU, DataType, CtrlType, num_inports, num_outports,
-                    data_mem_size, src_comp, src_predicate, src_opt,
-                    sink_if, sink_else )
+  th = TestHarness( FU, DataType, PredicateType, CtrlType,
+                    num_inports, num_outports, data_mem_size,
+                    src_comp, src_predicate, src_opt, sink_if, sink_else )
   run_sim( th )
 

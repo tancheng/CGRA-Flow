@@ -19,19 +19,19 @@ class Node:
 
   def __init__( s, id, FuType, opt, opt_predicate, const_index, input_node,
                 input_predicate_node, output_node ):
-    s.id              = id
-    s.fu_type         = FuType
-    s.opt             = opt
-    s.opt_predicate   = opt_predicate
-    s.layer           = 0
-    s.const_index     = const_index
-    s.num_const       = len( const_index )
-    s.num_input       = len( input_node  )
-    DataType          = mk_data( 16, 1 )
-    s.input_node      = input_node
+    s.id                   = id
+    s.fu_type              = FuType
+    s.opt                  = opt
+    s.opt_predicate        = opt_predicate
+    s.layer                = 0
+    s.const_index          = const_index
+    s.num_const            = len( const_index )
+    s.num_input            = len( input_node  )
+    DataType               = mk_data( 16, 1 )
+    s.input_node           = input_node
     s.input_predicate_node = input_predicate_node
-    s.input_value     = [ DataType( 0, 0 ) ] * s.num_input
-    s.input_predicate = 1
+    s.input_value          = [ DataType( 0, 0 ) ] * s.num_input
+    s.input_predicate      = 1
 
     # 2D array for output since there will be multiple results generated,
     # and each of them will route to different successors.
@@ -40,15 +40,17 @@ class Node:
     s.output_value = [ [ DataType( 0, 0 ) for _ in array ]
                          for array in output_node ]
 
-    # We manually or automatically pick one BRH node to insert a live_out
+    # We manually or automatically pick one BRH node to insert a live_out_ctrl
     # output, which will indicate the 'exit' point.
-    s.live_out = 0
+    s.live_out_ctrl = 0
+    # Correspondingly, the live out value is indicated by the node with
+    # live_out_val attribute.
+    s.live_out_val  = 0
 
     # This is used to update the input value without consideration of the
     # ordering, which means the we cannot support 'partial' operation, such
     # as 'LE'.
     s.current_input_index = 0
-
     s.current_output_index = 0
 
   # ---------------------------------------------------------------------
@@ -108,9 +110,11 @@ class DFG:
         s.num_const  += node.num_const
         s.num_input  += node.num_input
 #        s.num_output += node.num_output
-        if 'live_out' in dfg[i].keys():
-#        if dfg[i]['out2'] != None:
-          node.live_out = 1
+        if 'live_out_ctrl' in dfg[i].keys():
+          node.live_out_ctrl = 1
+        if 'live_out_val' in dfg[i].keys():
+          node.live_out_val = 1
+
     s.layer_diff_list = [ 0 ] * s.num_input
     channel_index= 0
     for node in s.nodes:

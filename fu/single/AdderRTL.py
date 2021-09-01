@@ -16,11 +16,12 @@ from ..basic.Fu         import Fu
 
 class AdderRTL( Fu ):
 
-  def construct( s, DataType, ConfigType, num_inports, num_outports,
-                 data_mem_size ):
+  def construct( s, DataType, PredicateType, CtrlType,
+                 num_inports, num_outports, data_mem_size ):
 
-    super( AdderRTL, s ).construct( DataType, ConfigType, num_inports, num_outports,
-           data_mem_size )
+    super( AdderRTL, s ).construct( DataType, PredicateType, CtrlType,
+                                    num_inports, num_outports,
+                                    data_mem_size )
 
     s.const_one = DataType(1, 1)
     FuInType = mk_bits( clog2( num_inports + 1 ) )
@@ -71,4 +72,5 @@ class AdderRTL( Fu ):
           s.send_out[j].en = b1( 0 )
 
       if s.recv_opt.msg.predicate == b1( 1 ):
-        s.send_out[0].msg.predicate = s.send_out[0].msg.predicate and s.recv_predicate.msg
+        s.send_out[0].msg.predicate = s.send_out[0].msg.predicate and\
+                                      s.recv_predicate.msg.predicate

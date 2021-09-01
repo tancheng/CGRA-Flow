@@ -39,15 +39,15 @@ import os
 
 class TestHarness( Component ):
 
-  def construct( s, DUT, FunctionUnit, FuList, DataType, CtrlType,
-                 width, height, ctrl_mem_size, data_mem_size,
+  def construct( s, DUT, FunctionUnit, FuList, DataType, PredicateType,
+                 CtrlType, width, height, ctrl_mem_size, data_mem_size,
                  src_opt, preload_data, preload_const ):
 
     s.num_tiles = width * height
     AddrType = mk_bits( clog2( ctrl_mem_size ) )
 
-    s.dut = DUT( FunctionUnit, FuList, DataType, CtrlType, width, height,
-                 ctrl_mem_size, data_mem_size, 100, src_opt,
+    s.dut = DUT( FunctionUnit, FuList, DataType, PredicateType, CtrlType,
+                 width, height, ctrl_mem_size, data_mem_size, 100, src_opt,
                  preload_data, preload_const )
 
   def line_trace( s ):
@@ -58,6 +58,7 @@ class TestHarness( Component ):
     SOUTH = 1
     WEST  = 2
     EAST  = 3
+    # The branch breaks out the loop.
     return s.dut.tile[11].element.send_out[1].msg
 
 
@@ -99,16 +100,16 @@ def run_CGRAFL():
   target_json = "dfg_fir.json"
   script_dir  = os.path.dirname(__file__)
   file_path   = os.path.join( script_dir, target_json )
-  DataType = mk_data( 16, 1 )
-  CtrlType = mk_ctrl()
-  const_data = [ DataType( 0, 1  ),
-                 DataType( 1, 1  ),
-                 DataType( 2, 1  ),
-                 DataType( 3, 1  ),
-                 DataType( 4, 1  ),
-                 DataType( 5, 1 ) ]
-  data_spm = [ 3 for _ in range(100) ]
-  fu_dfg = DFG( file_path, const_data, data_spm )
+  DataType    = mk_data( 16, 1 )
+  CtrlType    = mk_ctrl()
+  const_data  = [ DataType( 0, 1  ),
+                  DataType( 1, 1  ),
+                  DataType( 2, 1  ),
+                  DataType( 3, 1  ),
+                  DataType( 4, 1  ),
+                  DataType( 5, 1 ) ]
+  data_spm    = [ 3 for _ in range(100) ]
+  fu_dfg      = DFG( file_path, const_data, data_spm )
 
   print( "----------------- FL test ------------------" )
   # FL golden reference
@@ -137,20 +138,24 @@ def test_CGRA_4x4_fir():
   num_fu_in         = 4
   DUT               = CGRACL
   FunctionUnit      = FlexibleFuRTL
-  FuList            = [ MemUnitRTL, AdderRTL, MulRTL, ShifterRTL, PhiRTL, CompRTL, BranchRTL, LogicRTL ]
+  FuList            = [ MemUnitRTL, AdderRTL, MulRTL, ShifterRTL, PhiRTL,
+                        CompRTL, BranchRTL, LogicRTL ]
   DataType          = mk_data( 16, 1 )
+  PredicateType     = mk_predicate( 1, 1 )
   CtrlType          = mk_ctrl( num_fu_in, num_xbar_inports, num_xbar_outports )
   cgra_ctrl         = CGRACtrl( file_path, CtrlType, RouteType, width, height,
-                                num_fu_in, num_xbar_outports, II )
+                                num_fu_in, num_xbar_inports, num_xbar_outports,
+                                II )
   src_opt           = cgra_ctrl.get_ctrl()
+
 #  print( src_opt )
   preload_data  = [ DataType( 3, 1 ) ] * data_mem_size
   preload_const = [ [ DataType( 0, 1 ) for _ in range( II ) ] for _ in range( num_tiles ) ]
   preload_const[6][2] = DataType( 1, 1 )
   preload_const[6][3] = DataType( 2, 1 )
 
-  th = TestHarness( DUT, FunctionUnit, FuList, DataType, CtrlType,
-                    width, height, ctrl_mem_size, data_mem_size,
+  th = TestHarness( DUT, FunctionUnit, FuList, DataType, PredicateType,
+                    CtrlType, width, height, ctrl_mem_size, data_mem_size,
                     src_opt, preload_data, preload_const )
 
   target = run_sim( th )

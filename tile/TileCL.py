@@ -19,10 +19,12 @@ from ..fu.single.MemUnitRTL      import MemUnitRTL
 
 class TileCL( Component ):
 
-  def construct( s, Fu, FuList, DataType, CtrlType, ctrl_mem_size,
-                 data_mem_size, num_ctrl, const_list, opt_list ):
+  def construct( s, Fu, FuList, DataType, PredicateType, CtrlType,
+                 ctrl_mem_size, data_mem_size, num_ctrl,
+                 const_list, opt_list, id=0 ):
 
     # Constant
+    s.id = id
     num_xbar_inports  = 6
     num_xbar_outports = 8
     num_fu_inports    = 4
@@ -31,7 +33,6 @@ class TileCL( Component ):
     bypass_point      = 4
     CtrlAddrType      = mk_bits( clog2( ctrl_mem_size ) )
     DataAddrType      = mk_bits( clog2( data_mem_size ) )
-    PredicateType     = mk_bits( 1 )
 
     # Interfaces
     s.recv_data    = [ RecvIfcRTL( DataType ) for _ in range ( num_mesh_ports ) ]
@@ -44,12 +45,12 @@ class TileCL( Component ):
     s.to_mem_wdata   = SendIfcRTL( DataType )
 
     # Components
-    s.element     = FlexibleFuRTL( DataType, CtrlType, num_fu_inports,
+    s.element     = FlexibleFuRTL( DataType, PredicateType, CtrlType, num_fu_inports,
                                    num_fu_outports, data_mem_size, FuList )
     s.const_queue = ConstQueueRTL( DataType, const_list )
-    s.crossbar    = CrossbarRTL( DataType, CtrlType, num_xbar_inports,
+    s.crossbar    = CrossbarRTL( DataType, PredicateType, CtrlType, num_xbar_inports,
                                  num_xbar_outports, bypass_point )
-    s.ctrl_mem    = CtrlMemCL( CtrlType, ctrl_mem_size, num_ctrl, opt_list )
+    s.ctrl_mem    = CtrlMemCL( CtrlType, ctrl_mem_size, num_ctrl, opt_list, s.id )
     s.channel     = [ ChannelRTL ( DataType ) for _ in range( num_xbar_outports ) ]
 
     # Additional one register for partial predication
@@ -94,10 +95,10 @@ class TileCL( Component ):
 
     @s.update
     def update_opt():
-      s.element.recv_opt.msg  = s.ctrl_mem.send_ctrl.msg
-      s.crossbar.recv_opt.msg = s.ctrl_mem.send_ctrl.msg
-      s.element.recv_opt.en  = s.ctrl_mem.send_ctrl.en
-      s.crossbar.recv_opt.en = s.ctrl_mem.send_ctrl.en
+      s.element.recv_opt.msg   = s.ctrl_mem.send_ctrl.msg
+      s.crossbar.recv_opt.msg  = s.ctrl_mem.send_ctrl.msg
+      s.element.recv_opt.en    = s.ctrl_mem.send_ctrl.en
+      s.crossbar.recv_opt.en   = s.ctrl_mem.send_ctrl.en
       s.ctrl_mem.send_ctrl.rdy = s.element.recv_opt.rdy or s.crossbar.recv_opt.rdy
 
   # Line trace

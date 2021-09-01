@@ -25,18 +25,19 @@ from ....lib.messages             import *
 
 class TestHarness( Component ):
 
-  def construct( s, FunctionUnit, DataUnit, DataType, ConfigType,
-                 num_inports, num_outports, data_mem_size, src0_msgs,
-                 src1_msgs, src_predicate, ctrl_msgs, sink_msgs ):
+  def construct( s, FunctionUnit, DataUnit, DataType, PredicateType,
+                 ConfigType, num_inports, num_outports, data_mem_size,
+                 src0_msgs, src1_msgs, src_predicate, ctrl_msgs,
+                 sink_msgs ):
 
-    s.src_in0       = TestSrcRTL( DataType,   src0_msgs     )
-    s.src_in1       = TestSrcRTL( DataType,   src1_msgs     )
-    s.src_predicate = TestSrcRTL( b1,         src_predicate )
-    s.src_opt       = TestSrcRTL( ConfigType, ctrl_msgs     )
-    s.sink_out      = TestSinkCL( DataType,   sink_msgs     )
+    s.src_in0       = TestSrcRTL( DataType,      src0_msgs     )
+    s.src_in1       = TestSrcRTL( DataType,      src1_msgs     )
+    s.src_predicate = TestSrcRTL( PredicateType, src_predicate )
+    s.src_opt       = TestSrcRTL( ConfigType,    ctrl_msgs     )
+    s.sink_out      = TestSinkCL( DataType,      sink_msgs     )
 
-    s.dut = FunctionUnit( DataType, ConfigType, num_inports, num_outports,
-                          data_mem_size )
+    s.dut = FunctionUnit( DataType, PredicateType, ConfigType,
+                          num_inports, num_outports, data_mem_size )
     s.data_mem = DataUnit( DataType, data_mem_size )
 
     connect( s.dut.to_mem_raddr,   s.data_mem.recv_raddr[0] )
@@ -82,6 +83,7 @@ def test_Mem():
   FU            = MemUnitRTL
   DataUnit      = DataMemRTL
   DataType      = mk_data( 16, 1 )
+  PredicateType = mk_predicate( 1, 1 )
   ConfigType    = mk_ctrl()
   data_mem_size = 8
   num_inports   = 2
@@ -90,21 +92,22 @@ def test_Mem():
   pickRegister  = [ FuInType( x+1 ) for x in range( num_inports ) ]
   src_in0       = [ DataType(1, 1), DataType(3, 1), DataType(3, 1), DataType(3, 1) ]
   src_in1       = [ DataType(9, 1), DataType(6, 1), DataType(2, 1), DataType(7, 1) ]
-  src_predicate = [ b1( 0 ), b1( 1 ), b1( 0 ), b1( 0 ) ]
+  src_predicate = [ PredicateType(1, 0), PredicateType(1,1), PredicateType(1,0), PredicateType(0,0) ]
   sink_out      = [ DataType(0, 0), DataType(6, 1), DataType(6, 1) ]
   src_opt       = [ ConfigType( OPT_LD,  b1( 1 ), pickRegister ),
                     ConfigType( OPT_STR, b1( 0 ), pickRegister ),
                     ConfigType( OPT_LD,  b1( 0 ), pickRegister ),
                     ConfigType( OPT_LD,  b1( 0 ), pickRegister ) ]
-  th = TestHarness( FU, DataUnit, DataType, ConfigType, num_inports,
-                    num_outports, data_mem_size, src_in0, src_in1,
-                    src_predicate, src_opt, sink_out )
+  th = TestHarness( FU, DataUnit, DataType, PredicateType, ConfigType,
+                    num_inports, num_outports, data_mem_size,
+                    src_in0, src_in1, src_predicate, src_opt, sink_out )
   run_sim( th )
 
 def test_PseudoMem():
   FU = MemUnitRTL
-  DataUnit = DataMemCL
-  DataType = mk_data( 16, 1 )
+  DataUnit      = DataMemCL
+  DataType      = mk_data( 16, 1 )
+  PredicateType = mk_predicate( 1, 1 )
   ConfigType = mk_ctrl()
   data_mem_size = 8
   num_inports  = 2
@@ -113,14 +116,15 @@ def test_PseudoMem():
   pickRegister = [ FuInType( x+1 ) for x in range( num_inports ) ]
   src_in0  = [ DataType(1, 1), DataType(0, 1), DataType(0, 1) ]
   src_in1  = [ DataType(9, 1), DataType(6, 1), DataType(7, 1) ]
-  src_predicate = [ b1( 1 ), b1( 0 ), b1( 0 ), b1( 0 ), b1( 0 ), b1( 0 ) ]
+  src_predicate = [ PredicateType(1, 1), PredicateType(0, 0), PredicateType(1, 0),
+                    PredicateType(0, 0), PredicateType(0, 0), PredicateType(0, 0) ]
   sink_out = [ DataType(0, 1), DataType(6, 1), DataType(6, 1), DataType(6, 1) ]
   src_opt  = [ ConfigType( OPT_LD      , b1( 0 ), pickRegister ),
                ConfigType( OPT_STR     , b1( 0 ), pickRegister ),
                ConfigType( OPT_LD_CONST, b1( 0 ), pickRegister ),
                ConfigType( OPT_LD      , b1( 0 ), pickRegister ),
                ConfigType( OPT_LD_CONST, b1( 0 ), pickRegister ) ]
-  th = TestHarness( FU, DataUnit, DataType, ConfigType, num_inports,
+  th = TestHarness( FU, DataUnit, DataType, PredicateType, ConfigType, num_inports,
                     num_outports, data_mem_size, src_in0, src_in1,
                     src_predicate, src_opt, sink_out )
   run_sim( th )

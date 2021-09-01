@@ -15,11 +15,8 @@ from ...lib.opt_type    import *
 
 class TwoPrlCombo( Component ):
 
-  def construct( s, DataType, CtrlType, Fu0, Fu1, num_inports, num_outports,
-                 data_mem_size ):
-
-    # Cosntant
-    PredicateType = mk_bits( 1 )
+  def construct( s, DataType, PredicateType, CtrlType, Fu0, Fu1,
+                 num_inports, num_outports, data_mem_size ):
 
     # Interface
     s.recv_in        = [ RecvIfcRTL( DataType ) for _ in range( num_inports  ) ]
@@ -28,8 +25,8 @@ class TwoPrlCombo( Component ):
     s.send_out       = [ SendIfcRTL( DataType ) for _ in range( num_outports ) ]
 
     # Components
-    s.Fu0 = Fu0( DataType, CtrlType, 2, 1, data_mem_size )
-    s.Fu1 = Fu1( DataType, CtrlType, 2, 1, data_mem_size )
+    s.Fu0 = Fu0( DataType, PredicateType, CtrlType, 2, 1, data_mem_size )
+    s.Fu1 = Fu1( DataType, PredicateType, CtrlType, 2, 1, data_mem_size )
 
     # Connections
     s.recv_in[0].msg      //= s.Fu0.recv_in[0].msg

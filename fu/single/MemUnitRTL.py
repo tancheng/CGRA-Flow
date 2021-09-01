@@ -16,13 +16,12 @@ from ..basic.Fu          import Fu
 
 class MemUnitRTL( Component ):
 
-  def construct( s, DataType, CtrlType, num_inports, num_outports,
-                 data_mem_size ):
+  def construct( s, DataType, PredicateType, CtrlType,
+                 num_inports, num_outports, data_mem_size ):
 
     # Constant
     AddrType      = mk_bits( clog2( data_mem_size ) )
     FuInType      = mk_bits( clog2( num_inports + 1 ) )
-    PredicateType = mk_bits( 1 )
 
     # Interface
     s.recv_in        = [ RecvIfcRTL( DataType ) for _ in range( num_inports  ) ]
@@ -110,7 +109,8 @@ class MemUnitRTL( Component ):
           s.send_out[j].en = b1( 0 )
 
       if s.recv_opt.msg.predicate == b1( 1 ):
-        s.send_out[0].msg.predicate = s.send_out[0].msg.predicate and s.recv_predicate.msg
+        s.send_out[0].msg.predicate = s.send_out[0].msg.predicate and\
+                                      s.recv_predicate.msg.predicate
 
   def line_trace( s ):
     opt_str = " #"

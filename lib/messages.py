@@ -37,6 +37,27 @@ def mk_data( payload_nbits=16, predicate_nbits=1, bypass_nbits=1,
   )
 
 #=========================================================================
+# Predicate signal
+#=========================================================================
+
+def mk_predicate( payload_nbits=1, predicate_nbits=1, prefix="CGRAData" ):
+
+  PayloadType   = mk_bits( payload_nbits   )
+  PredicateType = mk_bits( predicate_nbits )
+
+  new_name = f"{prefix}_{payload_nbits}_{predicate_nbits}"
+
+  def str_func( s ):
+    return f"{s.payload}.{s.predicate}"
+
+  return mk_bitstruct( new_name, {
+      'payload'  : PayloadType,
+      'predicate': PredicateType,
+    },
+    namespace = { '__str__': str_func }
+  )
+
+#=========================================================================
 # Generic config message
 #=========================================================================
 
@@ -52,29 +73,29 @@ def mk_ctrl( num_fu_in=2, num_inports=5, num_outports=5, prefix="CGRAConfig" ):
   new_name = f"{prefix}_{ctrl_nbits}_{num_fu_in}_{num_inports}_{num_outports}"
 
   def str_func( s ):
-    out_str = ''
+    out_str = '(in)'
 
     for i in range( num_fu_in ):
       if i != 0:
         out_str += '-'
       out_str += str(int(s.fu_in[i]))
 
-    out_str += '|'
+    out_str += '|(p)'
     out_str += str(int(s.predicate))
 
-    out_str += '|'
+    out_str += '|(out)'
     for i in range( num_outports ):
       if i != 0:
         out_str += '-'
       out_str += str(int(s.outport[i]))
 
-    out_str += '|'
+    out_str += '|(p_in)'
     for i in range( num_inports ):
       if i != 0:
         out_str += '-'
       out_str += str(int(s.predicate_in[i]))
 
-    return f"{s.ctrl}|{out_str}"
+    return f"(opt){s.ctrl}|{out_str}"
 
   field_dict = {}
   field_dict[ 'ctrl' ]         = CtrlType

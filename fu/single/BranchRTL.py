@@ -5,7 +5,7 @@ BranchRTL.py
 Functional unit Branch for CGRA tile.
 
 Author : Cheng Tan
-  Date : December [1], 2[0][1]9
+  Date : December 1, 2019
 
 """
 
@@ -16,11 +16,11 @@ from ..basic.Fu         import Fu
 
 class BranchRTL( Fu ):
 
-  def construct( s, DataType, ConfigType, num_inports, num_outports,
-                 data_mem_size ):
+  def construct( s, DataType, PredicateType, CtrlType,
+                 num_inports, num_outports, data_mem_size ):
 
-    super( BranchRTL, s ).construct( DataType, ConfigType, num_inports, num_outports,
-           data_mem_size )
+    super( BranchRTL, s ).construct( DataType, PredicateType, CtrlType,
+                                     num_inports, num_outports, data_mem_size )
 
     FuInType = mk_bits( clog2( num_inports + 1 ) )
 
@@ -39,6 +39,7 @@ class BranchRTL( Fu ):
 #        if s.recv_opt.msg.fu_in[1] != FuInType( 0 ):
 #          in1 = s.recv_opt.msg.fu_in[1] - FuInType( 1 )
 #          s.recv_in[in1].rdy = b1( 1 )
+
         if s.recv_opt.msg.predicate == b1( 1 ):
           s.recv_predicate.rdy = b1( 1 )
 
@@ -58,7 +59,12 @@ class BranchRTL( Fu ):
           s.send_out[j].en = b1( 0 )
 
       if s.recv_opt.msg.predicate == b1( 1 ):
-        s.send_out[0].msg.predicate = s.send_out[0].msg.predicate and s.recv_predicate.msg
+        # The operation executed on the first cycle gets no input predicate.
+        s.send_out[0].msg.predicate = s.send_out[0].msg.predicate and\
+                                       s.recv_predicate.msg.predicate
+        s.send_out[1].msg.predicate = s.send_out[1].msg.predicate and\
+                                      s.recv_predicate.msg.predicate
+
 
   def line_trace( s ):
     symbol0 = "?"

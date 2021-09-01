@@ -14,14 +14,13 @@ from ...lib.opt_type    import *
 
 class Fu( Component ):
 
-  def construct( s, DataType, CtrlType, num_inports, num_outports,
-                 data_mem_size=4 ):
+  def construct( s, DataType, PredicateType, CtrlType,
+                 num_inports, num_outports, data_mem_size=4 ):
 
     # Constant
     AddrType      = mk_bits( clog2( data_mem_size ) )
     s.const_zero  = DataType(0, 0)
     FuInType      = mk_bits( clog2( num_inports + 1 ) )
-    PredicateType = mk_bits( 1 )
 
     # Interface
     s.recv_in        = [ RecvIfcRTL( DataType ) for _ in range( num_inports ) ]

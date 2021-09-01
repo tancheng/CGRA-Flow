@@ -18,12 +18,13 @@ from ..lib.messages import *
 #------------------------------------------------------------------------
 def CGRAFL( FuDFG, DataType, CtrlType, src_const ):#, data_spm ):
 
-  live_out = DataType( 0, 0 )
+  live_out_val  = DataType( 0, 0 )
+  live_out_ctrl = DataType( 0, 0 )
 
   data_spm = FuDFG.data_spm
   print("data SPM: ", data_spm)
 
-  while live_out.predicate == Bits1( 0 ):
+  while live_out_ctrl.predicate == Bits1( 0 ):
     for node in FuDFG.nodes:
       current_input = []
       current_input_predicate = 0
@@ -86,22 +87,25 @@ def CGRAFL( FuDFG, DataType, CtrlType, src_const ):#, data_spm ):
         #   else:
         #     result[1].predicate = Bits1( 1 )
 
-        # Currently, treat BRH node as the exit node that could contain live_out
-        if node.live_out != 0:
-          if node.opt_predicate == 1:
-            for i in range(len( node.num_output )):
-              result[i].predicate = result[i].predicate and current_input_predicate
-          live_out = DataType( 0, 0 )
-          live_out.payload = current_input[0].payload
-          # case of 'FALSE' ([0]->'FALSE' path; [1]->'TRUE' path)
-          if result[0].predicate == 1:
-            live_out.predicate = Bits1( 0 )
-          # Terminate the execution when BRANCH leads to a 'TRUE'
-          else:
-            live_out.predicate = Bits1( 1 )
-          if node.opt_predicate == 1:
-            live_out.predicate = live_out.predicate and current_input_predicate
+      # Currently, treat BRH node as the exit node that could contain live_out_ctrl
+      if node.live_out_ctrl != 0:
+        if node.opt_predicate == 1:
+          for i in range(len( node.num_output )):
+            result[i].predicate = result[i].predicate and current_input_predicate
+        # case of 'FALSE' ([0]->'FALSE' path; [1]->'TRUE' path)
+        if result[0].predicate == 1:
+          live_out_ctrl.predicate = Bits1( 0 )
+        # Terminate the execution when BRANCH leads to a 'TRUE'
+        else:
+          live_out_ctrl.predicate = Bits1( 1 )
+        if node.opt_predicate == 1:
+          live_out_ctrl.predicate = live_out_ctrl.predicate and current_input_predicate
   
+      # We allow single live out value in the DFG.
+      if node.live_out_val != 0:
+        live_out_val.payload   = result[0].payload
+        live_out_val.predicate = result[0].predicate
+
       if node.opt_predicate == 1:
         for i in range(len( node.num_output )):
           result[i].predicate = result[i].predicate and current_input_predicate
@@ -115,13 +119,13 @@ def CGRAFL( FuDFG, DataType, CtrlType, src_const ):#, data_spm ):
             FuDFG.get_node(node.output_node[i][j]).updateInput( result[i] )
 
       print( "id: ", node.id, " current output: ", result )
-      if live_out.predicate == Bits1( 1 ):
+      if live_out_ctrl.predicate == Bits1( 1 ):
         break
   
 
-    print( "[ current iteration live_out: ", live_out, " ]" )
+    print( "[ current iteration live_out_val: ", live_out_val, " ]" )
     print( "--------------------------------------" )
   
-  print( "final live_out: ", live_out )
-  return live_out, data_spm
+  print( "final live_out: ", live_out_val )
+  return live_out_val.payload, data_spm
 

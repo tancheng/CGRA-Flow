@@ -32,20 +32,22 @@ from ...single.BranchRTL          import BranchRTL
 
 class TestHarness( Component ):
 
-  def construct( s, FunctionUnit, FuList, DataType, CtrlType, data_mem_size,
-                 num_inports, num_outports, src0_msgs, src1_msgs,
-                 src_predicate, ctrl_msgs, sink0_msgs, sink1_msgs ):
+  def construct( s, FunctionUnit, FuList, DataType, PredicateType,
+                 CtrlType, data_mem_size, num_inports, num_outports,
+                 src0_msgs, src1_msgs, src_predicate, ctrl_msgs,
+                 sink0_msgs, sink1_msgs ):
 
-    s.src_in0       = TestSrcRTL( DataType, src0_msgs     )
-    s.src_in1       = TestSrcRTL( DataType, src1_msgs     )
-    s.src_predicate = TestSrcRTL( b1,       src_predicate )
-    s.src_const     = TestSrcRTL( DataType, src1_msgs     )
-    s.src_opt       = TestSrcRTL( CtrlType, ctrl_msgs     )
-    s.sink_out0     = TestSinkCL( DataType, sink0_msgs    )
-    s.sink_out1     = TestSinkCL( DataType, sink1_msgs    )
+    s.src_in0       = TestSrcRTL( DataType,      src0_msgs     )
+    s.src_in1       = TestSrcRTL( DataType,      src1_msgs     )
+    s.src_predicate = TestSrcRTL( PredicateType, src_predicate )
+    s.src_const     = TestSrcRTL( DataType,      src1_msgs     )
+    s.src_opt       = TestSrcRTL( CtrlType,      ctrl_msgs     )
+    s.sink_out0     = TestSinkCL( DataType,      sink0_msgs    )
+    s.sink_out1     = TestSinkCL( DataType,      sink1_msgs    )
 
-    s.dut = FunctionUnit( DataType, CtrlType, num_inports,
-                          num_outports, data_mem_size, FuList )
+    s.dut = FunctionUnit( DataType, PredicateType, CtrlType,
+                          num_inports, num_outports, data_mem_size,
+                          FuList )
 
     connect( s.src_const.send,     s.dut.recv_const     )
     connect( s.src_in0.send,       s.dut.recv_in[0]     )
@@ -98,6 +100,7 @@ def test_flexible_alu():
   FU            = FlexibleFuRTL
   FuList        = [AdderRTL]
   DataType      = mk_data( 16, 1 )
+  PredicateType = mk_predicate( 1, 1 )
   CtrlType      = mk_ctrl()
   data_mem_size = 8
   num_inports   = 2
@@ -106,20 +109,22 @@ def test_flexible_alu():
   pickRegister  = [ FuInType( x+1 ) for x in range( num_inports ) ]
   src_in0       = [ DataType(1, 1), DataType(2, 1), DataType(9, 1) ]
   src_in1       = [ DataType(2, 1), DataType(3, 1), DataType(1, 1) ]
-  src_predicate = [ b1( 0 ), b1( 0 ), b1( 0 ) ]
+  src_predicate = [ PredicateType(1, 0), PredicateType(1, 0), PredicateType(1, 0) ]
   sink_out      = [ DataType(3, 0), DataType(5, 1), DataType(8, 0) ]
   src_opt       = [ CtrlType( OPT_ADD, b1( 1 ), pickRegister ),
                     CtrlType( OPT_ADD, b1( 0 ), pickRegister ),
                     CtrlType( OPT_SUB, b1( 1 ), pickRegister ) ]
-  th = TestHarness( FU, FuList, DataType, CtrlType, data_mem_size,
-                    num_inports, num_outports, src_in0, src_in1,
-                    src_predicate, src_opt, sink_out, sink_out )
+  th = TestHarness( FU, FuList, DataType, PredicateType, CtrlType,
+                    data_mem_size, num_inports, num_outports,
+                    src_in0, src_in1, src_predicate, src_opt,
+                    sink_out, sink_out )
   run_sim( th )
 
 def test_flexible_mul():
   FU            = FlexibleFuRTL
   FuList        = [AdderRTL, MulRTL]
   DataType      = mk_data( 16, 1 )
+  PredicateType = mk_predicate( 1, 1 )
   CtrlType      = mk_ctrl()
   data_mem_size = 8
   num_inports   = 2
@@ -128,20 +133,22 @@ def test_flexible_mul():
   pickRegister  = [ FuInType( x+1 ) for x in range( num_inports ) ]
   src_in0       = [ DataType(1, 1), DataType(2, 1), DataType(9, 1) ]
   src_in1       = [ DataType(2, 1), DataType(3, 1), DataType(2, 1) ]
-  src_predicate = [ b1( 0 ), b1( 1 ), b1( 1 ) ]
+  src_predicate = [ PredicateType(1, 0), PredicateType(1, 1), PredicateType(1, 1) ]
   sink_out      = [ DataType(2, 0), DataType(6, 1), DataType(18, 1) ]
   src_opt       = [ CtrlType( OPT_MUL, b1( 1 ), pickRegister ),
                     CtrlType( OPT_MUL, b1( 1 ), pickRegister ),
                     CtrlType( OPT_MUL, b1( 1 ), pickRegister ) ]
-  th = TestHarness( FU, FuList, DataType, CtrlType, data_mem_size,
-                    num_inports, num_outports, src_in0, src_in1,
-                    src_predicate, src_opt, sink_out, sink_out )
+  th = TestHarness( FU, FuList, DataType, PredicateType, CtrlType,
+                    data_mem_size, num_inports, num_outports,
+                    src_in0, src_in1, src_predicate, src_opt,
+                    sink_out, sink_out )
   run_sim( th )
 
 def test_flexible_universal():
   FU            = FlexibleFuRTL
   FuList        = [AdderRTL, MulRTL, LogicRTL, ShifterRTL, PhiRTL, CompRTL, BranchRTL, MemUnitRTL]
   DataType      = mk_data( 16, 1 )
+  PredicateType = mk_predicate( 1, 1 )
   CtrlType      = mk_ctrl()
   data_mem_size = 8
   num_inports   = 2
@@ -150,14 +157,15 @@ def test_flexible_universal():
   pickRegister  = [ FuInType( x+1 ) for x in range( num_inports ) ]
   src_in0       = [ DataType(2, 1), DataType(1, 1), DataType(3, 0) ]
   src_in1       = [ DataType(2, 1), DataType(0, 1), DataType(2, 1) ]
-  src_predicate = [ b1( 0 ), b1( 1 ), b1( 0 ) ]
+  src_predicate = [ PredicateType(1, 0), PredicateType(1, 1), PredicateType(1, 0) ]
   sink_out0     = [ DataType(1, 0), DataType(0, 0), DataType(2, 1) ]
   sink_out1     = [ DataType(0, 0), DataType(0, 1), DataType(0, 0) ]
   src_opt       = [ CtrlType( OPT_EQ , b1( 1 ), pickRegister ),
                     CtrlType( OPT_BRH, b1( 1 ), pickRegister ),
                     CtrlType( OPT_PHI, b1( 0 ), pickRegister ) ]
-  th = TestHarness( FU, FuList, DataType, CtrlType, data_mem_size,
-                    num_inports, num_outports, src_in0, src_in1,
-                    src_predicate, src_opt, sink_out0, sink_out1 )
+  th = TestHarness( FU, FuList, DataType, PredicateType, CtrlType,
+                    data_mem_size, num_inports, num_outports,
+                    src_in0, src_in1, src_predicate, src_opt,
+                    sink_out0, sink_out1 )
   run_sim( th )
 

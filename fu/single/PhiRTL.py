@@ -17,11 +17,11 @@ import copy
 
 class PhiRTL( Fu ):
 
-  def construct( s, DataType, ConfigType, num_inports, num_outports,
-                 data_mem_size ):
+  def construct( s, DataType, PredicateType, CtrlType,
+                 num_inports, num_outports, data_mem_size ):
 
-    super( PhiRTL, s ).construct( DataType, ConfigType, num_inports, num_outports,
-           data_mem_size )
+    super( PhiRTL, s ).construct( DataType, PredicateType, CtrlType,
+                                  num_inports, num_outports, data_mem_size )
 
     FuInType = mk_bits( clog2( num_inports + 1 ) )
 
@@ -53,9 +53,9 @@ class PhiRTL( Fu ):
         elif s.recv_in[in1].msg.predicate == Bits1( 1 ):
           s.send_out[0].msg.payload   = s.recv_in[in1].msg.payload
           s.send_out[0].msg.predicate = Bits1( 1 )
-        else: # By default recv_in[0] is used as the initial input.
+        else: # No predecessor is active.
           s.send_out[0].msg.payload   = s.recv_in[in0].msg.payload
-          s.send_out[0].msg.predicate = Bits1( 1 )
+          s.send_out[0].msg.predicate = Bits1( 0 )
 
       elif s.recv_opt.msg.ctrl == OPT_PHI_CONST:
         if s.recv_in[in0].msg.predicate == Bits1( 1 ):
@@ -70,7 +70,12 @@ class PhiRTL( Fu ):
           s.send_out[j].en = b1( 0 )
 
       if s.recv_opt.msg.predicate == b1( 1 ):
-        s.send_out[0].msg.predicate = s.send_out[0].msg.predicate and s.recv_predicate.msg
+        s.send_out[0].msg.predicate = s.send_out[0].msg.predicate and\
+                                      s.recv_predicate.msg.predicate
+        # The PHI_CONST operation executed on the first cycle gets no input predicate.
+        if s.recv_opt.msg.ctrl == OPT_PHI_CONST:
+          s.send_out[0].msg.predicate = s.send_out[0].msg.predicate or\
+                                        ( s.recv_predicate.msg.payload == b1( 0 ) )
 
   def line_trace( s ):
     opt_str = " #"

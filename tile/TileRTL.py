@@ -19,8 +19,8 @@ from ..fu.single.AdderRTL        import AdderRTL
 
 class TileRTL( Component ):
 
-  def construct( s, DataType, CtrlType, ctrl_mem_size,
-                 data_mem_size, num_ctrl,
+  def construct( s, DataType, PredicateType, CtrlType,
+                 ctrl_mem_size, data_mem_size, num_ctrl,
                  num_fu_inports, num_fu_outports,
                  num_connect_inports, num_connect_outports,
                  Fu=FlexibleFuRTL, FuList=[MemUnitRTL,AdderRTL] ):
@@ -28,7 +28,6 @@ class TileRTL( Component ):
     # Constant
     num_xbar_inports  = num_fu_outports + num_connect_inports
     num_xbar_outports = num_fu_inports + num_connect_outports
-    PredicateType = mk_bits( 1 )
 
     CtrlAddrType = mk_bits( clog2( ctrl_mem_size ) )
     DataAddrType = mk_bits( clog2( data_mem_size ) )
@@ -48,10 +47,11 @@ class TileRTL( Component ):
     s.to_mem_wdata   = SendIfcRTL( DataType )
 
     # Components
-    s.element  = FlexibleFuRTL( DataType, CtrlType, num_fu_inports,
-                                num_fu_outports, data_mem_size, FuList )
-    s.crossbar = CrossbarRTL( DataType, CtrlType, num_xbar_inports,
-                              num_xbar_outports )
+    s.element  = FlexibleFuRTL( DataType, PredicateType, CtrlType,
+                                num_fu_inports, num_fu_outports,
+                                data_mem_size, FuList )
+    s.crossbar = CrossbarRTL( DataType, PredicateType, CtrlType,
+                              num_xbar_inports, num_xbar_outports )
     s.ctrl_mem = CtrlMemRTL( CtrlType, ctrl_mem_size, num_ctrl )
     s.channel  = [ ChannelRTL( DataType ) for _ in range( num_xbar_outports ) ]
 

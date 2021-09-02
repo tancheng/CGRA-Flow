@@ -19,6 +19,9 @@ from ...lib.ctrl_helper           import *
 
 from ...fu.flexible.FlexibleFuRTL import FlexibleFuRTL
 from ...fu.single.AdderRTL        import AdderRTL
+from ...fu.single.MulRTL          import MulRTL
+from ...fu.single.PhiRTL          import PhiRTL
+from ...fu.single.CompRTL         import CompRTL
 from ...fu.single.MemUnitRTL      import MemUnitRTL
 from ..CGRACL                     import CGRACL
 
@@ -131,7 +134,7 @@ def test_cgra_4x4_universal_fir():
   num_fu_in         = 4
   DUT               = CGRACL
   FunctionUnit      = FlexibleFuRTL
-  FuList            = [ AdderRTL, MemUnitRTL ]
+  FuList            = [ AdderRTL, PhiRTL, MemUnitRTL, CompRTL, MulRTL ]
   DataType          = mk_data( 16, 1 )
   PredicateType     = mk_predicate( 1, 1 )
   CtrlType          = mk_ctrl( num_fu_in, num_xbar_inports, num_xbar_outports )
@@ -145,8 +148,8 @@ def test_cgra_4x4_universal_fir():
 
   print(src_opt)
 
-  preload_data  = [ DataType( 1, 1 ) ] * data_mem_size
-  preload_const = [ [ DataType( 1, 1 ) ] * II ] * num_tiles
+  preload_data      = [ DataType( 3, 1 ) ] * data_mem_size
+  preload_const     = [ [ DataType( 1, 1 ) ] * II ] * num_tiles
 
   th = TestHarness( DUT, FunctionUnit, FuList, DataType, PredicateType,
                     CtrlType, width, height, ctrl_mem_size, data_mem_size,

@@ -43,8 +43,8 @@ class CtrlMemCL( Component ):
         s.send_ctrl.en = b1( 0 )
       else:
         s.send_ctrl.en  = s.send_ctrl.rdy
-#      if s.id == 5 or s.id == 6:
-#        print("[update] tile[", s.id, "] check ctrl out: ", s.send_ctrl.msg, "; send_ctrl.en: ", s.send_ctrl.en, "; send_ctrl.rdy: ", s.send_ctrl.rdy, "; cur: ", s.cur, "; times: ", s.times)
+      # if s.id == 6:
+      #   print("[update] tile[", s.id, "] check ctrl out: ", s.send_ctrl.msg, "; send_ctrl.en: ", s.send_ctrl.en, "; send_ctrl.rdy: ", s.send_ctrl.rdy, "; cur: ", s.cur, "; times: ", s.times)
 
     @s.update_ff
     def update_raddr():

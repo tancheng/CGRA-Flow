@@ -54,7 +54,7 @@ class CompRTL( Fu ):
         s.send_out[j].en = s.recv_opt.en
 
       if s.recv_opt.msg.ctrl == OPT_EQ:
-        if s.recv_in[0].msg.payload == s.recv_in[in1].msg.payload:
+        if s.recv_in[in0].msg.payload == s.recv_in[in1].msg.payload:
           s.send_out[0].msg = s.const_one
           s.send_out[0].msg.predicate = predicate
         else:
@@ -62,15 +62,15 @@ class CompRTL( Fu ):
           s.send_out[0].msg.predicate = predicate
 
       elif s.recv_opt.msg.ctrl == OPT_EQ_CONST:
-        if s.recv_in[0].msg.payload == s.recv_const.msg.payload:
+        if s.recv_in[in0].msg.payload == s.recv_const.msg.payload:
           s.send_out[0].msg = s.const_one
-          s.send_out[0].msg.predicate = predicate
+          s.send_out[0].msg.predicate = b1( 1 )
         else:
           s.send_out[0].msg = s.const_zero
-          s.send_out[0].msg.predicate = predicate
+          s.send_out[0].msg.predicate = b1( 1 )
 
       elif s.recv_opt.msg.ctrl == OPT_LE:
-        if s.recv_in[0].msg.payload < s.recv_in[in1].msg.payload:
+        if s.recv_in[in0].msg.payload < s.recv_in[in1].msg.payload:
           s.send_out[0].msg = s.const_one
           s.send_out[0].msg.predicate = predicate
         else:

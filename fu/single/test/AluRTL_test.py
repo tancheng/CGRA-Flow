@@ -42,6 +42,9 @@ class TestHarness( Component ):
     s.dut = FunctionUnit( DataType, PredicateType, ConfigType,
                           num_inports, num_outports, data_mem_size )
 
+    for i in range( num_inports ):
+      s.dut.recv_in_count[i] //= 1
+
     connect( s.src_in0.send,       s.dut.recv_in[0]         )
     connect( s.src_in1.send,       s.dut.recv_in[1]         )
     connect( s.src_predicate.send, s.dut.recv_predicate     )
@@ -78,7 +81,7 @@ def run_sim( test_harness, max_cycles=100 ):
   test_harness.tick()
 
 def test_alu():
-  FU = AdderRTL
+  FU            = AdderRTL
   DataType      = mk_data( 16, 1 )
   PredicateType = mk_predicate( 1, 1 )
   ConfigType    = mk_ctrl()

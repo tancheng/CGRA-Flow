@@ -24,7 +24,6 @@ class TileCL( Component ):
                  const_list, opt_list, id=0 ):
 
     # Constant
-    s.id = id
     num_xbar_inports  = 6
     num_xbar_outports = 8
     num_fu_inports    = 4
@@ -49,8 +48,8 @@ class TileCL( Component ):
                                    num_fu_outports, data_mem_size, FuList )
     s.const_queue = ConstQueueRTL( DataType, const_list )
     s.crossbar    = CrossbarRTL( DataType, PredicateType, CtrlType, num_xbar_inports,
-                                 num_xbar_outports, bypass_point )
-    s.ctrl_mem    = CtrlMemCL( CtrlType, ctrl_mem_size, num_ctrl, opt_list, s.id )
+                                 num_xbar_outports, bypass_point, id )
+    s.ctrl_mem    = CtrlMemCL( CtrlType, ctrl_mem_size, num_ctrl, opt_list, id )
     s.channel     = [ ChannelRTL ( DataType ) for _ in range( num_xbar_outports ) ]
 
     # Additional one register for partial predication
@@ -88,7 +87,8 @@ class TileCL( Component ):
       s.channel[i].send //= s.send_data[i]
 
     for i in range( num_fu_inports ):
-      s.channel[num_mesh_ports+i].send //= s.element.recv_in[i]
+      s.channel[num_mesh_ports+i].send  //= s.element.recv_in[i]
+      s.channel[num_mesh_ports+i].count //= s.element.recv_in_count[i]
 
     for i in range( num_fu_outports ):
       s.element.send_out[i] //= s.crossbar.recv_data[num_mesh_ports+i]

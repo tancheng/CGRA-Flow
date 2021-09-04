@@ -23,9 +23,12 @@ class SelRTL( Component ):
     s.const_zero     = DataType(0, 0)
     s.true           = DataType(1, 1)
     FuInType         = mk_bits( clog2( num_inports + 1 ) )
+    num_entries      = 2
+    CountType        = mk_bits( clog2( num_entries + 1 ) )
 
     # Interface
     s.recv_in        = [ RecvIfcRTL( DataType ) for _ in range( num_inports ) ]
+    s.recv_in_count  = [ InPort( CountType ) for _ in range( num_inports ) ]
     s.recv_predicate = RecvIfcRTL( PredicateType )
     s.recv_const     = RecvIfcRTL( DataType )
     s.recv_opt       = RecvIfcRTL( CtrlType )
@@ -80,6 +83,13 @@ class SelRTL( Component ):
           s.send_out[0].msg = s.recv_in[in1].msg
         else:
           s.send_out[0].msg = s.recv_in[in2].msg
+        if s.recv_opt.en and ( s.recv_in_count[in0] == CountType( 0 ) or\
+                               s.recv_in_count[in1] == CountType( 0 ) or\
+                               s.recv_in_count[in2] == CountType( 0 ) ):
+          s.recv_in[in0].rdy = b1( 0 )
+          s.recv_in[in1].rdy = b1( 0 )
+          s.recv_in[in2].rdy = b1( 0 )
+          s.send_out[0].msg.predicate = b1( 0 )
       else:
         for j in range( num_outports ):
           s.send_out[j].en = b1( 0 )

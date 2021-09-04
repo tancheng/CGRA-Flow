@@ -84,7 +84,7 @@
     "id"            : 9,
     "opt"           : "OPT_EQ",
     "opt_predicate" : 0,
-    "in_const"      : [2],
+    "in_const"      : [4],
     "in"            : [8],
     "in_predicate"  : [],
     "out"           : [[10]]

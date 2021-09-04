@@ -49,6 +49,9 @@ class TestHarness( Component ):
     s.dut = FunctionUnit( DataType, PredicateType, ConfigType,
                           num_inports, num_outports, data_mem_size )
 
+    for i in range( num_inports ):
+      s.dut.recv_in_count[i] //= 1
+
     connect( s.src_in0.send,       s.dut.recv_in[0]         )
     connect( s.src_in1.send,       s.dut.recv_in[1]         )
     connect( s.src_in2.send,       s.dut.recv_in[2]         )

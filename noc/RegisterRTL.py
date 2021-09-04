@@ -17,7 +17,7 @@ class RegisterRTL( Component ):
     # Constant
     s.latency     = latency
     s.num_entries = 2
-    s.data = DataType(0)
+    s.data = DataType( 0 )
 
     # Interface
     s.recv  = RecvIfcRTL( DataType )

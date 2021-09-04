@@ -22,7 +22,9 @@ class BranchRTL( Fu ):
     super( BranchRTL, s ).construct( DataType, PredicateType, CtrlType,
                                      num_inports, num_outports, data_mem_size )
 
-    FuInType = mk_bits( clog2( num_inports + 1 ) )
+    FuInType    = mk_bits( clog2( num_inports + 1 ) )
+    num_entries = 2
+    CountType   = mk_bits( clog2( num_entries + 1 ) )
 
     @s.update
     def comb_logic():
@@ -47,8 +49,9 @@ class BranchRTL( Fu ):
         s.send_out[j].en = s.recv_opt.en
       if s.recv_opt.msg.ctrl == OPT_BRH:
         # Branch is only used to set predication rather than delivering value.
-        # s.send_out[0].msg.payload = s.recv_in[in0].msg.payload
-        if s.recv_in[0].msg.payload == s.const_zero.payload:
+        s.send_out[0].msg = DataType(0, 0)
+        s.send_out[1].msg = DataType(0, 0)
+        if s.recv_in[in0].msg.payload == s.const_zero.payload:
           s.send_out[0].msg.predicate = Bits1( 1 )
           s.send_out[1].msg.predicate = Bits1( 0 )
         else:

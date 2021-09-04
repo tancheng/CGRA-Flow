@@ -21,7 +21,9 @@ class MulRTL( Fu ):
     super( MulRTL, s ).construct( DataType, PredicateType, CtrlType,
                                   num_inports, num_outports, data_mem_size )
 
-    FuInType = mk_bits( clog2( num_inports + 1) )
+    FuInType    = mk_bits( clog2( num_inports + 1) )
+    num_entries = 2
+    CountType   = mk_bits( clog2( num_entries + 1 ) )
 
     @s.update
     def comb_logic():
@@ -48,11 +50,21 @@ class MulRTL( Fu ):
         s.send_out[j].en = s.recv_opt.en
       if s.recv_opt.msg.ctrl == OPT_MUL:
         s.send_out[0].msg.payload = s.recv_in[in0].msg.payload * s.recv_in[in1].msg.payload
+        if s.recv_opt.en and ( s.recv_in_count[in0] == CountType( 0 ) or\
+                               s.recv_in_count[in1] == CountType( 0 ) ):
+          s.recv_in[in0].rdy = b1( 0 )
+          s.recv_in[in1].rdy = b1( 0 )
+          s.send_out[0].msg.predicate = b1( 0 )
       elif s.recv_opt.msg.ctrl == OPT_MUL_CONST:
         s.send_out[0].msg.payload = s.recv_in[in0].msg.payload * s.recv_const.msg.payload
         s.send_out[0].msg.predicate = s.recv_in[in0].msg.predicate
       elif s.recv_opt.msg.ctrl == OPT_DIV:
         s.send_out[0].msg.payload = s.recv_in[in0].msg.payload / s.recv_in[in1].msg.payload
+        if s.recv_opt.en and ( s.recv_in_count[in0] == CountType( 0 ) or\
+                               s.recv_in_count[in1] == CountType( 0 ) ):
+          s.recv_in[in0].rdy = b1( 0 )
+          s.recv_in[in1].rdy = b1( 0 )
+          s.send_out[0].msg.predicate = b1( 0 )
       else:
         for j in range( num_outports ):
           s.send_out[j].en = b1( 0 )

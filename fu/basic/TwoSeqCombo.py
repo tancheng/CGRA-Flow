@@ -21,9 +21,12 @@ class TwoSeqCombo( Component ):
     # Constant
     AddrType      = mk_bits( clog2( data_mem_size ) )
     s.const_zero  = DataType(0, 0)
+    num_entries   = 2
+    CountType     = mk_bits( clog2( num_entries + 1 ) )
 
     # Interface
     s.recv_in        = [ RecvIfcRTL( DataType ) for _ in range( num_inports  ) ]
+    s.recv_in_count  = [ InPort( CountType ) for _ in range( num_inports  ) ]
     s.recv_predicate = RecvIfcRTL( PredicateType )
     s.recv_const     = RecvIfcRTL( DataType )
     s.recv_opt       = RecvIfcRTL( CtrlType )
@@ -77,6 +80,11 @@ class TwoSeqCombo( Component ):
       # FIXME:should work, though two fields...
       s.Fu0.recv_predicate.msg = s.recv_predicate.msg
       s.Fu1.recv_predicate.msg = s.recv_predicate.msg
+
+      # Connect count.
+      for i in range( num_inports ):
+        s.Fu0.recv_in_count[i] = s.recv_in_count[i]
+        s.Fu1.recv_in_count[i] = s.recv_in_count[i]
 
     @s.update
     def update_mem():

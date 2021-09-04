@@ -40,6 +40,9 @@ class TestHarness( Component ):
                           num_inports, num_outports, data_mem_size )
     s.data_mem = DataUnit( DataType, data_mem_size )
 
+    for i in range( num_inports ):
+      s.dut.recv_in_count[i] //= 1
+
     connect( s.dut.to_mem_raddr,   s.data_mem.recv_raddr[0] )
     connect( s.dut.from_mem_rdata, s.data_mem.send_rdata[0] )
     connect( s.dut.to_mem_waddr,   s.data_mem.recv_waddr[0] )

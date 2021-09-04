@@ -15,7 +15,7 @@ from ..lib.opt_type     import *
 class CrossbarRTL( Component ):
 
   def construct( s, DataType, PredicateType, CtrlType,
-                 num_inports=5, num_outports=5, bypass_point=4 ):
+                 num_inports=5, num_outports=5, bypass_point=4, id=0 ):
 
     OutType     = mk_bits( clog2( num_inports + 1 ) )
     s.bypass_point = bypass_point
@@ -27,7 +27,7 @@ class CrossbarRTL( Component ):
     s.send_data      = [ SendIfcRTL( DataType ) for _ in range ( num_outports ) ]
     s.send_predicate = SendIfcRTL( PredicateType )
 
-    # TODO: should include position information or not?
+    # TODO: should include position information or not
     # s.pos  = InPort( PositionType )
 
     # Routing logic
@@ -42,12 +42,14 @@ class CrossbarRTL( Component ):
       # the predicate and pushes into the predicate register that will be used
       # in the future.
       if s.recv_opt.msg.predicate == b1( 1 ):
-        s.send_predicate.msg.payload = b1( 0 )
-        s.send_predicate.msg.predicate = b1( 0 )
+        # s.send_predicate.msg.payload = b1( 0 )
+        # s.send_predicate.msg.predicate = b1( 0 )
+        s.send_predicate.msg = PredicateType( 0, 0 )
       if s.recv_opt.msg.ctrl != OPT_START:
         for i in range( num_inports ):
-          if s.recv_opt.msg.predicate_in[i] == b1( 1 ):
-            s.send_predicate.en  = b1( 1 )
+          # Set predicate once the recv_data is stable (i.e., en == true).
+          if s.recv_opt.msg.predicate_in[i] == b1( 1 ) and s.recv_data[i].en == b1( 1 ):
+            s.send_predicate.en = b1( 1 )
             s.send_predicate.msg.payload = b1( 1 )
             s.send_predicate.msg.predicate = s.send_predicate.msg.predicate | s.recv_data[i].msg.predicate
             # predicate_out_rdy = b1( 1 )
@@ -92,5 +94,5 @@ class CrossbarRTL( Component ):
     recv_str = "|".join([ str(x.msg) for x in s.recv_data ])
     out_str  = "|".join([ str(x.msg) for x in s.send_data ])
     pred_str = str( s.send_predicate.msg )
-    return f"{recv_str} [{s.recv_opt.msg}] {out_str}-{pred_str}"
+    return f"{recv_str} [{s.recv_opt.msg}] {out_str}-xbar.pred:{pred_str}"
 

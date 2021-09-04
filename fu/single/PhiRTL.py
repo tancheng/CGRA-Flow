@@ -23,7 +23,9 @@ class PhiRTL( Fu ):
     super( PhiRTL, s ).construct( DataType, PredicateType, CtrlType,
                                   num_inports, num_outports, data_mem_size )
 
-    FuInType = mk_bits( clog2( num_inports + 1 ) )
+    FuInType    = mk_bits( clog2( num_inports + 1 ) )
+    num_entries = 2
+    CountType   = mk_bits( clog2( num_entries + 1 ) )
 
     @s.update
     def comb_logic():
@@ -56,26 +58,54 @@ class PhiRTL( Fu ):
         else: # No predecessor is active.
           s.send_out[0].msg.payload   = s.recv_in[in0].msg.payload
           s.send_out[0].msg.predicate = Bits1( 0 )
+        if s.recv_opt.en and ( s.recv_in_count[in0] == CountType( 0 ) or\
+                               s.recv_in_count[in1] == CountType( 0 ) ):
+          s.recv_in[in0].rdy   = b1( 0 )
+          s.recv_in[in1].rdy   = b1( 0 )
+          s.recv_predicate.rdy = b1( 0 )
+          s.send_out[0].msg.predicate = b1( 0 )
+
+        if s.recv_opt.msg.predicate     == b1( 1 ) and\
+           s.recv_predicate.msg.payload == b1( 0 ):
+          s.recv_predicate.rdy = b1( 0 )
+          s.recv_in[in0].rdy   = b1( 0 )
+          s.recv_in[in1].rdy   = b1( 0 )
 
       elif s.recv_opt.msg.ctrl == OPT_PHI_CONST:
+
+        s.send_out[0].msg.predicate = Bits1( 1 )
         if s.recv_in[in0].msg.predicate == Bits1( 1 ):
           s.send_out[0].msg.payload   = s.recv_in[in0].msg.payload
-          s.send_out[0].msg.predicate = Bits1( 1 )
         else:
           s.send_out[0].msg.payload   = s.recv_const.msg.payload
-          s.send_out[0].msg.predicate = Bits1( 1 )
+
+        if s.recv_opt.msg.predicate     == b1( 1 ) and\
+           s.recv_predicate.msg.payload == b1( 0 ):
+          s.recv_predicate.rdy = b1( 0 )
+          s.recv_in[in0].rdy   = b1( 0 )
+
+      elif s.recv_opt.msg.ctrl == OPT_PHI_START:
+
+        s.send_out[0].msg.predicate = Bits1( 1 )
+        if s.recv_in[in0].msg.predicate == Bits1( 1 ):
+          s.send_out[0].msg.payload   = s.recv_in[in0].msg.payload
+        else:
+          s.send_out[0].msg.payload   = s.recv_const.msg.payload
 
       else:
         for j in range( num_outports ):
           s.send_out[j].en = b1( 0 )
 
       if s.recv_opt.msg.predicate == b1( 1 ):
+
         s.send_out[0].msg.predicate = s.send_out[0].msg.predicate and\
                                       s.recv_predicate.msg.predicate
         # The PHI_CONST operation executed on the first cycle gets no input predicate.
-        if s.recv_opt.msg.ctrl == OPT_PHI_CONST:
-          s.send_out[0].msg.predicate = s.send_out[0].msg.predicate or\
-                                        ( s.recv_predicate.msg.payload == b1( 0 ) )
+        if s.recv_opt.msg.ctrl == OPT_PHI_START or s.recv_opt.msg.ctrl == OPT_PHI_CONST:
+          if s.recv_predicate.msg.payload == b1( 0 ):
+            s.send_out[0].msg.predicate = b1( 1 )
+#          s.send_out[0].msg.predicate = s.send_out[0].msg.predicate or\
+#                                        ( s.recv_predicate.msg.payload == b1( 0 ) )
 
   def line_trace( s ):
     opt_str = " #"

@@ -21,10 +21,13 @@ class MemUnitRTL( Component ):
 
     # Constant
     AddrType      = mk_bits( clog2( data_mem_size ) )
+    num_entries   = 2
+    CountType     = mk_bits( clog2( num_entries + 1 ) )
     FuInType      = mk_bits( clog2( num_inports + 1 ) )
 
     # Interface
-    s.recv_in        = [ RecvIfcRTL( DataType ) for _ in range( num_inports  ) ]
+    s.recv_in        = [ RecvIfcRTL( DataType ) for _ in range( num_inports ) ]
+    s.recv_in_count  = [ InPort( CountType ) for _ in range( num_inports ) ]
     s.recv_predicate = RecvIfcRTL( PredicateType )
     s.recv_const     = RecvIfcRTL( DataType )
     s.recv_opt       = RecvIfcRTL( CtrlType )
@@ -103,6 +106,11 @@ class MemUnitRTL( Component ):
         s.send_out[0].msg  = s.from_mem_rdata.msg
         s.send_out[0].msg.predicate = s.recv_in[in0].msg.predicate and\
                                       s.recv_in[in1].msg.predicate
+        if s.recv_opt.en and ( s.recv_in_count[in0] == CountType( 0 ) or\
+                               s.recv_in_count[in1] == CountType( 0 ) ):
+          s.recv_in[in0].rdy = b1( 0 )
+          s.recv_in[in1].rdy = b1( 0 )
+          s.send_out[0].msg.predicate = b1( 0 )
 
       else:
         for j in range( num_outports ):

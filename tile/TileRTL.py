@@ -93,6 +93,7 @@ class TileRTL( Component ):
 
     for i in range( num_fu_inports ):
       s.channel[num_connect_inports+i].send //= s.element.recv_in[i]
+      s.channel[num_connect_inports+i].count //= s.element.recv_in_count[i]
 
     for i in range( num_fu_outports ):
       s.element.send_out[i] //= s.crossbar.recv_data[num_connect_outports+i]

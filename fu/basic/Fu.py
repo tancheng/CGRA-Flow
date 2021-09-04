@@ -20,10 +20,13 @@ class Fu( Component ):
     # Constant
     AddrType      = mk_bits( clog2( data_mem_size ) )
     s.const_zero  = DataType(0, 0)
+    num_entries = 2
+    CountType     = mk_bits( clog2( num_entries + 1 ) )
     FuInType      = mk_bits( clog2( num_inports + 1 ) )
 
     # Interface
     s.recv_in        = [ RecvIfcRTL( DataType ) for _ in range( num_inports ) ]
+    s.recv_in_count  = [ InPort( CountType ) for _ in range( num_inports ) ]
     s.recv_predicate = RecvIfcRTL( PredicateType )
     s.recv_const     = RecvIfcRTL( DataType )
     s.recv_opt       = RecvIfcRTL( CtrlType )

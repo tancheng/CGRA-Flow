@@ -49,8 +49,8 @@ class BranchRTL( Fu ):
         s.send_out[j].en = s.recv_opt.en
       if s.recv_opt.msg.ctrl == OPT_BRH:
         # Branch is only used to set predication rather than delivering value.
-        s.send_out[0].msg = DataType(0, 0)
-        s.send_out[1].msg = DataType(0, 0)
+        s.send_out[0].msg = DataType(0, b1( 0 ), b1( 0 ) )
+        s.send_out[1].msg = DataType(0, b1( 0 ), b1( 0 ) )
         if s.recv_in[in0].msg.payload == s.const_zero.payload:
           s.send_out[0].msg.predicate = Bits1( 1 )
           s.send_out[1].msg.predicate = Bits1( 0 )

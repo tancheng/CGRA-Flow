@@ -30,8 +30,8 @@ from pymtl3.passes.backends.verilog import TranslationImportPass
 
 class TestHarness( Component ):
 
-  def construct( s, DUT, FunctionUnit, FuList, DataType, CtrlType,
-                 width, height, ctrl_mem_size, data_mem_size,
+  def construct( s, DUT, FunctionUnit, FuList, DataType, PredicateType,
+                 CtrlType, width, height, ctrl_mem_size, data_mem_size,
                  src_opt, ctrl_waddr):
 
     s.num_tiles = width * height
@@ -42,9 +42,9 @@ class TestHarness( Component ):
     s.ctrl_waddr  = [ TestSrcRTL( AddrType, ctrl_waddr[i] )
                       for i in range( s.num_tiles ) ]
 
-    s.dut = DUT( DataType, CtrlType, width, height,
-                 ctrl_mem_size, data_mem_size,
-                 len( src_opt[0] ), FunctionUnit, FuList )
+    s.dut = DUT( DataType, PredicateType, CtrlType, width, height,
+                 ctrl_mem_size, data_mem_size, len( src_opt[0] ),
+                 FunctionUnit, FuList )
 
     for i in range( s.num_tiles ):
       connect( s.src_opt[i].send,     s.dut.recv_wopt[i]  )
@@ -109,6 +109,7 @@ def test_hetero_2x2():
   FunctionUnit      = FlexibleFuRTL
   FuList            = [MemUnitRTL, AdderRTL]
   DataType          = mk_data( 16, 1 )
+  PredicateType     = mk_predicate( 1, 1 )
   CtrlType          = mk_ctrl( num_fu_in, num_xbar_inports, num_xbar_outports )
   FuInType          = mk_bits( clog2( num_fu_in + 1 ) )
   pickRegister      = [ FuInType( x+1 ) for x in range( num_fu_in ) ]
@@ -133,8 +134,8 @@ def test_hetero_2x2():
                           for _ in range( num_tiles ) ]
   ctrl_waddr        = [ [ AddrType( 0 ), AddrType( 1 ), AddrType( 2 ), AddrType( 3 ),
                           AddrType( 4 ), AddrType( 5 ) ] for _ in range( num_tiles ) ]
-  th = TestHarness( DUT, FunctionUnit, FuList, DataType, CtrlType,
-                    width, height, ctrl_mem_size, data_mem_size,
+  th = TestHarness( DUT, FunctionUnit, FuList, DataType, PredicateType,
+                    CtrlType, width, height, ctrl_mem_size, data_mem_size,
                     src_opt, ctrl_waddr )
   th.set_param("top.dut.tile[1].construct", FuList=[ShifterRTL])
   run_sim( th )

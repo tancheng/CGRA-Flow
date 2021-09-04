@@ -116,7 +116,7 @@ def inputs_strat( draw, functions ):
   opt = draw( st.sampled_from( [ func_opt[function] for function in functions ] ) )
   return input_a, input_b, opt
 
-#@hypothesis.settings( deadline=None, max_examples=5 )
+@hypothesis.settings( deadline=None, max_examples=50 )
 @hypothesis.given(
   functions = st.sampled_from( [ [AdderRTL], [ AdderRTL, MulRTL ]] ),
   inputs = st.data(),

@@ -39,26 +39,31 @@ from hypothesis import strategies as st
 
 class TestHarness( Component ):
 
-  def construct( s, FunctionUnit, FuList, DataType, CtrlType, 
-                 src0_msgs, src1_msgs, ctrl_msgs, sink0_msgs ):
+  def construct( s, FunctionUnit, FuList, DataType, PredicateType, CtrlType,
+                 src0_msgs, src1_msgs, src_predicate, ctrl_msgs, sink0_msgs ):
     data_mem_size = 8
     num_inports   = 2
     num_outports  = 2
 
-    s.src_in0   = TestSrcRTL( DataType, src0_msgs  )
-    s.src_in1   = TestSrcRTL( DataType, src1_msgs  )
-    s.src_const = TestSrcRTL( DataType, src1_msgs  )
-    s.src_opt   = TestSrcRTL( CtrlType, ctrl_msgs  )
-    s.sink_out0 = TestSinkCL( DataType, sink0_msgs )
+    s.src_in0       = TestSrcRTL( DataType,      src0_msgs     )
+    s.src_in1       = TestSrcRTL( DataType,      src1_msgs     )
+    s.src_predicate = TestSrcRTL( PredicateType, src_predicate )
+    s.src_const     = TestSrcRTL( DataType,      src1_msgs     )
+    s.src_opt       = TestSrcRTL( CtrlType,      ctrl_msgs     )
+    s.sink_out0     = TestSinkCL( DataType,      sink0_msgs    )
 
-    s.dut = FunctionUnit( DataType, CtrlType, num_inports,
-                          num_outports, data_mem_size, FuList )
+    s.dut = FunctionUnit( DataType, PredicateType, CtrlType,
+                          num_inports, num_outports, data_mem_size, FuList )
 
-    connect( s.src_const.send,  s.dut.recv_const )
-    connect( s.src_in0.send,    s.dut.recv_in[0] )
-    connect( s.src_in1.send,    s.dut.recv_in[1] )
-    connect( s.src_opt.send,    s.dut.recv_opt   )
-    connect( s.dut.send_out[0], s.sink_out0.recv )
+    for i in range( num_inports ):
+      s.dut.recv_in_count[i] //= 1
+
+    connect( s.src_const.send,     s.dut.recv_const     )
+    connect( s.src_in0.send,       s.dut.recv_in[0]     )
+    connect( s.src_in1.send,       s.dut.recv_in[1]     )
+    connect( s.src_predicate.send, s.dut.recv_predicate )
+    connect( s.src_opt.send,       s.dut.recv_opt       )
+    connect( s.dut.send_out[0],    s.sink_out0.recv     )
 
     AddrType = mk_bits( clog2( data_mem_size ) )
     s.to_mem_raddr   = [ TestSinkCL( AddrType, [] ) for _ in FuList ]
@@ -123,17 +128,19 @@ def test_hypothesis( functions, inputs ):
     label = "functions"
   )
   src_a, src_b, src_opt  = [], [], []
-  DataType = mk_data( 16, 1 )
-  CtrlType = mk_ctrl()
-  num_inports = 2
-  FuInType = mk_bits( clog2( num_inports + 1 ) )
-  pickRegister = [ FuInType( x+1 ) for x in range( num_inports ) ]
+  DataType      = mk_data( 16, 1 )
+  PredicateType = mk_predicate( 1, 1 )
+  CtrlType      = mk_ctrl()
+  num_inports   = 2
+  FuInType      = mk_bits( clog2( num_inports + 1 ) )
+  pickRegister  = [ FuInType( x+1 ) for x in range( num_inports ) ]
   for value in input_list:
     src_a.append  ( DataType(value[0]) )
     src_b.append  ( DataType(value[1]) )
-    src_opt.append( CtrlType(value[2], pickRegister) )
-  sink_out = FuFL( DataType, src_a, src_b, src_opt )
-  th = TestHarness( FU, functions, DataType, CtrlType,
-                    src_a, src_b, src_opt, sink_out )
+    src_opt.append( CtrlType(value[2], b1( 0 ), pickRegister) )
+  src_predicate = [ PredicateType(1, 0) ]
+  sink_out      = FuFL( DataType, src_a, src_b, src_opt )
+  th = TestHarness( FU, functions, DataType, PredicateType, CtrlType,
+                    src_a, src_b, src_predicate, src_opt, sink_out )
   run_sim( th )
 

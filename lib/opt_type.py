@@ -66,7 +66,7 @@ OPT_SYMBOL_DICT = {
   OPT_LD            : "(ld)",
   OPT_STR           : "(st)",
   OPT_EQ            : "(?=)",
-  OPT_EQ_CONST      : "(?=*)",
+  OPT_EQ_CONST      : "(?=')",
   OPT_LE            : "(?<)",
   OPT_BRH           : "(br)",
   OPT_PHI           : "(ph)",

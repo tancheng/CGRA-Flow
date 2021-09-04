@@ -11,7 +11,7 @@ from pymtl3                      import *
 from pymtl3.stdlib.ifcs          import SendIfcRTL, RecvIfcRTL
 from ..noc.CrossbarRTL           import CrossbarRTL
 from ..noc.ChannelRTL            import ChannelRTL
-from ..noc.RegisterRTL           import RegisterRTL
+from ..rf.RegisterRTL            import RegisterRTL
 from ..mem.ctrl.CtrlMemCL        import CtrlMemCL
 from ..fu.flexible.FlexibleFuRTL import FlexibleFuRTL
 from ..mem.const.ConstQueueRTL   import ConstQueueRTL

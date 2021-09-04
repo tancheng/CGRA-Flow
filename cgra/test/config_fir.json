@@ -33,7 +33,7 @@
     "x"           : 2,
     "y"           : 1,
     "cycle"       : 0,
-    "opt"         : "OPT_PHI_START",
+    "opt"         : "OPT_PHI_CONST",
     "predicate"   : 1,
     "out_0"       : "none",
     "out_1"       : "none",

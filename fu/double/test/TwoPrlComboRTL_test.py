@@ -40,6 +40,9 @@ class TestHarness( Component ):
     s.dut = FunctionUnit( DataType, PredicateType, CtrlType,
                           num_inports, num_outports, data_mem_size )
 
+    s.dut.recv_in_count[0] //= 1
+    s.dut.recv_in_count[1] //= 1
+
     connect( s.src_in0.send,       s.dut.recv_in[0]     )
     connect( s.src_in1.send,       s.dut.recv_in[1]     )
     connect( s.src_in2.send,       s.dut.recv_in[2]     )
@@ -93,10 +96,10 @@ def test_mul_alu():
   src_in0       = [ DataType(1, 1), DataType(2, 1), DataType(4, 1)  ]
   src_in1       = [ DataType(2, 1), DataType(3, 1), DataType(3, 1)  ]
   src_in2       = [ DataType(1, 1), DataType(3, 1), DataType(3, 1)  ]
-  src_in3       = [ DataType(1, 1), DataType(3, 1), DataType(3, 1)  ]
+  src_in3       = [ DataType(1, 1), DataType(2, 1), DataType(3, 1)  ]
   src_predicate = [ PredicateType(1, 0), PredicateType(1, 0), PredicateType(1, 1 ) ]
   sink_out0     = [ DataType(2, 0), DataType(6, 1), DataType(12,1) ]
-  sink_out1     = [ DataType(2, 0), DataType(6, 1), DataType(0, 1)  ]
+  sink_out1     = [ DataType(2, 0), DataType(5, 1), DataType(0, 1)  ]
   src_opt       = [ CtrlType( OPT_MUL_ADD, b1( 1 ), pickRegister ),
                     CtrlType( OPT_MUL_ADD, b1( 0 ), pickRegister ),
                     CtrlType( OPT_MUL_SUB, b1( 1 ), pickRegister ) ]

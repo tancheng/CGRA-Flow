@@ -49,7 +49,7 @@ class TestHarness( Component ):
     connect( s.dut.send_out[0],    s.sink_out.recv      )
 
   def done( s ):
-    return s.src_in0.done() and s.src_opt.done() and s.sink_out.done()
+    return s.src_opt.done() and s.sink_out.done()
 
   def line_trace( s ):
     return s.dut.line_trace()
@@ -116,7 +116,7 @@ def test_Phi_const():
   src_opt       = [ CtrlType( OPT_PHI_CONST, b1( 1 ), pickRegister ),
                     CtrlType( OPT_PHI_CONST, b1( 1 ), pickRegister ),
                     CtrlType( OPT_PHI_CONST, b1( 1 ), pickRegister ) ]
-  sink_out      = [ DataType(3, 1), DataType(3, 0), DataType(2, 1) ]
+  sink_out      = [ DataType(3, 1), DataType(5, 0), DataType(3, 1) ]
   th = TestHarness( FU, DataType, PredicateType, CtrlType,
                     num_inports, num_outports, data_mem_size,
                     src_in0, src_in1, src_const, src_predicate,

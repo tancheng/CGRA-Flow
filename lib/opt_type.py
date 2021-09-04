@@ -35,7 +35,6 @@ OPT_LE            = Bits6( 15 )
 OPT_BRH           = Bits6( 16 )
 OPT_PHI           = Bits6( 17 )
 OPT_PHI_CONST     = Bits6( 32 )
-OPT_PHI_START     = Bits6( 34 )
 OPT_SEL           = Bits6( 27 )
 OPT_LD_CONST      = Bits6( 28 )
 OPT_MUL_ADD       = Bits6( 18 )
@@ -72,7 +71,6 @@ OPT_SYMBOL_DICT = {
   OPT_BRH           : "(br)",
   OPT_PHI           : "(ph)",
   OPT_PHI_CONST     : "(ph')",
-  OPT_PHI_START     : "(PH)",
   OPT_SEL           : "(sel)",
   OPT_LD_CONST      : "(ldcst)",
   OPT_MUL_ADD       : "(x +)",

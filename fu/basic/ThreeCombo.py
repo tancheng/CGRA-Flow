@@ -91,9 +91,12 @@ class ThreeCombo( Component ):
       s.Fu2.recv_predicate.msg = s.recv_predicate.msg
 
       # Connect count.
-      for i in range( 2 ):
-        s.Fu0.recv_in_count[i] = s.recv_in_count[i]
-        s.Fu1.recv_in_count[i] = s.recv_in_count[i]
+      s.Fu0.recv_in_count[0] = s.recv_in_count[0]
+      s.Fu0.recv_in_count[1] = s.recv_in_count[1]
+      s.Fu1.recv_in_count[0] = s.recv_in_count[2]
+      s.Fu1.recv_in_count[1] = s.recv_in_count[3]
+      s.Fu2.recv_in_count[0] = s.recv_in_count[0]
+      s.Fu2.recv_in_count[1] = s.recv_in_count[2]
 
     @s.update
     def update_mem():

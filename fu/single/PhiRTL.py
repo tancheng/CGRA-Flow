@@ -79,18 +79,11 @@ class PhiRTL( Fu ):
         else:
           s.send_out[0].msg.payload   = s.recv_const.msg.payload
 
+        # Predication signal not arrive yet.
         if s.recv_opt.msg.predicate     == b1( 1 ) and\
            s.recv_predicate.msg.payload == b1( 0 ):
-          s.recv_predicate.rdy = b1( 0 )
+          #s.recv_predicate.rdy = b1( 0 )
           s.recv_in[in0].rdy   = b1( 0 )
-
-      elif s.recv_opt.msg.ctrl == OPT_PHI_START:
-
-        s.send_out[0].msg.predicate = Bits1( 1 )
-        if s.recv_in[in0].msg.predicate == Bits1( 1 ):
-          s.send_out[0].msg.payload   = s.recv_in[in0].msg.payload
-        else:
-          s.send_out[0].msg.payload   = s.recv_const.msg.payload
 
       else:
         for j in range( num_outports ):
@@ -100,11 +93,10 @@ class PhiRTL( Fu ):
 
         s.send_out[0].msg.predicate = s.send_out[0].msg.predicate and\
                                       s.recv_predicate.msg.predicate
-        # The PHI_CONST operation executed on the first cycle gets no input predicate.
-        if s.recv_opt.msg.ctrl == OPT_PHI_START or s.recv_opt.msg.ctrl == OPT_PHI_CONST:
+        # The PHI_CONST operation executed an the first time does not need predication signal.
+        if s.recv_opt.msg.ctrl == OPT_PHI_CONST:
           if s.recv_predicate.msg.payload == b1( 0 ):
             s.send_out[0].msg.predicate = b1( 1 )
-#          s.send_out[0].msg.predicate = s.send_out[0].msg.predicate or\
 #                                        ( s.recv_predicate.msg.payload == b1( 0 ) )
 
   def line_trace( s ):

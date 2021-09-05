@@ -12,13 +12,15 @@
 [![Build Status](https://travis-ci.com/tancheng/OpenCGRA.svg?token=yazoBFLC1ynpzdD4wAEP&branch=master)](https://travis-ci.com/github/tancheng/OpenCGRA)
 [![codecov](https://codecov.io/gh/tancheng/OpenCGRA/graph/badge.svg?token=9GKOM7EMU6)](https://codecov.io/gh/tancheng/OpenCGRA)
 
-OpenCGRA is a parameterizable and powerful CGRA (Coarse-Grained Reconfigurable Architecture) generator to generate synthesizable Verilog for different CGRAs based on user-specified configurations (e.g., CGRA size, type of the computing units in each tile, communication connection, etc.). OpenCGRA uses modular design and standardized interfaces between modules. The configurability and extensibility are maximized by its parametrization system to fit in various research and industrial needs.
+OpenCGRA2 is a parameterizable and powerful CGRA (Coarse-Grained Reconfigurable Architecture) generator to generate synthesizable Verilog for different CGRAs based on user-specified configurations (e.g., CGRA size, type of the computing units in each tile, communication connection, etc.). OpenCGRA uses modular design and standardized interfaces between modules. The configurability and extensibility are maximized by its parametrization system to fit in various research and industrial needs.
+
+Different from the previous version (i.e., OpenCGRA), the partial predication is supported in OpenCGRA2 by giving (at least) three inputs (i.e., two for arriving data and one for predication signal) for each funtional unit. The computation of a functional unit can only be valid (for most operations, except first PHI, etc) when all the three inputs are valid (and ready).
 
 
 Related publications
 --------------------------------------------------------------------------
 
-- Cheng Tan, Chenhao Xie, Ang Li, Kevin Barker, and Antonino Tumeo. _"OpenCGRA: An Open-Source Framework for Modeling, Testing, and Evaluating CGRAs."_ The 38th IEEE International Conference on Computer Design. (ICCD-20), Oct 2020
+- C. Tan et al. _"OpenCGRA: An Open-Source Framework for Modeling, Testing, and Evaluating CGRAs."_ The 38th IEEE International Conference on Computer Design. (ICCD-20), Oct 2020
 
 
 License

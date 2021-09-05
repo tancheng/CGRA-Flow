@@ -12,9 +12,9 @@
 [![Build Status](https://travis-ci.com/tancheng/OpenCGRA.svg?token=yazoBFLC1ynpzdD4wAEP&branch=master)](https://travis-ci.com/github/tancheng/OpenCGRA)
 [![codecov](https://codecov.io/gh/tancheng/OpenCGRA/graph/badge.svg?token=9GKOM7EMU6)](https://codecov.io/gh/tancheng/OpenCGRA)
 
-OpenCGRA2 is a parameterizable and powerful CGRA (Coarse-Grained Reconfigurable Architecture) generator to generate synthesizable Verilog for different CGRAs based on user-specified configurations (e.g., CGRA size, type of the computing units in each tile, communication connection, etc.). OpenCGRA uses modular design and standardized interfaces between modules. The configurability and extensibility are maximized by its parametrization system to fit in various research and industrial needs.
+OpenCGRA2 is a parameterizable and powerful CGRA (Coarse-Grained Reconfigurable Architecture) generator to generate synthesizable Verilog for different CGRAs based on user-specified configurations (e.g., CGRA size, type of the computing units in each tile, communication connection, etc.). OpenCGRA2 uses modular design and standardized interfaces between modules. The configurability and extensibility are maximized by its parametrization system to fit in various research and industrial needs.
 
-Different from the previous version (i.e., OpenCGRA), the partial predication is supported in OpenCGRA2 by giving (at least) three inputs (i.e., two for arriving data and one for predication signal) for each funtional unit. The computation of a functional unit can only be valid (for most operations, except first PHI, etc) when all the three inputs are valid (and ready).
+Different from the previous version (i.e., [OpenCGRA](https://github.com/pnnl/OpenCGRA)), the partial predication is supported in OpenCGRA2 by giving (at least) three inputs (i.e., two for arriving data and one for predication signal) for each funtional unit. The computation of a functional unit can only be valid (for most operations, except first PHI, etc) when all the three inputs are valid (and ready).
 
 
 Related publications
@@ -26,7 +26,7 @@ Related publications
 License
 --------------------------------------------------------------------------
 
-OpenCGRA is offered under the terms of the Open Source Initiative BSD 3-Clause License. More information about this license can be found here:
+OpenCGRA2 is offered under the terms of the Open Source Initiative BSD 3-Clause License. More information about this license can be found here:
 
   - http://choosealicense.com/licenses/bsd-3-clause
   - http://opensource.org/licenses/BSD-3-Clause
@@ -35,14 +35,14 @@ OpenCGRA is offered under the terms of the Open Source Initiative BSD 3-Clause L
 Installation
 --------------------------------------------------------
 
-OpenCGRA requires Python3.7 and has the following additional prerequisites:
+OpenCGRA2 requires Python3.7 and has the following additional prerequisites:
 
  - graphviz, verilator
  - git, Python headers, and libffi
  - virtualenv
  - PyMTL3
 
-The steps for installing these prerequisites and OpenCGRA on a fresh Ubuntu
+The steps for installing these prerequisites and OpenCGRA2 on a fresh Ubuntu
 distribution are shown below. They have been tested with Ubuntu Trusty
 14.04.
 
@@ -61,7 +61,7 @@ distribution are shown below. They have been tested with Ubuntu Trusty
 ### Install Verilator
 
 [Verilator][4] is an open-source toolchain for compiling Verilog RTL
-models into C++ simulators. OpenCGRA uses Verilator for Verilog import.
+models into C++ simulators. OpenCGRA2 uses Verilator for Verilog import.
 
 ```
  $ sudo apt-get install git make autoconf g++ libfl-dev bison
@@ -112,19 +112,19 @@ commands will create and activate the virtual environment:
  % pip list
 ```
 
-### Clone OpenCGRA repo
+### Clone OpenCGRA2 repo
 
-We can now use git to clone the OpenCGRA repo.
+We can now use git to clone the OpenCGRA2 repo.
 
 ```
  % mkdir -p ${HOME}/cgra
  % cd ${HOME}/cgra
- % git clone https://github.com/tancheng/OpenCGRA.git
+ % git clone https://github.com/tancheng/OpenCGRA2.git
 ```
 
 ### Run an example to generate Verilog
 
-In [folder](https://github.com/tancheng/OpenCGRA/tree/master/cgra/translate), just type:
+In [folder](https://github.com/tancheng/OpenCGRA2/tree/master/cgra/translate), just type:
 
 ```
  % pytest --tb=short -sv CGRARTL_test.py

@@ -25,6 +25,7 @@ class BranchRTL( Fu ):
     FuInType    = mk_bits( clog2( num_inports + 1 ) )
     num_entries = 2
     CountType   = mk_bits( clog2( num_entries + 1 ) )
+    s.first     = Wire( b1 ) 
 
     @s.update
     def comb_logic():
@@ -57,23 +58,47 @@ class BranchRTL( Fu ):
         else:
           s.send_out[0].msg.predicate = Bits1( 0 )
           s.send_out[1].msg.predicate = Bits1( 1 )
+      elif s.recv_opt.msg.ctrl == OPT_BRH_START:
+        s.send_out[0].msg = DataType(0, b1( 0 ), b1( 0 ) )
+        s.send_out[1].msg = DataType(0, b1( 0 ), b1( 0 ) )
+        if s.first == b1( 1 ):
+          s.send_out[0].msg.predicate = Bits1( 1 )
+          s.send_out[1].msg.predicate = Bits1( 0 )
+        else:
+          s.send_out[0].msg.predicate = Bits1( 0 )
+          s.send_out[1].msg.predicate = Bits1( 1 )
+
       else:
         for j in range( num_outports ):
           s.send_out[j].en = b1( 0 )
 
-      if s.recv_opt.msg.predicate == b1( 1 ):
+      if s.recv_opt.msg.predicate == b1( 1 ) and s.recv_opt.msg.ctrl != OPT_BRH_START:
         # The operation executed on the first cycle gets no input predicate.
         s.send_out[0].msg.predicate = s.send_out[0].msg.predicate and\
                                        s.recv_predicate.msg.predicate
         s.send_out[1].msg.predicate = s.send_out[1].msg.predicate and\
                                       s.recv_predicate.msg.predicate
 
+    # branch_start could be the entry of a function, which is executed by
+    # only once.
+    @s.update_ff
+    def br_start_once():
+      if s.reset:
+        s.first <<= b1( 1 )
+      if s.recv_opt.msg.ctrl == OPT_BRH_START:
+        s.first <<= b1( 0 )
+
+
 
   def line_trace( s ):
     symbol0 = "?"
     symbol1 = "?"
     winner  = "nobody"
-    if s.send_out[0].msg.predicate == Bits1(1):
+    if s.recv_opt.msg.ctrl == OPT_BRH_START:
+      symbol0 = " "
+      symbol1 = " "
+      winner = "nobody"
+    elif s.send_out[0].msg.predicate == Bits1(1):
       symbol0 = "*"
       symbol1 = " "
       winner  = "false "
@@ -81,4 +106,4 @@ class BranchRTL( Fu ):
       symbol0 = " "
       symbol1 = "*"
       winner  = " true "
-    return f'[{s.recv_in[0].msg}] => ([{s.send_out[0].msg} {symbol0}] ({winner}) [{s.send_out[1].msg} {symbol1}])'
+    return f'[{s.recv_in[0].msg}] => ([{s.send_out[0].msg} {symbol0}] ({winner}) [{s.send_out[1].msg}(first:{s.first}) {symbol1}])'

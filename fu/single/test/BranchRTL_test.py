@@ -46,8 +46,7 @@ class TestHarness( Component ):
     connect( s.dut.send_out[1],    s.sink_else.recv     )
 
   def done( s ):
-    return s.src_comp.done()  and s.src_opt.done() and\
-           s.sink_if.done()  and s.sink_else.done() 
+    return s.src_opt.done() and s.sink_if.done()  and s.sink_else.done() 
 
   def line_trace( s ):
     return s.dut.line_trace()
@@ -91,6 +90,27 @@ def test_Branch():
                     CtrlType( OPT_BRH, b1( 0 ), [FuInType(1), FuInType(2)] ) ]
   sink_if       = [ DataType(0, 0), DataType(0, 0), DataType(0, 1) ]
   sink_else     = [ DataType(0, 0), DataType(0, 1), DataType(0, 0) ]
+  th = TestHarness( FU, DataType, PredicateType, CtrlType,
+                    num_inports, num_outports, data_mem_size,
+                    src_comp, src_predicate, src_opt, sink_if, sink_else )
+  run_sim( th )
+
+def test_Branch_Start():
+  FU            = BranchRTL
+  DataType      = mk_data( 16, 1 )
+  PredicateType = mk_predicate( 1, 1 )
+  CtrlType      = mk_ctrl()
+  num_inports   = 2
+  num_outports  = 2
+  data_mem_size = 8
+  FuInType      = mk_bits( clog2( num_inports + 1 ) )
+  src_comp      = [ DataType(0, 1), DataType(1, 1), DataType(0, 1) ]
+  src_predicate = [ PredicateType(1, 0), PredicateType(1,0), PredicateType(1,1) ]
+  src_opt       = [ CtrlType( OPT_BRH_START, b1( 0 ), [FuInType(0), FuInType(0)] ),
+                    CtrlType( OPT_BRH_START, b1( 0 ), [FuInType(0), FuInType(0)] ),
+                    CtrlType( OPT_BRH_START, b1( 0 ), [FuInType(0), FuInType(0)] ) ]
+  sink_if       = [ DataType(0, 1), DataType(0, 0), DataType(0, 0) ]
+  sink_else     = [ DataType(0, 0), DataType(0, 1), DataType(0, 1) ]
   th = TestHarness( FU, DataType, PredicateType, CtrlType,
                     num_inports, num_outports, data_mem_size,
                     src_comp, src_predicate, src_opt, sink_if, sink_else )

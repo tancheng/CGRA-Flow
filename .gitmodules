@@ -4,3 +4,6 @@
 [submodule "CGRA-Benchmark"]
 	path = CGRA-Benchmark
 	url = https://github.com/tancheng/CGRA-Benchmark
+[submodule "OpenCGRA"]
+	path = OpenCGRA
+	url = https://github.com/pnnl/OpenCGRA.git

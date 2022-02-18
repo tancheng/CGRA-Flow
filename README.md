@@ -13,7 +13,7 @@
 [![Build Status](https://travis-ci.com/tancheng/OpenCGRA.svg?token=yazoBFLC1ynpzdD4wAEP&branch=master)](https://travis-ci.com/github/tancheng/OpenCGRA)
 [![codecov](https://codecov.io/gh/tancheng/OpenCGRA/graph/badge.svg?token=9GKOM7EMU6)](https://codecov.io/gh/tancheng/OpenCGRA)
 
-CGRA-Flow is a integrated framework for CGRA synthesis and development. It collects various CGRA components/repos.
+CGRA-Flow is an integrated framework for CGRA synthesis and development. It collects various open-source CGRA repos/components.
 
 
 License

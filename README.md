@@ -19,7 +19,7 @@ CGRA-Flow is an integrated framework for CGRA synthesis and development. It coll
 License
 --------------------------------------------------------------------------
 
-OpenCGRA2 is offered under the terms of the Open Source Initiative BSD 3-Clause License. More information about this license can be found here:
+CGRA-Flow is offered under the terms of the Open Source Initiative BSD 3-Clause License. More information about this license can be found here:
 
   - http://choosealicense.com/licenses/bsd-3-clause
   - http://opensource.org/licenses/BSD-3-Clause

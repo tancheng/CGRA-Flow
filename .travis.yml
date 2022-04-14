@@ -6,7 +6,7 @@
 # language and build matrix
 #------------------------------------------------------------------------
 
-dist: xenial
+dist: bionic
 language: python
 
 python:

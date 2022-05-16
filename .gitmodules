@@ -10,3 +10,6 @@
 [submodule "mflowgen"]
 	path = mflowgen
 	url = https://github.com/mflowgen/mflowgen.git
+[submodule "pymtl3"]
+	path = pymtl3
+	url = https://github.com/tancheng/pymtl3.git

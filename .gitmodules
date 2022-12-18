@@ -16,3 +16,9 @@
 [submodule "OpenROAD-flow-scripts"]
 	path = OpenROAD-flow-scripts
 	url = https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts.git
+[submodule "VectorCGRA"]
+	path = VectorCGRA
+	url = https://github.com/tancheng/VectorCGRA.git
+[submodule "mlir-cgra"]
+	path = mlir-cgra
+	url = https://github.com/tancheng/mlir-cgra.git

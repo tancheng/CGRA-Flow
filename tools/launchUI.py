@@ -2,6 +2,7 @@ import tkinter
 from tkinter import ttk
 from functools import partial
 
+
 def helloCallBack():
     pass
 
@@ -11,7 +12,7 @@ INTERVAL = 10
 BORDER = 4
 
 master = tkinter.Tk()
-rfr = tkinter.Label(master, text="hello world!!")
+master.title("CGRA-Flow: An Integrated End-to-End Framework for CGRA Exploration, Compilation, and Development")
 
 ROWS = 4
 COLS = 4
@@ -67,7 +68,7 @@ def create_cgra_pannel(root, rows, columns):
     canvas.place(x=INTERVAL, y=INTERVAL)
 
     # pad contains tile and links
-    padSize = TILE_SIZE + linkLength
+    padSize = TILE_SIZE + LINK_LENGTH
     
     # draw data memory
     posX = 0
@@ -84,7 +85,7 @@ def create_cgra_pannel(root, rows, columns):
             ID = i*columns+j
             button = tkinter.Button(canvas, text = "Tile "+str(ID), fg='black', bg='gray', relief='raised', bd=BORDER, command=partial(
     clickTile, ID))
-            posX = padSize * j + MEM_WIDTH + linkLength
+            posX = padSize * j + MEM_WIDTH + LINK_LENGTH
             posY = GRID_HEIGHT - padSize * i - TILE_SIZE
             button.place(height=TILE_SIZE, width=TILE_SIZE, x = posX, y = posY)
             if j == 0:
@@ -126,7 +127,7 @@ def create_cgra_pannel(root, rows, columns):
             if j == 0:
                 # connect to memory
                 srcX, srcY = tiles[i][j].getLeftMid()
-                dstX, dstY = srcX - linkLength, srcY
+                dstX, dstY = srcX - LINK_LENGTH, srcY
                 canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
                 canvas.create_line(dstX, dstY, srcX, srcY, arrow=tkinter.LAST)
 
@@ -134,7 +135,7 @@ def place_fu_options(master, fuList = ["Add"]):
     fuCount = len(fuList)
     for i in range(len(fuList)):
         fu = tkinter.Checkbutton(master, text = fuList[i], variable = "Var1")
-        fu.grid(row=i//3, column=i%3, padx=3, pady=3, sticky="W")
+        fu.grid(row=i//4, column=i%4, padx=3, pady=3, sticky="W")
         
 def place_xbar_options(master):
     xbarList = ["W", "E", "N", "S", "NE", "NW", "SE", "SW"]
@@ -152,27 +153,27 @@ def create_param_pannel(master, x, width, height, fuList):
     paramPannel.columnconfigure(3, weight=60)
 
     rowsLabel = ttk.Label(paramPannel, text='Rows:' )
-    rowsLabel.grid(row=0, column=0, sticky=tk.W, padx=BORDER, pady=BORDER)
+    rowsLabel.grid(row=0, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER)
     rowsEntry = ttk.Entry(paramPannel, justify=tkinter.CENTER)
-    rowsEntry.grid(row=0, column=1, sticky=tk.W, padx=BORDER, pady=BORDER)
+    rowsEntry.grid(row=0, column=1, sticky=tkinter.W, padx=BORDER, pady=BORDER)
     rowsEntry.insert(0, "4")
     
     columnsLabel = ttk.Label(paramPannel, text='Columns:')
-    columnsLabel.grid(row=0, column=2, sticky=tk.E, padx=BORDER, pady=BORDER)
+    columnsLabel.grid(row=0, column=2, sticky=tkinter.E, padx=BORDER, pady=BORDER)
     columnsEntry = ttk.Entry(paramPannel, justify=tkinter.CENTER)
-    columnsEntry.grid(row=0, column=3, sticky=tk.E, padx=BORDER, pady=BORDER)
+    columnsEntry.grid(row=0, column=3, sticky=tkinter.E, padx=BORDER, pady=BORDER)
     columnsEntry.insert(0, "4")
     
     configMemLabel = ttk.Label(paramPannel, text='ConfigMemSize (entries):')
     configMemLabel.grid(columnspan=3, row=1, column=0, padx=BORDER, pady=BORDER)
     configMemEntry = ttk.Entry(paramPannel, justify=tkinter.CENTER)
-    configMemEntry.grid(row=1, column=3, sticky=tk.E, padx=BORDER, pady=BORDER)
+    configMemEntry.grid(row=1, column=3, sticky=tkinter.E, padx=BORDER, pady=BORDER)
     configMemEntry.insert(0, "8")
     
     dataMemLabel = ttk.Label(paramPannel, text='DataSPMSize (KBs):')
     dataMemLabel.grid(columnspan=3, row=2, column=0, padx=BORDER, pady=BORDER)
     dataMemEntry = ttk.Entry(paramPannel, justify=tkinter.CENTER)
-    dataMemEntry.grid(row=2, column=3, sticky=tk.E, padx=BORDER, pady=BORDER)
+    dataMemEntry.grid(row=2, column=3, sticky=tkinter.E, padx=BORDER, pady=BORDER)
     dataMemEntry.insert(0, "4")
     
     # updateButton = tkinter.Button(paramPannel, text = "Update demo and script", relief='raised', command = helloCallBack)
@@ -191,58 +192,57 @@ def create_param_pannel(master, x, width, height, fuList):
     xbarConfigPannel.grid(columnspan=4, row=5, column=0, padx=BORDER, pady=BORDER)
     xbarConfigPannels.append(xbarConfigPannel)
     
-    place_xbar_options(xbarConfigPannel)
-    
-    
-def create_script_pannel(master, x, width, height):
-    scriptPannel = tkinter.LabelFrame(master, text='Script', bd = BORDER, relief='groove')
-    scriptPannel.place(height=height, width=width, x=x, y=INTERVAL)
-    
-    script = tkinter.Entry(scriptPannel, bd = BORDER, relief='groove')
-    script.place(height=height-8*BORDER-30, width=width-4*BORDER, x=BORDER, y=BORDER)
-    
-    copyButton = tkinter.Button(scriptPannel, text = "Copy script", relief='raised', command = helloCallBack)
-    copyButton.place(x=width-4*BORDER-70, y=height-8*BORDER-20)
-    
-    
-def create_test_pannel(master, x, y, width, height):
+    place_xbar_options(xbarConfigPannel)   
+   
+
+def create_test_pannel(master, x, width, height):
     testPannel = tkinter.LabelFrame(master, text='Verification', bd = BORDER, relief='groove')
-    testPannel.place(height=height, width=width, x=x, y=y)
+    testPannel.place(height=height, width=width, x=x, y=INTERVAL)
     testButton = tkinter.Button(testPannel, text = "Run tests", relief='raised', command = helloCallBack)
-    testButton.grid(row=0, column=0, sticky=tk.W, padx=BORDER, pady=BORDER//2)
-    testProgress = ttk.Progressbar(testPannel, orient='horizontal', mode='determinate', length=170)
+    testButton.grid(row=0, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    testProgress = ttk.Progressbar(testPannel, orient='horizontal', mode='determinate', length=width/2.5)
     testProgress['value'] = 70
     testProgress.grid(row=0, column=1, padx=BORDER, pady=BORDER//2)
-    testShow = tkinter.Label(testPannel, text = "PASS", fg='green')
-    testShow.grid(row=0, column=2, sticky=tk.E, padx=BORDER, pady=BORDER//2)
+    testShow = tkinter.Label(testPannel, text = "PASSED", fg='green')
+    testShow.grid(row=0, column=2, sticky=tkinter.E, padx=BORDER, pady=BORDER//2)
 
+def create_script_pannel(master, x, y, width, height):
+    scriptPannel = tkinter.LabelFrame(master, text='SVerilog', bd = BORDER, relief='groove')
+    scriptPannel.place(height=height, width=width, x=x, y=y)
+    
+    script = tkinter.Entry(scriptPannel, bd = BORDER, relief='groove')
+    script.place(height=height-8*BORDER-40, width=width-4*BORDER, x=BORDER, y=BORDER)
+    
+    copyButton = tkinter.Button(scriptPannel, text = "Copy", relief='raised', command = helloCallBack)
+    copyButton.place(x=width-4*BORDER-70, y=height-8*BORDER-30)
+ 
     
 def create_report_pannel(master, x, y, width):
     reportPannel = tkinter.LabelFrame(master, text='Report area/power', bd = BORDER, relief='groove')
     reportPannel.place(width=width, x=x, y=y)
-    reportButton = tkinter.Button(reportPannel, text = "Report", relief='raised', command = helloCallBack)
-    reportButton.grid(row=0, column=0, sticky=tk.W, padx=BORDER, pady=BORDER//2)
-    reportProgress = ttk.Progressbar(reportPannel, orient='horizontal', mode='determinate', length=190)
+    reportButton = tkinter.Button(reportPannel, text = "Synthesize", relief='raised', command = helloCallBack)
+    reportButton.grid(row=0, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    reportProgress = ttk.Progressbar(reportPannel, orient='horizontal', mode='determinate', length=width/1.7)
     reportProgress['value'] = 30
     reportProgress.grid(columnspan=3, row=0, column=1, padx=BORDER, pady=BORDER//2)
     
     reportTileAreaLabel = tkinter.Label(reportPannel, text = "Area of tiles:")
-    reportTileAreaLabel.grid(row=1, column=0, sticky=tk.E, padx=BORDER, pady=BORDER//2)
+    reportTileAreaLabel.grid(row=1, column=0, sticky=tkinter.E, padx=BORDER, pady=BORDER//2)
     reportTileAreaData = tkinter.Label(reportPannel, text = "0")
-    reportTileAreaData.grid(row=1, column=1, sticky=tk.E, padx=BORDER, pady=BORDER//2)
+    reportTileAreaData.grid(row=1, column=1, sticky=tkinter.E, padx=BORDER, pady=BORDER//2)
     reportTilePowerLabel = tkinter.Label(reportPannel, text = "Power of tiles:")
-    reportTilePowerLabel.grid(row=1, column=2, sticky=tk.E, padx=BORDER, pady=BORDER//2)
+    reportTilePowerLabel.grid(row=1, column=2, sticky=tkinter.E, padx=BORDER, pady=BORDER//2)
     reportTilePowerData = tkinter.Label(reportPannel, text = "0")
-    reportTilePowerData.grid(row=1, column=3, sticky=tk.E, padx=BORDER, pady=BORDER//2)
+    reportTilePowerData.grid(row=1, column=3, sticky=tkinter.E, padx=BORDER, pady=BORDER//2)
     
     reportSPMAreaLabel = tkinter.Label(reportPannel, text = "Area of SPM:")
-    reportSPMAreaLabel.grid(row=2, column=0, sticky=tk.E, padx=BORDER, pady=BORDER//2)
+    reportSPMAreaLabel.grid(row=2, column=0, sticky=tkinter.E, padx=BORDER, pady=BORDER//2)
     reportSPMAreaData = tkinter.Label(reportPannel, text = "0")
-    reportSPMAreaData.grid(row=2, column=1, sticky=tk.E, padx=BORDER, pady=BORDER//2)
+    reportSPMAreaData.grid(row=2, column=1, sticky=tkinter.E, padx=BORDER, pady=BORDER//2)
     reportSPMPowerLabel = tkinter.Label(reportPannel, text = "Power of SPM:")
-    reportSPMPowerLabel.grid(row=2, column=2, sticky=tk.E, padx=BORDER, pady=BORDER//2)
+    reportSPMPowerLabel.grid(row=2, column=2, sticky=tkinter.E, padx=BORDER, pady=BORDER//2)
     reportSPMPowerData = tkinter.Label(reportPannel, text = "0")
-    reportSPMPowerData.grid(row=2, column=3, sticky=tk.E, padx=BORDER, pady=BORDER//2)
+    reportSPMPowerData.grid(row=2, column=3, sticky=tkinter.E, padx=BORDER, pady=BORDER//2)
     
     
 def create_layout_pannel(master, x, width, height):
@@ -257,23 +257,24 @@ def create_layout_pannel(master, x, width, height):
 create_cgra_pannel(master, ROWS, COLS)
 
 paramPadPosX = GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + INTERVAL * 3
-paramPadWidth = 250
-fuList = ["Add", "Mul", "Shift", "Load", "Store", "MAC"]
+paramPadWidth = 270
+fuList = ["Phi", "Add", "Shift", "Ld", "Sel", "Cmp", "MAC", "St", "Ret", "Mul", "Logic", "Br"]
 create_param_pannel(master, paramPadPosX, paramPadWidth, GRID_HEIGHT, fuList)
 
 scriptPadPosX = paramPadPosX + paramPadWidth + INTERVAL
 scriptPadWidth = 300
-create_script_pannel(master, scriptPadPosX, scriptPadWidth, GRID_HEIGHT//2)
 
-create_test_pannel(master, scriptPadPosX, GRID_HEIGHT//2+20, scriptPadWidth, GRID_HEIGHT//4-30)
+create_test_pannel(master, scriptPadPosX, scriptPadWidth, GRID_HEIGHT//4-30)
 
-create_report_pannel(master, scriptPadPosX, GRID_HEIGHT*3//4, scriptPadWidth)
+create_script_pannel(master, scriptPadPosX, GRID_HEIGHT//4-10, scriptPadWidth, GRID_HEIGHT//2-10)
+
+create_report_pannel(master, scriptPadPosX, GRID_HEIGHT*3//4-10, scriptPadWidth)
 
 layoutPadPosX = scriptPadPosX + scriptPadWidth + INTERVAL
 layoutPadWidth = 300
 create_layout_pannel(master, layoutPadPosX, layoutPadWidth, GRID_HEIGHT)
 
-master.geometry(str(layoutPadPosX+layoutPadWidth+INTERVAL)+"x"+str(GRID_HEIGHT+INTERVAL*2))
 
+master.geometry(str(layoutPadPosX+layoutPadWidth+INTERVAL)+"x"+str(GRID_HEIGHT+INTERVAL*2))
 
 master.mainloop()

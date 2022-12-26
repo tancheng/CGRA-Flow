@@ -20,6 +20,8 @@ GRID_WIDTH = (TILE_SIZE+LINK_LENGTH) * COLS - LINK_LENGTH
 GRID_HEIGHT = (TILE_SIZE+LINK_LENGTH) * ROWS - LINK_LENGTH
 MEM_WIDTH = 50
 
+II = 4
+
 class Tile:
     def __init__(self, ID, posX, posY, size):
         self.ID = 0
@@ -62,6 +64,8 @@ def create_cgra_pannel(root, rows, columns):
 
     # GRID_WIDTH = (TILE_SIZE+LINK_LENGTH) * COLS - linkLength
     TILE_SIZE = (GRID_WIDTH + LINK_LENGTH) / columns - LINK_LENGTH
+    ROWS = rows
+    COLS = columns
 
     totalWidth = GRID_WIDTH+MEM_WIDTH+LINK_LENGTH
     canvas = tkinter.Canvas(root, bd=5, height=GRID_HEIGHT, width=totalWidth)
@@ -252,7 +256,113 @@ def create_layout_pannel(master, x, width, height):
     showButton.pack()
     X = tkinter.Label(layoutPannel, text = 'layout figure is coming soon...', fg = 'black')
     X.pack()
+
+
+def create_kernel_pannel(master, x, y, width, height):
+    kernelPannel = tkinter.LabelFrame(master, text='kernel', bd = BORDER, relief='groove')
+    kernelPannel.place(height=height+3, width=width, x=x, y=y)
+    showButton = tkinter.Button(kernelPannel, text = "Compile kernel", relief='raised', command = helloCallBack)
+    showButton.pack()
+    X = tkinter.Label(kernelPannel, text = 'Kernel input is coming soon...', fg = 'black')
+    X.pack()
                 
+
+def create_mapping_pannel(root, x, y, width, height):
+
+    # GRID_WIDTH = (TILE_SIZE+LINK_LENGTH) * COLS - linkLength
+    TILE_SIZE = (GRID_WIDTH + LINK_LENGTH) / COLS - LINK_LENGTH
+    memHeight = height
+
+    frame = tkinter.LabelFrame(root, text="Mapping", bd=BORDER, relief='groove', width=width, height=height+20)
+    frame.place(x=x, y=y)
+    # frame.pack(expand=True, fill=tkinter.BOTH) #.grid(row=0,column=0)
+
+    cgraWidth = GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + 20
+    canvas = tkinter.Canvas(frame, bd=-1, height=height+20, width=width, scrollregion=(0,0,II*cgraWidth, height))
+    # canvas.place(x=x, y=y)
+
+    hbar=tkinter.Scrollbar(frame, orient=tkinter.HORIZONTAL, bd=BORDER/4, relief='groove')
+    hbar.pack(side=tkinter.BOTTOM, fill=tkinter.X)
+    # hbar.place(x=0, y=memHeight+20)
+    hbar.config(command=canvas.xview)
+    canvas.config(width=width, height=height+20)
+    canvas.config(xscrollcommand=hbar.set)
+    canvas.pack(side=tkinter.LEFT, expand=True, fill=tkinter.BOTH)
+
+
+    # pad contains tile and links
+    padSize = TILE_SIZE + LINK_LENGTH
+    baseX = 0
+    
+    for ii in range(II):
+
+      # draw data memory
+      posX = baseX
+      posY = 0
+      spmButton = tkinter.Label(canvas, text = "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nData\nSPM", fg = 'black', bg = 'gray', relief = 'raised', bd = BORDER)
+      adjustedHeight = (memHeight - TILE_SIZE/2)*2 + 10
+      canvas.create_window(posX+30, posY+30, window=spmButton, height=adjustedHeight, width=MEM_WIDTH)
+      # spmButton.place(height=memHeight, width=MEM_WIDTH, x = posX, y = posY)
+              
+      # draw tiles
+      tiles = []
+      numOfTile = 0
+      for i in range(ROWS):
+          for j in range(COLS):
+              ID = i*COLS+j
+              button = tkinter.Label(canvas, text = "Tile "+str(ID), fg='black', bg='gray', relief='raised', bd=BORDER)
+              posX = baseX+BORDER+padSize * j + MEM_WIDTH + LINK_LENGTH
+              posY = BORDER+height - padSize * i - TILE_SIZE
+              canvas.create_window(posX+30, posY+30, window=button, height=TILE_SIZE, width=TILE_SIZE)
+              # button.place(height=TILE_SIZE, width=TILE_SIZE, x = posX, y = posY)
+              if j == 0:
+                  tiles.append([])
+              tile = Tile(ID, posX, posY, TILE_SIZE)
+              tiles[-1].append(tile)
+
+      # draw links
+      for i in range(ROWS):
+          for j in range(COLS):
+              if j < COLS-1:
+                  # horizontal
+                  srcX, srcY = tiles[i][j].getRightMid()
+                  dstX, dstY = tiles[i][j+1].getLeftMid()
+                  canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
+                  canvas.create_line(dstX, dstY, srcX, srcY, arrow=tkinter.LAST)
+              
+              if i < ROWS-1 and j < COLS-1:
+                  # diagonal left bottom to right top
+                  srcX, srcY = tiles[i][j].getRightTop()
+                  dstX, dstY = tiles[i+1][j+1].getLeftBottom()
+                  canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
+                  canvas.create_line(dstX, dstY, srcX, srcY, arrow=tkinter.LAST)
+                  
+              if i < ROWS-1 and j > 0:
+                  # diagonal left top to right bottom
+                  srcX, srcY = tiles[i][j].getLeftTop()
+                  dstX, dstY = tiles[i+1][j-1].getRightBottom()
+                  canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
+                  canvas.create_line(dstX, dstY, srcX, srcY, arrow=tkinter.LAST)
+                  
+              if i < ROWS-1:
+                  # vertical
+                  srcX, srcY = tiles[i][j].getTopMid()
+                  dstX, dstY = tiles[i+1][j].getBottomMid()
+                  canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
+                  canvas.create_line(dstX, dstY, srcX, srcY, arrow=tkinter.LAST)
+                  
+              if j == 0:
+                  # connect to memory
+                  srcX, srcY = tiles[i][j].getLeftMid()
+                  dstX, dstY = srcX - LINK_LENGTH, srcY
+                  canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
+                  canvas.create_line(dstX, dstY, srcX, srcY, arrow=tkinter.LAST)
+      cycleLabel = tkinter.Label(canvas, text="Cycle "+str(ii))
+      canvas.create_window(baseX+width/3, memHeight+10+BORDER, window=cycleLabel, height=20, width=80)
+      # cycleLabel.place(x=MEM_WIDTH+LINK_LENGTH+TILE_SIZE, y=memHeight+BORDER)
+
+      baseX += GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + 20
+
 
 create_cgra_pannel(master, ROWS, COLS)
 
@@ -274,7 +384,12 @@ layoutPadPosX = scriptPadPosX + scriptPadWidth + INTERVAL
 layoutPadWidth = 300
 create_layout_pannel(master, layoutPadPosX, layoutPadWidth, GRID_HEIGHT)
 
+totalWidth = layoutPadPosX + layoutPadWidth
 
-master.geometry(str(layoutPadPosX+layoutPadWidth+INTERVAL)+"x"+str(GRID_HEIGHT+INTERVAL*2))
+create_kernel_pannel(master, INTERVAL, GRID_HEIGHT+INTERVAL*2, paramPadPosX-20, GRID_HEIGHT+55)
+
+create_mapping_pannel(master, paramPadPosX, GRID_HEIGHT+INTERVAL*2, totalWidth-paramPadPosX-5, GRID_HEIGHT)
+
+master.geometry(str(layoutPadPosX+layoutPadWidth+INTERVAL)+"x"+str(GRID_HEIGHT*2+INTERVAL*3+50))
 
 master.mainloop()

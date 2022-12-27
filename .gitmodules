@@ -7,9 +7,6 @@
 [submodule "mflowgen"]
 	path = mflowgen
 	url = https://github.com/mflowgen/mflowgen.git
-[submodule "pymtl3"]
-	path = pymtl3
-	url = https://github.com/tancheng/pymtl3.git
 [submodule "OpenROAD-flow-scripts"]
 	path = OpenROAD-flow-scripts
 	url = https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts.git

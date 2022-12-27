@@ -250,25 +250,24 @@ def create_param_pannel(master, x, width, height, fuList):
     dataMemEntry = ttk.Entry(paramPannel, justify=tkinter.CENTER)
     dataMemEntry.grid(row=2, column=3, sticky=tkinter.E, padx=BORDER, pady=BORDER)
     dataMemEntry.insert(0, "4")
-    
-    # updateButton = tkinter.Button(paramPannel, text = "Update demo and script", relief='raised', command = helloCallBack)
-    updateButton = tkinter.Button(paramPannel, text = "Update demo and script", relief='raised', command = partial(clickUpdate, master))
-    updateButton.grid(columnspan=4, row=3, column=0, padx=BORDER, pady=BORDER)
-    
+       
     fuConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 functional units', bd = BORDER, relief='groove')
     # fuConfigPannel.config(text='xxx')
-    fuConfigPannel.grid(columnspan=4, row=4, column=0, padx=BORDER, pady=BORDER)
+    fuConfigPannel.grid(columnspan=4, row=3, column=0, padx=BORDER, pady=BORDER)
     widgets["fuConfigPannel"] = fuConfigPannel
     
     place_fu_options(fuConfigPannel, fuList)
     
     xbarConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 crossbar incoming links', bd = BORDER, relief='groove')
     # xbarConfigPannel.config(text='y')
-    xbarConfigPannel.grid(columnspan=4, row=5, column=0, padx=BORDER, pady=BORDER)
+    xbarConfigPannel.grid(columnspan=4, row=4, column=0, padx=BORDER, pady=BORDER)
     widgets["xbarConfigPannel"] = xbarConfigPannel
     
     place_xbar_options(xbarConfigPannel)   
    
+    updateButton = tkinter.Button(paramPannel, text = "Update model", relief='raised', command = partial(clickUpdate, master))
+    updateButton.grid(columnspan=4, row=5, column=0, padx=BORDER, pady=BORDER)
+ 
 
 def create_test_pannel(master, x, width, height):
     testPannel = tkinter.LabelFrame(master, text='Verification', bd = BORDER, relief='groove')

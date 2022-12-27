@@ -4,9 +4,6 @@
 [submodule "CGRA-Benchmark"]
 	path = CGRA-Benchmark
 	url = https://github.com/tancheng/CGRA-Benchmark
-[submodule "OpenCGRA"]
-	path = OpenCGRA
-	url = https://github.com/pnnl/OpenCGRA.git
 [submodule "mflowgen"]
 	path = mflowgen
 	url = https://github.com/mflowgen/mflowgen.git

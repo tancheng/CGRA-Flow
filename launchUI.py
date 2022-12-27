@@ -2,7 +2,6 @@ import tkinter
 from tkinter import ttk
 from functools import partial
 
-
 def helloCallBack():
     pass
 
@@ -53,19 +52,89 @@ class Tile:
     def getBottomMid(self):
         return (self.posX+self.size//2, self.posY+self.size)
         
+widgets = {}
 
-fuConfigPannels = []
-xbarConfigPannels = []
+class ParamTile:
+    def __init__( s, posX, posY ):
+        s.disabled = False
+        s.posX = posX
+        s.posY = posY
+        s.hasToMem = False
+        s.hasFromMem = False
+        s.invalidOutPorts = set()
+        s.invalidInPorts = set()
+        for i in range( DIRECTION_COUNTS ):
+            s.invalidOutPorts.add(i)
+            s.invalidInPorts.add(i)
+
+    def getIndex( s, tileList ):
+        if s.disabled:
+            return -1
+        index = 0
+        for tile in tileList:
+            if tile.posY < s.posY and not tile.disabled:
+                index += 1
+            elif tile.posY == s.posY and tile.posX < s.posX and not tile.disabled:
+                index += 1
+        return index
+
+class ParamLink:
+    def __init__(s, srcTile, dstTile, srcPort, dstPort):
+        s.srcTile = srcTile
+        s.dstTile = dstTile
+        s.srcPort = srcPort
+        s.dstPort = dstPort
+        s.disabled = False
+        s.isToMem = False
+        s.isFromMem = False
+
+    def validatePorts(s):
+        if not s.isToMem and not s.isFromMem:
+            s.srcTile.invalidOutPorts.remove(s.srcPort)
+            s.dstTile.invalidInPorts.remove(s.dstPort)
+        if s.isToMem:
+            s.srcTile.hasToMem = True
+        if s.isFromMem:
+            s.dstTile.hasFromMem = True
+
+class CGRA:
+    def __init__(s):
+        s.tiles = []
+        s.links = []
+
+    def initTiles(s, rows, columns):
+        for r in range(rows):
+            for c in range(columns):
+                s.tiles.append(ParamTile(r, c))
+
+    def initLinks(s, numOfLinks):
+        for _ in range(numOfLinks):
+            s.links.append(ParamLink(None, None, 0, 0))
+
+
+paramCGRA = CGRA()
+
+from VectorCGRA.cgra.translate.CGRARTL_test import *
+
+def clickGenerateVerilog():
+    test_cgra_universal()
+
 def clickTile(ID):
-    fuConfigPannels[0].config(text='Tile '+str(ID)+' functional units')
-    xbarConfigPannels[0].config(text='Tile '+str(ID)+' crossbar incoming links')
+    widgets["fuConfigPannel"].config(text='Tile '+str(ID)+' functional units')
+    widgets["xbarConfigPannel"].config(text='Tile '+str(ID)+' crossbar incoming links')
         
+def clickUpdate(root):
+    rows = int(widgets["rowsEntry"].get())
+    columns = int(widgets["columnsEntry"].get())
+
+    create_cgra_pannel(root, rows, columns)
+
+
 def create_cgra_pannel(root, rows, columns):
 
-    # GRID_WIDTH = (TILE_SIZE+LINK_LENGTH) * COLS - linkLength
-    TILE_SIZE = (GRID_WIDTH + LINK_LENGTH) / columns - LINK_LENGTH
     ROWS = rows
     COLS = columns
+    TILE_SIZE = (GRID_WIDTH + LINK_LENGTH) / COLS - LINK_LENGTH
 
     totalWidth = GRID_WIDTH+MEM_WIDTH+LINK_LENGTH
     canvas = tkinter.Canvas(root, bd=5, height=GRID_HEIGHT, width=totalWidth)
@@ -84,9 +153,9 @@ def create_cgra_pannel(root, rows, columns):
     # draw tiles
     tiles = []
     numOfTile = 0
-    for i in range(rows):
-        for j in range(columns):
-            ID = i*columns+j
+    for i in range(ROWS):
+        for j in range(COLS):
+            ID = i*COLS+j
             button = tkinter.Button(canvas, text = "Tile "+str(ID), fg='black', bg='gray', relief='raised', bd=BORDER, command=partial(
     clickTile, ID))
             posX = padSize * j + MEM_WIDTH + LINK_LENGTH
@@ -98,30 +167,30 @@ def create_cgra_pannel(root, rows, columns):
             tiles[-1].append(tile)
 
     # draw links
-    for i in range(rows):
-        for j in range(columns):
-            if j < columns-1:
+    for i in range(ROWS):
+        for j in range(COLS):
+            if j < COLS-1:
                 # horizontal
                 srcX, srcY = tiles[i][j].getRightMid()
                 dstX, dstY = tiles[i][j+1].getLeftMid()
                 canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
                 canvas.create_line(dstX, dstY, srcX, srcY, arrow=tkinter.LAST)
             
-            if i < rows-1 and j < columns-1:
+            if i < ROWS-1 and j < COLS-1:
                 # diagonal left bottom to right top
                 srcX, srcY = tiles[i][j].getRightTop()
                 dstX, dstY = tiles[i+1][j+1].getLeftBottom()
                 canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
                 canvas.create_line(dstX, dstY, srcX, srcY, arrow=tkinter.LAST)
                 
-            if i < rows-1 and j > 0:
+            if i < ROWS-1 and j > 0:
                 # diagonal left top to right bottom
                 srcX, srcY = tiles[i][j].getLeftTop()
                 dstX, dstY = tiles[i+1][j-1].getRightBottom()
                 canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
                 canvas.create_line(dstX, dstY, srcX, srcY, arrow=tkinter.LAST)
                 
-            if i < rows-1:
+            if i < ROWS-1:
                 # vertical
                 srcX, srcY = tiles[i][j].getTopMid()
                 dstX, dstY = tiles[i+1][j].getBottomMid()
@@ -161,12 +230,14 @@ def create_param_pannel(master, x, width, height, fuList):
     rowsEntry = ttk.Entry(paramPannel, justify=tkinter.CENTER)
     rowsEntry.grid(row=0, column=1, sticky=tkinter.W, padx=BORDER, pady=BORDER)
     rowsEntry.insert(0, "4")
+    widgets["rowsEntry"] = rowsEntry
     
     columnsLabel = ttk.Label(paramPannel, text='Columns:')
     columnsLabel.grid(row=0, column=2, sticky=tkinter.E, padx=BORDER, pady=BORDER)
     columnsEntry = ttk.Entry(paramPannel, justify=tkinter.CENTER)
     columnsEntry.grid(row=0, column=3, sticky=tkinter.E, padx=BORDER, pady=BORDER)
     columnsEntry.insert(0, "4")
+    widgets["columnsEntry"] = columnsEntry
     
     configMemLabel = ttk.Label(paramPannel, text='ConfigMemSize (entries):')
     configMemLabel.grid(columnspan=3, row=1, column=0, padx=BORDER, pady=BORDER)
@@ -181,20 +252,20 @@ def create_param_pannel(master, x, width, height, fuList):
     dataMemEntry.insert(0, "4")
     
     # updateButton = tkinter.Button(paramPannel, text = "Update demo and script", relief='raised', command = helloCallBack)
-    updateButton = tkinter.Button(paramPannel, text = "Update demo and script", relief='raised', command = partial(create_cgra_pannel, master, 5, 5))
+    updateButton = tkinter.Button(paramPannel, text = "Update demo and script", relief='raised', command = partial(clickUpdate, master))
     updateButton.grid(columnspan=4, row=3, column=0, padx=BORDER, pady=BORDER)
     
     fuConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 functional units', bd = BORDER, relief='groove')
     # fuConfigPannel.config(text='xxx')
     fuConfigPannel.grid(columnspan=4, row=4, column=0, padx=BORDER, pady=BORDER)
-    fuConfigPannels.append(fuConfigPannel)
+    widgets["fuConfigPannel"] = fuConfigPannel
     
     place_fu_options(fuConfigPannel, fuList)
     
     xbarConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 crossbar incoming links', bd = BORDER, relief='groove')
     # xbarConfigPannel.config(text='y')
     xbarConfigPannel.grid(columnspan=4, row=5, column=0, padx=BORDER, pady=BORDER)
-    xbarConfigPannels.append(xbarConfigPannel)
+    widgets["xbarConfigPannel"] = xbarConfigPannel
     
     place_xbar_options(xbarConfigPannel)   
    
@@ -217,8 +288,8 @@ def create_script_pannel(master, x, y, width, height):
     script = tkinter.Entry(scriptPannel, bd = BORDER, relief='groove')
     script.place(height=height-8*BORDER-40, width=width-4*BORDER, x=BORDER, y=BORDER)
     
-    copyButton = tkinter.Button(scriptPannel, text = "Copy", relief='raised', command = helloCallBack)
-    copyButton.place(x=width-4*BORDER-70, y=height-8*BORDER-30)
+    generateButton = tkinter.Button(scriptPannel, text = "Generate", relief='raised', command = clickGenerateVerilog)
+    generateButton.place(x=width-4*BORDER-90, y=height-8*BORDER-30)
  
     
 def create_report_pannel(master, x, y, width):
@@ -359,9 +430,11 @@ def create_mapping_pannel(root, x, y, width, height):
                   canvas.create_line(dstX, dstY, srcX, srcY, arrow=tkinter.LAST)
       cycleLabel = tkinter.Label(canvas, text="Cycle "+str(ii))
       canvas.create_window(baseX+width/3, memHeight+10+BORDER, window=cycleLabel, height=20, width=80)
-      # cycleLabel.place(x=MEM_WIDTH+LINK_LENGTH+TILE_SIZE, y=memHeight+BORDER)
 
       baseX += GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + 20
+      canvas.create_line(baseX-5, INTERVAL, baseX-5, memHeight, width=2, dash=(10,2))
+      # cycleLabel.place(x=MEM_WIDTH+LINK_LENGTH+TILE_SIZE, y=memHeight+BORDER)
+
 
 
 create_cgra_pannel(master, ROWS, COLS)

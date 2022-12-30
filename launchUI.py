@@ -1,6 +1,14 @@
+import sys
+import os
+import time
+import subprocess
 import tkinter
 from tkinter import ttk
+from tkinter import filedialog as fd
+from PIL import Image, ImageTk
 from functools import partial
+
+from VectorCGRA.cgra.translate.CGRARTL_test import *
 
 def helloCallBack():
     pass
@@ -18,8 +26,15 @@ COLS = 4
 GRID_WIDTH = (TILE_SIZE+LINK_LENGTH) * COLS - LINK_LENGTH
 GRID_HEIGHT = (TILE_SIZE+LINK_LENGTH) * ROWS - LINK_LENGTH
 MEM_WIDTH = 50
-
+CONFIG_MEM = 8
+DATA_MEM = 4
 II = 4
+
+fuTypeList = ["Phi", "Add", "Shift", "Ld", "Sel", "Cmp", "MAC", "St", "Ret", "Mul", "Logic", "Br"]
+
+xbarTypeList = ["W", "E", "N", "S", "NE", "NW", "SE", "SW"]
+
+DIRECTION_COUNTS = 8
 
 class Tile:
     def __init__(self, ID, posX, posY, size):
@@ -53,6 +68,9 @@ class Tile:
         return (self.posX+self.size//2, self.posY+self.size)
         
 widgets = {}
+images = {}
+fuCheckVars = {}
+xbarCheckVars = {}
 
 class ParamTile:
     def __init__( s, posX, posY ):
@@ -63,9 +81,17 @@ class ParamTile:
         s.hasFromMem = False
         s.invalidOutPorts = set()
         s.invalidInPorts = set()
+        s.fuDict = {}
+        s.xbarDict = {}
         for i in range( DIRECTION_COUNTS ):
             s.invalidOutPorts.add(i)
             s.invalidInPorts.add(i)
+        
+        for xbarType in xbarTypeList:
+            s.xbarDict[xbarType] = 1
+
+        for fuType in fuTypeList:
+            s.fuDict[fuType] = 1
 
     def getIndex( s, tileList ):
         if s.disabled:
@@ -97,38 +123,160 @@ class ParamLink:
         if s.isFromMem:
             s.dstTile.hasFromMem = True
 
-class CGRA:
-    def __init__(s):
+class ParamCGRA:
+    def __init__(s, rows, columns, configMem=CONFIG_MEM, dataMem=DATA_MEM):
+        s.rows = rows
+        s.columns = columns
+        s.configMem = configMem
+        s.dataMem = dataMem
         s.tiles = []
         s.links = []
+        s.targetTileID = 0
+        s.initTiles(rows, columns)
+        numOfLinks = rows*columns*2 + (rows-1)*columns*2 + (rows-1)*(columns-1)*2*2
+        s.initLinks(numOfLinks)
+
+        for fuType in fuTypeList:
+            if fuType in fuCheckVars:
+                fuCheckVars[fuType].set(1)
+
+        for xbarType in xbarTypeList:
+            if xbarType in xbarCheckVars:
+                xbarCheckVars[xbarType].set(1)
+
+    def updateMem(s, configMem, dataMem):
+        s.configMem = configMem
+        s.dataMem = dataMem
 
     def initTiles(s, rows, columns):
         for r in range(rows):
             for c in range(columns):
-                s.tiles.append(ParamTile(r, c))
+                s.tiles.append(ParamTile(c, r))
 
     def initLinks(s, numOfLinks):
         for _ in range(numOfLinks):
             s.links.append(ParamLink(None, None, 0, 0))
 
 
-paramCGRA = CGRA()
+    def updateFuCheckbutton(s, fuType, value):
+        s.tiles[s.targetTileID].fuDict[fuType] = value
 
-from VectorCGRA.cgra.translate.CGRARTL_test import *
+    def updateXbarCheckbutton(s, xbarType, value):
+        s.tiles[s.targetTileID].xbarDict[xbarType] = value
+
+
+paramCGRA = ParamCGRA(ROWS, COLS, CONFIG_MEM, DATA_MEM)
+targetKernelName = "not selected yet"
 
 def clickGenerateVerilog():
+    os.system("mkdir verilog")
+    os.chdir("verilog")
+
     test_cgra_universal()
+
+    widgets["verilogText"].delete("1.0", tkinter.END)
+    found = False
+    print(os.listdir("./"))
+    for fileName in os.listdir("./"):
+        if "__" in fileName and ".v" in fileName:
+            print("we found the file: ", fileName)
+            f = open(fileName, "r")
+            widgets["verilogText"].insert("1.0", f.read())
+            found = True
+            break
+
+    if not found:
+        widgets["verilogText"].insert(tkinter.END, "Error exists during Verilog generation")
+    os.system("rename s/\.v/\.log/g *")
+
+    os.chdir("..")
+
 
 def clickTile(ID):
     widgets["fuConfigPannel"].config(text='Tile '+str(ID)+' functional units')
     widgets["xbarConfigPannel"].config(text='Tile '+str(ID)+' crossbar incoming links')
+    paramCGRA.targetTileID = ID
+    for fuType in fuTypeList:
+        fuCheckVars[fuType].set(paramCGRA.tiles[ID].fuDict[fuType])
+
+    for xbarType in xbarTypeList:
+        xbarCheckVars[xbarType].set(paramCGRA.tiles[ID].xbarDict[xbarType])
+
+
+def clickFuCheckbutton(fuType):
+    paramCGRA.updateFuCheckbutton(fuType, fuCheckVars[fuType].get())
+    # need to refine/assemble the CGRA model here:
+
+
+def clickXbarCheckbutton(xbarType):
+    paramCGRA.updateXbarCheckbutton(xbarType, xbarCheckVars[xbarType].get())
+    # need to refine/assemble the CGRA model here:
         
+
 def clickUpdate(root):
     rows = int(widgets["rowsEntry"].get())
     columns = int(widgets["columnsEntry"].get())
+    configMem = int(widgets["configMemEntry"].get())
+    dataMem = int(widgets["dataMemEntry"].get())
+
+    global paramCGRA
+
+    if paramCGRA.rows != rows or paramCGRA.columns != columns:
+        paramCGRA = ParamCGRA(rows, columns)
+
+    paramCGRA.updateMem(configMem, dataMem)
 
     create_cgra_pannel(root, rows, columns)
+    clickTile(0)
 
+def clickTest():
+    # need to provide the paths for lib.so and kernel.bc
+    os.system("mkdir test")
+    # os.system("cd test")
+    os.chdir("test")
+
+    widgets["testShow"].configure(text="0%", fg="red")
+    master.update_idletasks()
+
+    # os.system("pytest ../../VectorCGRA")
+    testProc = subprocess.Popen(["pytest ../../VectorCGRA", '-u'], stdout=subprocess.PIPE, shell=True, bufsize=1)
+    with testProc.stdout:
+        for line in iter(testProc.stdout.readline, b''):
+            outputLine = line.decode("utf-8")
+            print(outputLine)
+            if "%]" in outputLine:
+                value = int(outputLine.split("[")[1].split("%]")[0])
+                widgets["testProgress"].configure(value=value)
+                widgets["testShow"].configure(text=str(value)+"%", fg="red")
+                master.update_idletasks()
+
+    widgets["testShow"].configure(text="PASSED", fg="green")
+    # (out, err) = testProc.communicate()
+    # print("check test output:", out)
+
+    os.chdir("..")
+
+def clickSelectKernel():
+    global paramCGRA
+    kernelName = fd.askopenfilename(title="choose a kernel", initialdir="../", filetypes=(("C/C++ file", "*.cpp"), ("C/C++ file", "*.c"), ("C/C++ file", "*.C"), ("C/C++ file", "*.CPP")))
+    targetKernelName = kernelName
+
+    widgets["kernelPathLabel"].configure(state="normal")
+    widgets["kernelPathLabel"].delete(0, tkinter.END)
+    widgets["kernelPathLabel"].insert(0, targetKernelName)
+    widgets["kernelPathLabel"].configure(state="disabled")
+
+def clickCompileKernel():
+    # need to provide the paths for lib.so and kernel.bc
+    compileProc = subprocess.Popen(["../CGRA-Mapper/test/run_test.sh"], stdout=subprocess.PIPE, shell=True)
+    (out, err) = compileProc.communicate()
+    print("check program output:", out)
+
+def clickGenerateDFG():
+    pass
+
+def clickMapDFG():
+    pass
 
 def create_cgra_pannel(root, rows, columns):
 
@@ -204,19 +352,26 @@ def create_cgra_pannel(root, rows, columns):
                 canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
                 canvas.create_line(dstX, dstY, srcX, srcY, arrow=tkinter.LAST)
 
-def place_fu_options(master, fuList = ["Add"]):
-    fuCount = len(fuList)
-    for i in range(len(fuList)):
-        fu = tkinter.Checkbutton(master, text = fuList[i], variable = "Var1")
-        fu.grid(row=i//4, column=i%4, padx=3, pady=3, sticky="W")
+def place_fu_options(master):
+    fuCount = len(fuTypeList)
+    for i in range(len(fuTypeList)):
+        fuVar = tkinter.IntVar()
+        fuCheckVars[fuTypeList[i]] = fuVar
+        fuCheckbutton = tkinter.Checkbutton(master, variable=fuVar, text=fuTypeList[i], command=partial(clickFuCheckbutton, fuTypeList[i]))
+        fuCheckbutton.select()
+        paramCGRA.updateFuCheckbutton(fuTypeList[i], fuVar.get())
+        fuCheckbutton.grid(row=i//4, column=i%4, padx=3, pady=3, sticky="W")
         
 def place_xbar_options(master):
-    xbarList = ["W", "E", "N", "S", "NE", "NW", "SE", "SW"]
     for i in range(8):
-        xbar = tkinter.Checkbutton(master, text = xbarList[i], variable = "Var1")
-        xbar.grid(row=i//4, column=i%4, padx=BORDER, pady=BORDER, sticky="W")
+        xbarVar = tkinter.IntVar()
+        xbarCheckVars[xbarTypeList[i]] = xbarVar
+        xbarCheckbutton = tkinter.Checkbutton(master, variable=xbarVar, text=xbarTypeList[i], command=partial(clickXbarCheckbutton, xbarTypeList[i]))
+        xbarCheckbutton.select()
+        paramCGRA.updateXbarCheckbutton(xbarTypeList[i], xbarVar.get())
+        xbarCheckbutton.grid(row=i//4, column=i%4, padx=BORDER, pady=BORDER, sticky="W")
                 
-def create_param_pannel(master, x, width, height, fuList):
+def create_param_pannel(master, x, width, height):
     paramPannel = tkinter.LabelFrame(master, text='Configuration', bd=BORDER, relief='groove')
     paramPannel.place(height=height, width=width, x=x, y=INTERVAL)
     
@@ -229,34 +384,36 @@ def create_param_pannel(master, x, width, height, fuList):
     rowsLabel.grid(row=0, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER)
     rowsEntry = ttk.Entry(paramPannel, justify=tkinter.CENTER)
     rowsEntry.grid(row=0, column=1, sticky=tkinter.W, padx=BORDER, pady=BORDER)
-    rowsEntry.insert(0, "4")
+    rowsEntry.insert(0, str(paramCGRA.rows))
     widgets["rowsEntry"] = rowsEntry
     
     columnsLabel = ttk.Label(paramPannel, text='Columns:')
     columnsLabel.grid(row=0, column=2, sticky=tkinter.E, padx=BORDER, pady=BORDER)
     columnsEntry = ttk.Entry(paramPannel, justify=tkinter.CENTER)
     columnsEntry.grid(row=0, column=3, sticky=tkinter.E, padx=BORDER, pady=BORDER)
-    columnsEntry.insert(0, "4")
+    columnsEntry.insert(0, str(paramCGRA.columns))
     widgets["columnsEntry"] = columnsEntry
     
     configMemLabel = ttk.Label(paramPannel, text='ConfigMemSize (entries):')
     configMemLabel.grid(columnspan=3, row=1, column=0, padx=BORDER, pady=BORDER)
     configMemEntry = ttk.Entry(paramPannel, justify=tkinter.CENTER)
     configMemEntry.grid(row=1, column=3, sticky=tkinter.E, padx=BORDER, pady=BORDER)
-    configMemEntry.insert(0, "8")
+    configMemEntry.insert(0, paramCGRA.configMem)
+    widgets["configMemEntry"] = configMemEntry
     
     dataMemLabel = ttk.Label(paramPannel, text='DataSPMSize (KBs):')
     dataMemLabel.grid(columnspan=3, row=2, column=0, padx=BORDER, pady=BORDER)
     dataMemEntry = ttk.Entry(paramPannel, justify=tkinter.CENTER)
     dataMemEntry.grid(row=2, column=3, sticky=tkinter.E, padx=BORDER, pady=BORDER)
-    dataMemEntry.insert(0, "4")
+    dataMemEntry.insert(0, str(paramCGRA.dataMem))
+    widgets["dataMemEntry"] = dataMemEntry
        
     fuConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 functional units', bd = BORDER, relief='groove')
     # fuConfigPannel.config(text='xxx')
     fuConfigPannel.grid(columnspan=4, row=3, column=0, padx=BORDER, pady=BORDER)
     widgets["fuConfigPannel"] = fuConfigPannel
     
-    place_fu_options(fuConfigPannel, fuList)
+    place_fu_options(fuConfigPannel)
     
     xbarConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 crossbar incoming links', bd = BORDER, relief='groove')
     # xbarConfigPannel.config(text='y')
@@ -272,22 +429,25 @@ def create_param_pannel(master, x, width, height, fuList):
 def create_test_pannel(master, x, width, height):
     testPannel = tkinter.LabelFrame(master, text='Verification', bd = BORDER, relief='groove')
     testPannel.place(height=height, width=width, x=x, y=INTERVAL)
-    testButton = tkinter.Button(testPannel, text = "Run tests", relief='raised', command = helloCallBack)
+    testButton = tkinter.Button(testPannel, text = "Run tests", relief='raised', command = clickTest)
     testButton.grid(row=0, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
     testProgress = ttk.Progressbar(testPannel, orient='horizontal', mode='determinate', length=width/2.5)
-    testProgress['value'] = 70
+    testProgress['value'] = 0
+    widgets["testProgress"] = testProgress
     testProgress.grid(row=0, column=1, padx=BORDER, pady=BORDER//2)
-    testShow = tkinter.Label(testPannel, text = "PASSED", fg='green')
+    testShow = tkinter.Label(testPannel, text = "IDLE", fg='gray')
+    widgets["testShow"] = testShow
     testShow.grid(row=0, column=2, sticky=tkinter.E, padx=BORDER, pady=BORDER//2)
 
-def create_script_pannel(master, x, y, width, height):
-    scriptPannel = tkinter.LabelFrame(master, text='SVerilog', bd = BORDER, relief='groove')
-    scriptPannel.place(height=height, width=width, x=x, y=y)
+def create_verilog_pannel(master, x, y, width, height):
+    verilogPannel = tkinter.LabelFrame(master, text='SVerilog', bd = BORDER, relief='groove')
+    verilogPannel.place(height=height, width=width, x=x, y=y)
     
-    script = tkinter.Entry(scriptPannel, bd = BORDER, relief='groove')
-    script.place(height=height-8*BORDER-40, width=width-4*BORDER, x=BORDER, y=BORDER)
+    verilogText = tkinter.Text(verilogPannel, bd = BORDER, relief='groove')
+    widgets["verilogText"] = verilogText
+    verilogText.place(height=height-8*BORDER-40, width=width-4*BORDER, x=BORDER, y=BORDER)
     
-    generateButton = tkinter.Button(scriptPannel, text = "Generate", relief='raised', command = clickGenerateVerilog)
+    generateButton = tkinter.Button(verilogPannel, text="Generate", relief='raised', command=clickGenerateVerilog)
     generateButton.place(x=width-4*BORDER-90, y=height-8*BORDER-30)
  
     
@@ -329,12 +489,46 @@ def create_layout_pannel(master, x, width, height):
 
 
 def create_kernel_pannel(master, x, y, width, height):
-    kernelPannel = tkinter.LabelFrame(master, text='kernel', bd = BORDER, relief='groove')
+    kernelPannel = tkinter.LabelFrame(master, text='Kernel', bd = BORDER, relief='groove')
     kernelPannel.place(height=height+3, width=width, x=x, y=y)
-    showButton = tkinter.Button(kernelPannel, text = "Compile kernel", relief='raised', command = helloCallBack)
-    showButton.pack()
-    X = tkinter.Label(kernelPannel, text = 'Kernel input is coming soon...', fg = 'black')
-    X.pack()
+
+    selectKernelButton = tkinter.Button(kernelPannel, text='Select', fg='black', command=clickSelectKernel)
+    selectKernelButton.grid(row=0, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+
+    kernelPathLabel = tkinter.Entry(kernelPannel, fg="black")
+    widgets["kernelPathLabel"] = kernelPathLabel
+    kernelPathLabel.insert(0, targetKernelName)
+    kernelPathLabel.configure(state="disabled")
+    kernelPathLabel.grid(row=0, column=1, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+
+    # chooseKernelShow = tkinter.Label(kernelPannel, text = u'\u2713', fg='green')
+    # chooseKernelShow.place(height=20, width=200)
+    # chooseKernelShow.grid(row=0, column=3, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+
+    compileKernelButton = tkinter.Button(kernelPannel, text = "Compile", fg="black", command=clickCompileKernel)
+    compileKernelButton.grid(row=0, column=2, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+
+    compileKernelShow = tkinter.Label(kernelPannel, text=u'\u2713', fg='green')
+    compileKernelShow.grid(row=0, column=3, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+
+    mapDFGButton = tkinter.Button(kernelPannel, text="Map", fg="black", command = clickMapDFG)
+    mapDFGButton.grid(row=0, column=4, sticky=tkinter.E, padx=BORDER, pady=BORDER//2)
+
+    dfgPannel = tkinter.LabelFrame(kernelPannel, text='Data-Flow Graph', fg="black", bd=BORDER, relief='groove')
+    dfgHeight = height-40-4*BORDER
+    dfgWidth = width-4*BORDER
+    dfgPannel.place(height=dfgHeight, width=dfgWidth, x=BORDER, y=30+BORDER)
+    # dfgPannel.grid(columnspan=4, row=2, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    PIL_image = Image.open("../CGRA-Mapper/test/kernel.png")
+    PIL_image_small = PIL_image.resize((dfgWidth-10,dfgHeight-25), Image.Resampling.LANCZOS)
+    dfgImage = ImageTk.PhotoImage(PIL_image_small)
+    # dfgImage = ImageTk.PhotoImage(PIL_image)
+    images["dfgImage"] = dfgImage # This is important due to the garbage collection would remove local variable of image
+    dfgLabel = tkinter.Label(dfgPannel, image=dfgImage)
+    dfgLabel.pack()
+
+    # X = tkinter.Label(kernelPannel, text = 'Kernel input is coming soon...', fg = 'black')
+    # X.pack()
                 
 
 def create_mapping_pannel(root, x, y, width, height):
@@ -440,15 +634,14 @@ create_cgra_pannel(master, ROWS, COLS)
 
 paramPadPosX = GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + INTERVAL * 3
 paramPadWidth = 270
-fuList = ["Phi", "Add", "Shift", "Ld", "Sel", "Cmp", "MAC", "St", "Ret", "Mul", "Logic", "Br"]
-create_param_pannel(master, paramPadPosX, paramPadWidth, GRID_HEIGHT, fuList)
+create_param_pannel(master, paramPadPosX, paramPadWidth, GRID_HEIGHT)
 
 scriptPadPosX = paramPadPosX + paramPadWidth + INTERVAL
 scriptPadWidth = 300
 
 create_test_pannel(master, scriptPadPosX, scriptPadWidth, GRID_HEIGHT//4-30)
 
-create_script_pannel(master, scriptPadPosX, GRID_HEIGHT//4-10, scriptPadWidth, GRID_HEIGHT//2-10)
+create_verilog_pannel(master, scriptPadPosX, GRID_HEIGHT//4-10, scriptPadWidth, GRID_HEIGHT//2-10)
 
 create_report_pannel(master, scriptPadPosX, GRID_HEIGHT*3//4-10, scriptPadWidth)
 

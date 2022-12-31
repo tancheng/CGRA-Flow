@@ -10,10 +10,25 @@ from functools import partial
 
 from VectorCGRA.cgra.translate.CGRARTL_test import *
 
+PORT_NORTH     = 0
+PORT_SOUTH     = 1
+PORT_WEST      = 2
+PORT_EAST      = 3
+PORT_NORTHWEST = 4
+PORT_NORTHEAST = 5
+PORT_SOUTHEAST = 6
+PORT_SOUTHWEST = 7
+PORT_DIRECTION_COUNTS = 8
+
+LINK_NO_MEM   = 0
+LINK_FROM_MEM = 1
+LINK_TO_MEM   = 2
+
 def helloCallBack():
     pass
 
-TILE_SIZE = 60
+TILE_HEIGHT = 60
+TILE_WIDTH = 60
 LINK_LENGTH = 40
 INTERVAL = 10
 BORDER = 4
@@ -23,8 +38,8 @@ master.title("CGRA-Flow: An Integrated End-to-End Framework for CGRA Exploration
 
 ROWS = 4
 COLS = 4
-GRID_WIDTH = (TILE_SIZE+LINK_LENGTH) * COLS - LINK_LENGTH
-GRID_HEIGHT = (TILE_SIZE+LINK_LENGTH) * ROWS - LINK_LENGTH
+GRID_WIDTH = (TILE_WIDTH+LINK_LENGTH) * COLS - LINK_LENGTH
+GRID_HEIGHT = (TILE_HEIGHT+LINK_LENGTH) * ROWS - LINK_LENGTH
 MEM_WIDTH = 50
 CONFIG_MEM = 8
 DATA_MEM = 4
@@ -34,56 +49,28 @@ fuTypeList = ["Phi", "Add", "Shift", "Ld", "Sel", "Cmp", "MAC", "St", "Ret", "Mu
 
 xbarTypeList = ["W", "E", "N", "S", "NE", "NW", "SE", "SW"]
 
-DIRECTION_COUNTS = 8
-
-class Tile:
-    def __init__(self, ID, posX, posY, size):
-        self.ID = 0
-        self.posX = posX
-        self.posY = posY
-        self.size = size
-    
-    def getLeftTop(self):
-        return (self.posX, self.posY)
-    
-    def getRightTop(self):
-        return (self.posX+self.size, self.posY)
-    
-    def getLeftBottom(self):
-        return (self.posX, self.posY+self.size)
-    
-    def getRightBottom(self):
-        return (self.posX+self.size, self.posY+self.size)
-    
-    def getLeftMid(self):
-        return (self.posX, self.posY+self.size//2)
-    
-    def getRightMid(self):
-        return (self.posX+self.size, self.posY+self.size//2)
-    
-    def getTopMid(self):
-        return (self.posX+self.size//2, self.posY)
-    
-    def getBottomMid(self):
-        return (self.posX+self.size//2, self.posY+self.size)
-        
 widgets = {}
 images = {}
 fuCheckVars = {}
 xbarCheckVars = {}
 
 class ParamTile:
-    def __init__( s, posX, posY ):
+    def __init__(s, ID, dimX, dimY, posX, posY, tileWidth, tileHeight):
+        s.ID = ID
         s.disabled = False
         s.posX = posX
         s.posY = posY
+        s.dimX = dimX
+        s.dimY = dimY
+        s.width = tileWidth
+        s.height = tileHeight
         s.hasToMem = False
         s.hasFromMem = False
         s.invalidOutPorts = set()
         s.invalidInPorts = set()
         s.fuDict = {}
         s.xbarDict = {}
-        for i in range( DIRECTION_COUNTS ):
+        for i in range( PORT_DIRECTION_COUNTS ):
             s.invalidOutPorts.add(i)
             s.invalidInPorts.add(i)
         
@@ -93,35 +80,110 @@ class ParamTile:
         for fuType in fuTypeList:
             s.fuDict[fuType] = 1
 
-    def getIndex( s, tileList ):
+    # position X/Y for drawing the tile
+    def getPosXY(s, baseX=0, baseY=0):
+        return (baseX+s.posX, baseY+s.posY)
+   
+    # position X/Y for connecting routing ports
+    def getPosXYOnPort(s, portType, baseX=0, baseY=0):
+        if portType == PORT_NORTH:
+            return s.getNorth(baseX, baseY)
+        elif portType == PORT_SOUTH:
+            return s.getSouth(baseX, baseY)
+        elif portType == PORT_WEST:
+            return s.getWest(baseX, baseY)
+        elif portType == PORT_EAST:
+            return s.getEast(baseX, baseY)
+        elif portType == PORT_NORTHEAST:
+            return s.getNorthEast(baseX, baseY)
+        elif portType == PORT_NORTHWEST:
+            return s.getNorthWest(baseX, baseY)
+        elif portType == PORT_SOUTHEAST:
+            return s.getSouthEast(baseX, baseY)
+        else:
+            return s.getSouthWest(baseX, baseY)
+
+    def getNorthWest(s, baseX=0, baseY=0):
+        return (baseX+s.posX, baseY+s.posY)
+    
+    def getNorthEast(s, baseX=0, baseY=0):
+        return (baseX+s.posX+s.width, baseY+s.posY)
+    
+    def getSouthWest(s, baseX=0, baseY=0):
+        return (baseX+s.posX, baseY+s.posY+s.height)
+    
+    def getSouthEast(s, baseX=0, baseY=0):
+        return (baseX+s.posX+s.width, baseY+s.posY+s.height)
+    
+    def getWest(s, baseX=0, baseY=0):
+        return (baseX+s.posX, baseY+s.posY+s.height//2)
+    
+    def getEast(s, baseX=0, baseY=0):
+        return (baseX+s.posX+s.width, baseY+s.posY+s.height//2)
+    
+    def getNorth(s, baseX=0, baseY=0):
+        return (baseX+s.posX+s.width//2, baseY+s.posY)
+    
+    def getSouth(s, baseX=0, baseY=0):
+        return (baseX+s.posX+s.width//2, baseY+s.posY+s.height)
+ 
+    def getIndex(s, tileList):
         if s.disabled:
             return -1
         index = 0
         for tile in tileList:
-            if tile.posY < s.posY and not tile.disabled:
+            if tile.dimY < s.dimY and not tile.disabled:
                 index += 1
-            elif tile.posY == s.posY and tile.posX < s.posX and not tile.disabled:
+            elif tile.dimY == s.dimY and tile.dimX < s.dimX and not tile.disabled:
                 index += 1
         return index
 
+    def updateAvailability( s ):
+        s.disabled = True
+        for fuType in fuTypeList:
+            if s.fuDict[fuType] == 1:
+                s.disabled = False
+                break
+
+    def disable( s ):
+        s.disabled = True
+
+
 class ParamLink:
-    def __init__(s, srcTile, dstTile, srcPort, dstPort):
+    def __init__(s, srcTile, dstTile, srcPort, dstPort, memAccessType=LINK_NO_MEM):
         s.srcTile = srcTile
         s.dstTile = dstTile
         s.srcPort = srcPort
         s.dstPort = dstPort
         s.disabled = False
-        s.isToMem = False
-        s.isFromMem = False
+        s.memAccessType = memAccessType
 
     def validatePorts(s):
-        if not s.isToMem and not s.isFromMem:
+        if s.memAccessType == LINK_NO_MEM:
             s.srcTile.invalidOutPorts.remove(s.srcPort)
             s.dstTile.invalidInPorts.remove(s.dstPort)
-        if s.isToMem:
+        if s.memAccessType == LINK_TO_MEM:
             s.srcTile.hasToMem = True
-        if s.isFromMem:
+        if s.memAccessType == LINK_FROM_MEM:
             s.dstTile.hasFromMem = True
+
+    def disable(s):
+        s.disabled = True
+
+    def getSrcXY(s, baseX=0, baseY=0):
+        if s.srcTile != None:
+            return s.srcTile.getPosXYOnPort(s.srcPort, baseX, baseY)
+        else:
+            dstPosX, dstPosY = s.dstTile.getPosXYOnPort(s.dstPort, baseX, baseY)
+            return dstPosX-LINK_LENGTH, dstPosY
+
+    def getDstXY(s, baseX=0, baseY=0):
+        if s.dstTile != None:
+            return s.dstTile.getPosXYOnPort(s.dstPort, baseX, baseY)
+        else:
+            srcPosX, srcPosY = s.srcTile.getPosXYOnPort(s.srcPort, baseX, baseY)
+            return srcPosX-LINK_LENGTH, srcPosY
+
 
 class ParamCGRA:
     def __init__(s, rows, columns, configMem=CONFIG_MEM, dataMem=DATA_MEM):
@@ -132,9 +194,6 @@ class ParamCGRA:
         s.tiles = []
         s.links = []
         s.targetTileID = 0
-        s.initTiles(rows, columns)
-        numOfLinks = rows*columns*2 + (rows-1)*columns*2 + (rows-1)*(columns-1)*2*2
-        s.initLinks(numOfLinks)
 
         for fuType in fuTypeList:
             if fuType in fuCheckVars:
@@ -148,21 +207,48 @@ class ParamCGRA:
         s.configMem = configMem
         s.dataMem = dataMem
 
-    def initTiles(s, rows, columns):
-        for r in range(rows):
-            for c in range(columns):
-                s.tiles.append(ParamTile(c, r))
+    def initTiles(s, tiles):
+        for r in range(s.rows):
+            for c in range(s.columns):
+                s.tiles.append(tiles[r][c])
 
-    def initLinks(s, numOfLinks):
-        for _ in range(numOfLinks):
-            s.links.append(ParamLink(None, None, 0, 0))
+    def addTile(s, tile):
+        s.tiles.append(tile)
 
+    def initLinks(s, links):
+        numOfLinks = s.rows*s.columns*2 + (s.rows-1)*s.columns*2 + (s.rows-1)*(s.columns-1)*2*2
+
+        for link in links:
+            s.links.append(link)
+
+    def addLink(s, link):
+        s.links.append(link)
 
     def updateFuCheckbutton(s, fuType, value):
-        s.tiles[s.targetTileID].fuDict[fuType] = value
+        s.getTileOfID(s.targetTileID).fuDict[fuType] = value
 
     def updateXbarCheckbutton(s, xbarType, value):
-        s.tiles[s.targetTileID].xbarDict[xbarType] = value
+        s.getTileOfID(s.targetTileID).xbarDict[xbarType] = value
+
+    def getTileOfID(s, ID):
+        for tile in s.tiles:
+            if tile.ID == ID:
+                return tile
+        return None
+
+    def getTileOfDim(s, dimX, dimY):
+        for tile in s.tiles:
+            if tile.dimX == dimX and tile.dimY == dimY:
+                return tile
+        return None
+
+    # certain tiles could be disabled due to the disabled FUs/links
+    def updateTiles(s):
+        pass
+
+    # some links can be fused as single one due to disabled tiles
+    def updateLinks(s):
+        pass
 
 
 paramCGRA = ParamCGRA(ROWS, COLS, CONFIG_MEM, DATA_MEM)
@@ -225,6 +311,8 @@ def clickUpdate(root):
         paramCGRA = ParamCGRA(rows, columns)
 
     paramCGRA.updateMem(configMem, dataMem)
+    paramCGRA.updateTiles()
+    paramCGRA.updateLinks()
 
     create_cgra_pannel(root, rows, columns)
     clickTile(0)
@@ -275,82 +363,141 @@ def clickCompileKernel():
 def clickGenerateDFG():
     pass
 
-def clickMapDFG():
-    pass
+def clickMapDFG(II):
+    # pad contains tile and links
+    tileWidth = paramCGRA.tiles[0].width
+    tileHeight = paramCGRA.tiles[0].height
+    padWidth = tileWidth + LINK_LENGTH
+    padHeight = tileHeight + LINK_LENGTH
+    baseX = 0
+
+    canvas = widgets["mappingCanvas"]
+    canvas.delete("all")
+    cgraWidth = GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + 20
+    canvas.configure(scrollregion=(0,0,II*cgraWidth, GRID_HEIGHT))
+    
+    for ii in range(II):
+        # draw data memory
+        posX = baseX
+        posY = 0
+        spmButton = tkinter.Label(canvas, text = "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nData\nSPM", fg = 'black', bg = 'gray', relief = 'raised', bd = BORDER)
+        adjustedHeight = (GRID_HEIGHT - tileHeight/2)*2 + 10
+        canvas.create_window(posX+30, posY+30, window=spmButton, height=adjustedHeight, width=MEM_WIDTH)
+
+        # draw tiles
+        for tile in paramCGRA.tiles:
+            button = tkinter.Label(canvas, text = "Tile "+str(tile.ID), fg='black', bg='gray', relief='raised', bd=BORDER)
+            posX, posY = tile.getPosXY(baseX+BORDER, BORDER)
+            canvas.create_window(posX+30, posY+30, window=button, height=tileHeight, width=tileWidth)
+
+        # draw links
+        for link in paramCGRA.links:
+            srcX, srcY = link.getSrcXY(baseX+BORDER, BORDER)
+            dstX, dstY = link.getDstXY(baseX+BORDER, BORDER)
+            canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
+ 
+        cycleLabel = tkinter.Label(canvas, text="Cycle "+str(ii))
+        canvas.create_window(baseX+280, GRID_HEIGHT+10+BORDER, window=cycleLabel, height=20, width=80)
+
+        baseX += GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + 20
+        canvas.create_line(baseX-5, INTERVAL, baseX-5, GRID_HEIGHT, width=2, dash=(10,2))
+
 
 def create_cgra_pannel(root, rows, columns):
 
     ROWS = rows
     COLS = columns
-    TILE_SIZE = (GRID_WIDTH + LINK_LENGTH) / COLS - LINK_LENGTH
+    TILE_WIDTH = (GRID_WIDTH + LINK_LENGTH) / COLS - LINK_LENGTH
+    TILE_HEIGHT = (GRID_HEIGHT + LINK_LENGTH) / ROWS - LINK_LENGTH
 
     totalWidth = GRID_WIDTH+MEM_WIDTH+LINK_LENGTH
     canvas = tkinter.Canvas(root, bd=5, height=GRID_HEIGHT, width=totalWidth)
     canvas.place(x=INTERVAL, y=INTERVAL)
 
     # pad contains tile and links
-    padSize = TILE_SIZE + LINK_LENGTH
+    # padSize = TILE_SIZE + LINK_LENGTH
+    padHeight = TILE_HEIGHT + LINK_LENGTH
+    padWidth = TILE_WIDTH + LINK_LENGTH
     
     # draw data memory
-    posX = 0
-    posY = 0
     memHeight = GRID_HEIGHT
     button = tkinter.Button(canvas, text = "Data\nSPM", fg = 'black', bg = 'gray', relief = 'raised', bd = BORDER, command = helloCallBack)
-    button.place(height=memHeight, width=MEM_WIDTH, x = posX, y = posY)
+    button.place(height=memHeight, width=MEM_WIDTH, x = 0, y = 0)
             
-    # draw tiles
-    tiles = []
-    numOfTile = 0
+    # construct tiles
     for i in range(ROWS):
         for j in range(COLS):
             ID = i*COLS+j
-            button = tkinter.Button(canvas, text = "Tile "+str(ID), fg='black', bg='gray', relief='raised', bd=BORDER, command=partial(
-    clickTile, ID))
-            posX = padSize * j + MEM_WIDTH + LINK_LENGTH
-            posY = GRID_HEIGHT - padSize * i - TILE_SIZE
-            button.place(height=TILE_SIZE, width=TILE_SIZE, x = posX, y = posY)
-            if j == 0:
-                tiles.append([])
-            tile = Tile(ID, posX, posY, TILE_SIZE)
-            tiles[-1].append(tile)
+            posX = padWidth * j + MEM_WIDTH + LINK_LENGTH
+            posY = GRID_HEIGHT - padHeight * i - TILE_HEIGHT
 
-    # draw links
+            tile = ParamTile(ID, j, i, posX, posY, TILE_WIDTH, TILE_HEIGHT)
+            paramCGRA.addTile(tile)
+
+    # draw tiles
+    for tile in paramCGRA.tiles:
+        button = tkinter.Button(canvas, text = "Tile "+str(tile.ID), fg='black', bg='gray', relief='raised', bd=BORDER, command=partial(clickTile, ID))
+
+        posX, posY = tile.getPosXY()
+        button.place(height=TILE_HEIGHT, width=TILE_WIDTH, x = posX, y = posY)
+
+
+    # TODO: draw lines based on the links connected between tiles rather than pos
+
+    # construct links
     for i in range(ROWS):
         for j in range(COLS):
             if j < COLS-1:
                 # horizontal
-                srcX, srcY = tiles[i][j].getRightMid()
-                dstX, dstY = tiles[i][j+1].getLeftMid()
-                canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
-                canvas.create_line(dstX, dstY, srcX, srcY, arrow=tkinter.LAST)
-            
+                tile0 = paramCGRA.getTileOfDim(j, i)
+                tile1 = paramCGRA.getTileOfDim(j+1, i)
+                link0 = ParamLink(tile0, tile1, PORT_EAST, PORT_WEST)
+                link1 = ParamLink(tile1, tile0, PORT_WEST, PORT_EAST)
+                paramCGRA.addLink(link0)
+                paramCGRA.addLink(link1)
+
             if i < ROWS-1 and j < COLS-1:
                 # diagonal left bottom to right top
-                srcX, srcY = tiles[i][j].getRightTop()
-                dstX, dstY = tiles[i+1][j+1].getLeftBottom()
-                canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
-                canvas.create_line(dstX, dstY, srcX, srcY, arrow=tkinter.LAST)
-                
+                tile0 = paramCGRA.getTileOfDim(j, i)
+                tile1 = paramCGRA.getTileOfDim(j+1, i+1)
+                link0 = ParamLink(tile0, tile1, PORT_NORTHEAST, PORT_SOUTHWEST)
+                link1 = ParamLink(tile1, tile0, PORT_SOUTHWEST, PORT_NORTHEAST)
+                paramCGRA.addLink(link0)
+                paramCGRA.addLink(link1)
+
             if i < ROWS-1 and j > 0:
                 # diagonal left top to right bottom
-                srcX, srcY = tiles[i][j].getLeftTop()
-                dstX, dstY = tiles[i+1][j-1].getRightBottom()
-                canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
-                canvas.create_line(dstX, dstY, srcX, srcY, arrow=tkinter.LAST)
-                
+                tile0 = paramCGRA.getTileOfDim(j, i)
+                tile1 = paramCGRA.getTileOfDim(j-1, i+1)
+                link0 = ParamLink(tile0, tile1, PORT_NORTHWEST, PORT_SOUTHEAST)
+                link1 = ParamLink(tile1, tile0, PORT_SOUTHEAST, PORT_NORTHWEST)
+                paramCGRA.addLink(link0)
+                paramCGRA.addLink(link1)
+
             if i < ROWS-1:
                 # vertical
-                srcX, srcY = tiles[i][j].getTopMid()
-                dstX, dstY = tiles[i+1][j].getBottomMid()
-                canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
-                canvas.create_line(dstX, dstY, srcX, srcY, arrow=tkinter.LAST)
-                
+                tile0 = paramCGRA.getTileOfDim(j, i)
+                tile1 = paramCGRA.getTileOfDim(j, i+1)
+                link0 = ParamLink(tile0, tile1, PORT_NORTH, PORT_SOUTH)
+                link1 = ParamLink(tile1, tile0, PORT_SOUTH, PORT_NORTH)
+                paramCGRA.addLink(link0)
+                paramCGRA.addLink(link1)
+
             if j == 0:
                 # connect to memory
-                srcX, srcY = tiles[i][j].getLeftMid()
-                dstX, dstY = srcX - LINK_LENGTH, srcY
-                canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
-                canvas.create_line(dstX, dstY, srcX, srcY, arrow=tkinter.LAST)
+                tile0 = paramCGRA.getTileOfDim(j, i)
+                link0 = ParamLink(tile0, None, PORT_WEST, i, LINK_TO_MEM)
+                link1 = ParamLink(None, tile0, i, PORT_WEST, LINK_FROM_MEM)
+                paramCGRA.addLink(link0)
+                paramCGRA.addLink(link1)
+
+
+    # draw links
+    for link in paramCGRA.links:
+        srcX, srcY = link.getSrcXY()
+        dstX, dstY = link.getDstXY()
+        canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
+ 
 
 def place_fu_options(master):
     fuCount = len(fuTypeList)
@@ -435,7 +582,7 @@ def create_test_pannel(master, x, width, height):
     testProgress['value'] = 0
     widgets["testProgress"] = testProgress
     testProgress.grid(row=0, column=1, padx=BORDER, pady=BORDER//2)
-    testShow = tkinter.Label(testPannel, text = "IDLE", fg='gray')
+    testShow = tkinter.Label(testPannel, text = " IDLE", fg='gray')
     widgets["testShow"] = testShow
     testShow.grid(row=0, column=2, sticky=tkinter.E, padx=BORDER, pady=BORDER//2)
 
@@ -511,7 +658,7 @@ def create_kernel_pannel(master, x, y, width, height):
     compileKernelShow = tkinter.Label(kernelPannel, text=u'\u2713', fg='green')
     compileKernelShow.grid(row=0, column=3, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
 
-    mapDFGButton = tkinter.Button(kernelPannel, text="Map", fg="black", command = clickMapDFG)
+    mapDFGButton = tkinter.Button(kernelPannel, text="Map", fg="black", command = partial(clickMapDFG, II))
     mapDFGButton.grid(row=0, column=4, sticky=tkinter.E, padx=BORDER, pady=BORDER//2)
 
     dfgPannel = tkinter.LabelFrame(kernelPannel, text='Data-Flow Graph', fg="black", bd=BORDER, relief='groove')
@@ -531,104 +678,64 @@ def create_kernel_pannel(master, x, y, width, height):
     # X.pack()
                 
 
-def create_mapping_pannel(root, x, y, width, height):
+def create_mapping_pannel(root, x, y, width):
 
     # GRID_WIDTH = (TILE_SIZE+LINK_LENGTH) * COLS - linkLength
-    TILE_SIZE = (GRID_WIDTH + LINK_LENGTH) / COLS - LINK_LENGTH
-    memHeight = height
+    TILE_WIDTH = (GRID_WIDTH + LINK_LENGTH) / COLS - LINK_LENGTH
+    TILE_HEIGHT = (GRID_HEIGHT + LINK_LENGTH) / ROWS - LINK_LENGTH
 
-    frame = tkinter.LabelFrame(root, text="Mapping", bd=BORDER, relief='groove', width=width, height=height+20)
+    frame = tkinter.LabelFrame(root, text="Mapping", bd=BORDER, relief='groove', width=width, height=GRID_HEIGHT+20)
     frame.place(x=x, y=y)
     # frame.pack(expand=True, fill=tkinter.BOTH) #.grid(row=0,column=0)
 
     cgraWidth = GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + 20
-    canvas = tkinter.Canvas(frame, bd=-1, height=height+20, width=width, scrollregion=(0,0,II*cgraWidth, height))
+    # canvas = tkinter.Canvas(frame, bd=-1, height=height+20, width=width, scrollregion=(0,0,II*cgraWidth, height))
+    mappingCanvas = tkinter.Canvas(frame, bd=-1, height=GRID_HEIGHT+20, width=width, scrollregion=(0,0,cgraWidth, GRID_HEIGHT))
+    widgets["mappingCanvas"] = mappingCanvas
     # canvas.place(x=x, y=y)
 
     hbar=tkinter.Scrollbar(frame, orient=tkinter.HORIZONTAL, bd=BORDER/4, relief='groove')
     hbar.pack(side=tkinter.BOTTOM, fill=tkinter.X)
     # hbar.place(x=0, y=memHeight+20)
-    hbar.config(command=canvas.xview)
-    canvas.config(width=width, height=height+20)
-    canvas.config(xscrollcommand=hbar.set)
-    canvas.pack(side=tkinter.LEFT, expand=True, fill=tkinter.BOTH)
+    hbar.config(command=mappingCanvas.xview)
+    mappingCanvas.config(width=width, height=GRID_HEIGHT+20)
+    mappingCanvas.config(xscrollcommand=hbar.set)
+    mappingCanvas.pack(side=tkinter.LEFT, expand=True, fill=tkinter.BOTH)
 
-
+    '''
     # pad contains tile and links
-    padSize = TILE_SIZE + LINK_LENGTH
+    padWidth = TILE_WIDTH + LINK_LENGTH
+    padHeight = TILE_HEIGHT + LINK_LENGTH
     baseX = 0
     
     for ii in range(II):
 
-      # draw data memory
-      posX = baseX
-      posY = 0
-      spmButton = tkinter.Label(canvas, text = "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nData\nSPM", fg = 'black', bg = 'gray', relief = 'raised', bd = BORDER)
-      adjustedHeight = (memHeight - TILE_SIZE/2)*2 + 10
-      canvas.create_window(posX+30, posY+30, window=spmButton, height=adjustedHeight, width=MEM_WIDTH)
-      # spmButton.place(height=memHeight, width=MEM_WIDTH, x = posX, y = posY)
-              
-      # draw tiles
-      tiles = []
-      numOfTile = 0
-      for i in range(ROWS):
-          for j in range(COLS):
-              ID = i*COLS+j
-              button = tkinter.Label(canvas, text = "Tile "+str(ID), fg='black', bg='gray', relief='raised', bd=BORDER)
-              posX = baseX+BORDER+padSize * j + MEM_WIDTH + LINK_LENGTH
-              posY = BORDER+height - padSize * i - TILE_SIZE
-              canvas.create_window(posX+30, posY+30, window=button, height=TILE_SIZE, width=TILE_SIZE)
-              # button.place(height=TILE_SIZE, width=TILE_SIZE, x = posX, y = posY)
-              if j == 0:
-                  tiles.append([])
-              tile = Tile(ID, posX, posY, TILE_SIZE)
-              tiles[-1].append(tile)
+        # draw data memory
+        posX = baseX
+        posY = 0
+        spmButton = tkinter.Label(canvas, text = "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nData\nSPM", fg = 'black', bg = 'gray', relief = 'raised', bd = BORDER)
+        adjustedHeight = (memHeight - TILE_HEIGHT/2)*2 + 10
+        canvas.create_window(posX+30, posY+30, window=spmButton, height=adjustedHeight, width=MEM_WIDTH)
 
-      # draw links
-      for i in range(ROWS):
-          for j in range(COLS):
-              if j < COLS-1:
-                  # horizontal
-                  srcX, srcY = tiles[i][j].getRightMid()
-                  dstX, dstY = tiles[i][j+1].getLeftMid()
-                  canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
-                  canvas.create_line(dstX, dstY, srcX, srcY, arrow=tkinter.LAST)
-              
-              if i < ROWS-1 and j < COLS-1:
-                  # diagonal left bottom to right top
-                  srcX, srcY = tiles[i][j].getRightTop()
-                  dstX, dstY = tiles[i+1][j+1].getLeftBottom()
-                  canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
-                  canvas.create_line(dstX, dstY, srcX, srcY, arrow=tkinter.LAST)
-                  
-              if i < ROWS-1 and j > 0:
-                  # diagonal left top to right bottom
-                  srcX, srcY = tiles[i][j].getLeftTop()
-                  dstX, dstY = tiles[i+1][j-1].getRightBottom()
-                  canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
-                  canvas.create_line(dstX, dstY, srcX, srcY, arrow=tkinter.LAST)
-                  
-              if i < ROWS-1:
-                  # vertical
-                  srcX, srcY = tiles[i][j].getTopMid()
-                  dstX, dstY = tiles[i+1][j].getBottomMid()
-                  canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
-                  canvas.create_line(dstX, dstY, srcX, srcY, arrow=tkinter.LAST)
-                  
-              if j == 0:
-                  # connect to memory
-                  srcX, srcY = tiles[i][j].getLeftMid()
-                  dstX, dstY = srcX - LINK_LENGTH, srcY
-                  canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
-                  canvas.create_line(dstX, dstY, srcX, srcY, arrow=tkinter.LAST)
-      cycleLabel = tkinter.Label(canvas, text="Cycle "+str(ii))
-      canvas.create_window(baseX+width/3, memHeight+10+BORDER, window=cycleLabel, height=20, width=80)
+        # draw tiles
+        for tile in paramCGRA.tiles:
+            button = tkinter.Label(canvas, text = "Tile "+str(tile.ID), fg='black', bg='gray', relief='raised', bd=BORDER)
+            posX, posY = tile.getPosXY(baseX+BORDER, BORDER)
+            canvas.create_window(posX+30, posY+30, window=button, height=TILE_HEIGHT, width=TILE_WIDTH)
 
-      baseX += GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + 20
-      canvas.create_line(baseX-5, INTERVAL, baseX-5, memHeight, width=2, dash=(10,2))
-      # cycleLabel.place(x=MEM_WIDTH+LINK_LENGTH+TILE_SIZE, y=memHeight+BORDER)
+        # draw links
+        for link in paramCGRA.links:
+            srcX, srcY = link.getSrcXY(baseX+BORDER, BORDER)
+            dstX, dstY = link.getDstXY(baseX+BORDER, BORDER)
+            canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
+ 
+        cycleLabel = tkinter.Label(canvas, text="Cycle "+str(ii))
+        canvas.create_window(baseX+width/3, memHeight+10+BORDER, window=cycleLabel, height=20, width=80)
 
+        baseX += GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + 20
+        canvas.create_line(baseX-5, INTERVAL, baseX-5, memHeight, width=2, dash=(10,2))
 
+    '''
 
 create_cgra_pannel(master, ROWS, COLS)
 
@@ -653,7 +760,7 @@ totalWidth = layoutPadPosX + layoutPadWidth
 
 create_kernel_pannel(master, INTERVAL, GRID_HEIGHT+INTERVAL*2, paramPadPosX-20, GRID_HEIGHT+55)
 
-create_mapping_pannel(master, paramPadPosX, GRID_HEIGHT+INTERVAL*2, totalWidth-paramPadPosX-5, GRID_HEIGHT)
+create_mapping_pannel(master, paramPadPosX, GRID_HEIGHT+INTERVAL*2, totalWidth-paramPadPosX-5)
 
 master.geometry(str(layoutPadPosX+layoutPadWidth+INTERVAL)+"x"+str(GRID_HEIGHT*2+INTERVAL*3+50))
 

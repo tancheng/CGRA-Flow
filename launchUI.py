@@ -374,21 +374,18 @@ def clickMapDFG(II):
     canvas = widgets["mappingCanvas"]
     canvas.delete("all")
     cgraWidth = GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + 20
-    canvas.configure(scrollregion=(0,0,II*cgraWidth, GRID_HEIGHT))
+    canvas.configure(scrollregion=(0, 0, II*cgraWidth, GRID_HEIGHT))
     
     for ii in range(II):
         # draw data memory
-        posX = baseX
-        posY = 0
-        spmButton = tkinter.Label(canvas, text = "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nData\nSPM", fg = 'black', bg = 'gray', relief = 'raised', bd = BORDER)
-        adjustedHeight = (GRID_HEIGHT - tileHeight/2)*2 + 10
-        canvas.create_window(posX+30, posY+30, window=spmButton, height=adjustedHeight, width=MEM_WIDTH)
+        spmLabel = tkinter.Label(canvas, text="Data\nSPM", fg='black', bg='gray', relief='raised', bd=BORDER)
+        canvas.create_window(baseX+BORDER, BORDER, window=spmLabel, height=GRID_HEIGHT, width=MEM_WIDTH, anchor="nw")
 
         # draw tiles
         for tile in paramCGRA.tiles:
             button = tkinter.Label(canvas, text = "Tile "+str(tile.ID), fg='black', bg='gray', relief='raised', bd=BORDER)
             posX, posY = tile.getPosXY(baseX+BORDER, BORDER)
-            canvas.create_window(posX+30, posY+30, window=button, height=tileHeight, width=tileWidth)
+            canvas.create_window(posX, posY, window=button, height=tileHeight, width=tileWidth, anchor="nw")
 
         # draw links
         for link in paramCGRA.links:
@@ -436,7 +433,7 @@ def create_cgra_pannel(root, rows, columns):
 
     # draw tiles
     for tile in paramCGRA.tiles:
-        button = tkinter.Button(canvas, text = "Tile "+str(tile.ID), fg='black', bg='gray', relief='raised', bd=BORDER, command=partial(clickTile, ID))
+        button = tkinter.Button(canvas, text = "Tile "+str(tile.ID), fg='black', bg='gray', relief='raised', bd=BORDER, command=partial(clickTile, tile.ID))
 
         posX, posY = tile.getPosXY()
         button.place(height=TILE_HEIGHT, width=TILE_WIDTH, x = posX, y = posY)
@@ -689,53 +686,16 @@ def create_mapping_pannel(root, x, y, width):
     # frame.pack(expand=True, fill=tkinter.BOTH) #.grid(row=0,column=0)
 
     cgraWidth = GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + 20
-    # canvas = tkinter.Canvas(frame, bd=-1, height=height+20, width=width, scrollregion=(0,0,II*cgraWidth, height))
-    mappingCanvas = tkinter.Canvas(frame, bd=-1, height=GRID_HEIGHT+20, width=width, scrollregion=(0,0,cgraWidth, GRID_HEIGHT))
+    mappingCanvas = tkinter.Canvas(frame, height=GRID_HEIGHT+20, width=width, scrollregion=(0,0,cgraWidth, GRID_HEIGHT))
     widgets["mappingCanvas"] = mappingCanvas
-    # canvas.place(x=x, y=y)
 
     hbar=tkinter.Scrollbar(frame, orient=tkinter.HORIZONTAL, bd=BORDER/4, relief='groove')
-    hbar.pack(side=tkinter.BOTTOM, fill=tkinter.X)
-    # hbar.place(x=0, y=memHeight+20)
+    hbar.pack(side=tkinter.BOTTOM, fill=tkinter.X, expand=0)
     hbar.config(command=mappingCanvas.xview)
     mappingCanvas.config(width=width, height=GRID_HEIGHT+20)
     mappingCanvas.config(xscrollcommand=hbar.set)
     mappingCanvas.pack(side=tkinter.LEFT, expand=True, fill=tkinter.BOTH)
 
-    '''
-    # pad contains tile and links
-    padWidth = TILE_WIDTH + LINK_LENGTH
-    padHeight = TILE_HEIGHT + LINK_LENGTH
-    baseX = 0
-    
-    for ii in range(II):
-
-        # draw data memory
-        posX = baseX
-        posY = 0
-        spmButton = tkinter.Label(canvas, text = "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nData\nSPM", fg = 'black', bg = 'gray', relief = 'raised', bd = BORDER)
-        adjustedHeight = (memHeight - TILE_HEIGHT/2)*2 + 10
-        canvas.create_window(posX+30, posY+30, window=spmButton, height=adjustedHeight, width=MEM_WIDTH)
-
-        # draw tiles
-        for tile in paramCGRA.tiles:
-            button = tkinter.Label(canvas, text = "Tile "+str(tile.ID), fg='black', bg='gray', relief='raised', bd=BORDER)
-            posX, posY = tile.getPosXY(baseX+BORDER, BORDER)
-            canvas.create_window(posX+30, posY+30, window=button, height=TILE_HEIGHT, width=TILE_WIDTH)
-
-        # draw links
-        for link in paramCGRA.links:
-            srcX, srcY = link.getSrcXY(baseX+BORDER, BORDER)
-            dstX, dstY = link.getDstXY(baseX+BORDER, BORDER)
-            canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
- 
-        cycleLabel = tkinter.Label(canvas, text="Cycle "+str(ii))
-        canvas.create_window(baseX+width/3, memHeight+10+BORDER, window=cycleLabel, height=20, width=80)
-
-        baseX += GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + 20
-        canvas.create_line(baseX-5, INTERVAL, baseX-5, memHeight, width=2, dash=(10,2))
-
-    '''
 
 create_cgra_pannel(master, ROWS, COLS)
 

@@ -49,11 +49,23 @@ fuTypeList = ["Phi", "Add", "Shift", "Ld", "Sel", "Cmp", "MAC", "St", "Ret", "Mu
 
 xbarTypeList = ["W", "E", "N", "S", "NE", "NW", "SE", "SW"]
 
+xbarType2Port = {}
+xbarType2Port["W" ] = PORT_WEST
+xbarType2Port["E" ] = PORT_EAST
+xbarType2Port["N" ] = PORT_NORTH
+xbarType2Port["S" ] = PORT_SOUTH
+xbarType2Port["NE"] = PORT_NORTHEAST
+xbarType2Port["NW"] = PORT_NORTHWEST
+xbarType2Port["SE"] = PORT_SOUTHEAST
+xbarType2Port["SW"] = PORT_SOUTHWEST
+
 widgets = {}
 images = {}
 entireTileCheckVar = tkinter.IntVar()
 fuCheckVars = {}
+fuCheckbuttons = {}
 xbarCheckVars = {}
+xbarCheckbuttons = {}
 
 class ParamTile:
     def __init__(s, ID, dimX, dimY, posX, posY, tileWidth, tileHeight):
@@ -65,6 +77,8 @@ class ParamTile:
         s.dimY = dimY
         s.width = tileWidth
         s.height = tileHeight
+        s.outLinks = {}
+        s.inLinks = {}
         s.hasToMem = False
         s.hasFromMem = False
         s.invalidOutPorts = set()
@@ -80,6 +94,12 @@ class ParamTile:
 
         for fuType in fuTypeList:
             s.fuDict[fuType] = 1
+
+    def setOutLink(s, portType, link):
+        s.outLinks[portType] = link
+
+    def setInLink(s, portType, link):
+        s.inLinks[portType] = link
 
     # position X/Y for drawing the tile
     def getPosXY(s, baseX=0, baseY=0):
@@ -146,9 +166,6 @@ class ParamTile:
                 s.disabled = False
                 break
 
-    def disable( s ):
-        s.disabled = True
-
 
 class ParamLink:
     def __init__(s, srcTile, dstTile, srcPort, dstPort, memAccessType=LINK_NO_MEM):
@@ -158,6 +175,10 @@ class ParamLink:
         s.dstPort = dstPort
         s.disabled = False
         s.memAccessType = memAccessType
+        if s.srcTile != None:
+            s.srcTile.setOutLink(s.srcPort, s)
+        if s.dstTile != None:
+            s.dstTile.setInLink(s.dstPort, s)
 
     def validatePorts(s):
         if s.memAccessType == LINK_NO_MEM:
@@ -167,9 +188,6 @@ class ParamLink:
             s.srcTile.hasToMem = True
         if s.memAccessType == LINK_FROM_MEM:
             s.dstTile.hasFromMem = True
-
-    def disable(s):
-        s.disabled = True
 
     def getSrcXY(s, baseX=0, baseY=0):
         if s.srcTile != None:
@@ -229,7 +247,11 @@ class ParamCGRA:
         s.getTileOfID(s.targetTileID).fuDict[fuType] = value
 
     def updateXbarCheckbutton(s, xbarType, value):
-        s.getTileOfID(s.targetTileID).xbarDict[xbarType] = value
+        tile = s.getTileOfID(s.targetTileID)
+        tile.xbarDict[xbarType] = value
+        port = xbarType2Port[xbarType]
+        if port in tile.outLinks:
+            tile.outLinks[port].disabled = True if value == 0 else False
 
     def getTileOfID(s, ID):
         for tile in s.tiles:
@@ -284,17 +306,27 @@ def clickTile(ID):
     widgets["xbarConfigPannel"].config(text='Tile '+str(ID)+' crossbar incoming links')
     widgets["entireTileCheckbutton"].config(text='Disable the entire Tile '+str(ID))
     paramCGRA.targetTileID = ID
+
+    disabled = paramCGRA.getTileOfID(ID).disabled
     for fuType in fuTypeList:
         fuCheckVars[fuType].set(paramCGRA.tiles[ID].fuDict[fuType])
+        fuCheckbuttons[fuType].configure(state="disabled" if disabled else "normal")
 
     for xbarType in xbarTypeList:
         xbarCheckVars[xbarType].set(paramCGRA.tiles[ID].xbarDict[xbarType])
+        xbarCheckbuttons[xbarType].configure(state="disabled" if disabled else "normal")
+
+    entireTileCheckVar.set(1 if paramCGRA.getTileOfID(ID).disabled else 0)
+ 
 
 def clickEntireTileCheckbutton():
-    if entireTileCheckVar.get() == 0:
+
+    paramCGRA.getTileOfID(paramCGRA.targetTileID).disabled = True if entireTileCheckVar.get() == 1 else False
+    if entireTileCheckVar.get() == 1:
         for fuType in fuTypeList:
             fuCheckVars[fuType].set(0)
             clickFuCheckbutton(fuType)
+            fuCheckbuttons[fuType].configure(state="disabled")
             # paramCGRA.targetTileID tiles[ID].fuDict[fuType])
             # fuCheckbutton.select()
             # paramCGRA.updateFuCheckbutton(fuTypeList[i], fuVar.get())
@@ -302,9 +334,20 @@ def clickEntireTileCheckbutton():
         for xbarType in xbarTypeList:
             xbarCheckVars[xbarType].set(0)
             clickXbarCheckbutton(xbarType)
+            xbarCheckbuttons[xbarType].configure(state="disabled")
  
         paramCGRA.getTileOfID(paramCGRA.targetTileID).disabled = True
     else:
+        for fuType in fuTypeList:
+            fuCheckVars[fuType].set(0)
+            clickFuCheckbutton(fuType)
+            fuCheckbuttons[fuType].configure(state="normal")
+
+        for xbarType in xbarTypeList:
+            xbarCheckVars[xbarType].set(0)
+            clickXbarCheckbutton(xbarType)
+            xbarCheckbuttons[xbarType].configure(state="normal")
+ 
         paramCGRA.getTileOfID(paramCGRA.targetTileID).disabled = False
 
 
@@ -441,18 +484,22 @@ def create_cgra_pannel(root, rows, columns):
     button.place(height=memHeight, width=MEM_WIDTH, x = 0, y = 0)
             
     # construct tiles
-    for i in range(ROWS):
-        for j in range(COLS):
-            ID = i*COLS+j
-            posX = padWidth * j + MEM_WIDTH + LINK_LENGTH
-            posY = GRID_HEIGHT - padHeight * i - TILE_HEIGHT
+    if len(paramCGRA.tiles) == 0:
+        for i in range(ROWS):
+            for j in range(COLS):
+                ID = i*COLS+j
+                posX = padWidth * j + MEM_WIDTH + LINK_LENGTH
+                posY = GRID_HEIGHT - padHeight * i - TILE_HEIGHT
 
-            tile = ParamTile(ID, j, i, posX, posY, TILE_WIDTH, TILE_HEIGHT)
-            paramCGRA.addTile(tile)
+                tile = ParamTile(ID, j, i, posX, posY, TILE_WIDTH, TILE_HEIGHT)
+                paramCGRA.addTile(tile)
 
     # draw tiles
     for tile in paramCGRA.tiles:
-        button = tkinter.Button(canvas, text = "Tile "+str(tile.ID), fg='black', bg='gray', relief='raised', bd=BORDER, command=partial(clickTile, tile.ID))
+        if tile.disabled:
+            button = tkinter.Button(canvas, text = "Tile "+str(tile.ID), fg='gray', relief='flat', bd=BORDER, command=partial(clickTile, tile.ID))
+        else:
+            button = tkinter.Button(canvas, text = "Tile "+str(tile.ID), fg='black', bg='gray', relief='raised', bd=BORDER, command=partial(clickTile, tile.ID))
 
         posX, posY = tile.getPosXY()
         button.place(height=TILE_HEIGHT, width=TILE_WIDTH, x = posX, y = posY)
@@ -461,58 +508,62 @@ def create_cgra_pannel(root, rows, columns):
     # TODO: draw lines based on the links connected between tiles rather than pos
 
     # construct links
-    for i in range(ROWS):
-        for j in range(COLS):
-            if j < COLS-1:
-                # horizontal
-                tile0 = paramCGRA.getTileOfDim(j, i)
-                tile1 = paramCGRA.getTileOfDim(j+1, i)
-                link0 = ParamLink(tile0, tile1, PORT_EAST, PORT_WEST)
-                link1 = ParamLink(tile1, tile0, PORT_WEST, PORT_EAST)
-                paramCGRA.addLink(link0)
-                paramCGRA.addLink(link1)
+    if len(paramCGRA.links) == 0:
+        for i in range(ROWS):
+            for j in range(COLS):
+                if j < COLS-1:
+                    # horizontal
+                    tile0 = paramCGRA.getTileOfDim(j, i)
+                    tile1 = paramCGRA.getTileOfDim(j+1, i)
+                    link0 = ParamLink(tile0, tile1, PORT_EAST, PORT_WEST)
+                    link1 = ParamLink(tile1, tile0, PORT_WEST, PORT_EAST)
+                    paramCGRA.addLink(link0)
+                    paramCGRA.addLink(link1)
 
-            if i < ROWS-1 and j < COLS-1:
-                # diagonal left bottom to right top
-                tile0 = paramCGRA.getTileOfDim(j, i)
-                tile1 = paramCGRA.getTileOfDim(j+1, i+1)
-                link0 = ParamLink(tile0, tile1, PORT_NORTHEAST, PORT_SOUTHWEST)
-                link1 = ParamLink(tile1, tile0, PORT_SOUTHWEST, PORT_NORTHEAST)
-                paramCGRA.addLink(link0)
-                paramCGRA.addLink(link1)
+                if i < ROWS-1 and j < COLS-1:
+                    # diagonal left bottom to right top
+                    tile0 = paramCGRA.getTileOfDim(j, i)
+                    tile1 = paramCGRA.getTileOfDim(j+1, i+1)
+                    link0 = ParamLink(tile0, tile1, PORT_NORTHEAST, PORT_SOUTHWEST)
+                    link1 = ParamLink(tile1, tile0, PORT_SOUTHWEST, PORT_NORTHEAST)
+                    paramCGRA.addLink(link0)
+                    paramCGRA.addLink(link1)
 
-            if i < ROWS-1 and j > 0:
-                # diagonal left top to right bottom
-                tile0 = paramCGRA.getTileOfDim(j, i)
-                tile1 = paramCGRA.getTileOfDim(j-1, i+1)
-                link0 = ParamLink(tile0, tile1, PORT_NORTHWEST, PORT_SOUTHEAST)
-                link1 = ParamLink(tile1, tile0, PORT_SOUTHEAST, PORT_NORTHWEST)
-                paramCGRA.addLink(link0)
-                paramCGRA.addLink(link1)
+                if i < ROWS-1 and j > 0:
+                    # diagonal left top to right bottom
+                    tile0 = paramCGRA.getTileOfDim(j, i)
+                    tile1 = paramCGRA.getTileOfDim(j-1, i+1)
+                    link0 = ParamLink(tile0, tile1, PORT_NORTHWEST, PORT_SOUTHEAST)
+                    link1 = ParamLink(tile1, tile0, PORT_SOUTHEAST, PORT_NORTHWEST)
+                    paramCGRA.addLink(link0)
+                    paramCGRA.addLink(link1)
 
-            if i < ROWS-1:
-                # vertical
-                tile0 = paramCGRA.getTileOfDim(j, i)
-                tile1 = paramCGRA.getTileOfDim(j, i+1)
-                link0 = ParamLink(tile0, tile1, PORT_NORTH, PORT_SOUTH)
-                link1 = ParamLink(tile1, tile0, PORT_SOUTH, PORT_NORTH)
-                paramCGRA.addLink(link0)
-                paramCGRA.addLink(link1)
+                if i < ROWS-1:
+                    # vertical
+                    tile0 = paramCGRA.getTileOfDim(j, i)
+                    tile1 = paramCGRA.getTileOfDim(j, i+1)
+                    link0 = ParamLink(tile0, tile1, PORT_NORTH, PORT_SOUTH)
+                    link1 = ParamLink(tile1, tile0, PORT_SOUTH, PORT_NORTH)
+                    paramCGRA.addLink(link0)
+                    paramCGRA.addLink(link1)
 
-            if j == 0:
-                # connect to memory
-                tile0 = paramCGRA.getTileOfDim(j, i)
-                link0 = ParamLink(tile0, None, PORT_WEST, i, LINK_TO_MEM)
-                link1 = ParamLink(None, tile0, i, PORT_WEST, LINK_FROM_MEM)
-                paramCGRA.addLink(link0)
-                paramCGRA.addLink(link1)
+                if j == 0:
+                    # connect to memory
+                    tile0 = paramCGRA.getTileOfDim(j, i)
+                    link0 = ParamLink(tile0, None, PORT_WEST, i, LINK_TO_MEM)
+                    link1 = ParamLink(None, tile0, i, PORT_WEST, LINK_FROM_MEM)
+                    paramCGRA.addLink(link0)
+                    paramCGRA.addLink(link1)
 
 
     # draw links
     for link in paramCGRA.links:
-        srcX, srcY = link.getSrcXY()
-        dstX, dstY = link.getDstXY()
-        canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
+        if link.disabled:
+            pass
+        else:
+            srcX, srcY = link.getSrcXY()
+            dstX, dstY = link.getDstXY()
+            canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
  
 
 def place_fu_options(master):
@@ -521,6 +572,7 @@ def place_fu_options(master):
         fuVar = tkinter.IntVar()
         fuCheckVars[fuTypeList[i]] = fuVar
         fuCheckbutton = tkinter.Checkbutton(master, variable=fuVar, text=fuTypeList[i], command=partial(clickFuCheckbutton, fuTypeList[i]))
+        fuCheckbuttons[fuTypeList[i]] = fuCheckbutton
         fuCheckbutton.select()
         paramCGRA.updateFuCheckbutton(fuTypeList[i], fuVar.get())
         fuCheckbutton.grid(row=i//4, column=i%4, padx=3, pady=3, sticky="W")
@@ -530,6 +582,7 @@ def place_xbar_options(master):
         xbarVar = tkinter.IntVar()
         xbarCheckVars[xbarTypeList[i]] = xbarVar
         xbarCheckbutton = tkinter.Checkbutton(master, variable=xbarVar, text=xbarTypeList[i], command=partial(clickXbarCheckbutton, xbarTypeList[i]))
+        xbarCheckbuttons[xbarTypeList[i]] = xbarCheckbutton
         xbarCheckbutton.select()
         paramCGRA.updateXbarCheckbutton(xbarTypeList[i], xbarVar.get())
         xbarCheckbutton.grid(row=i//4, column=i%4, padx=BORDER, pady=BORDER, sticky="W")
@@ -579,8 +632,9 @@ def create_param_pannel(master, x, width, height):
     updateButton.grid(columnspan=2, row=2, column=3, sticky=tkinter.W, padx=BORDER)
 
     # entireTileCheckVar = tkinter.IntVar()
+    entireTileCheckVar.set(0)
     entireTileCheckbutton = tkinter.Checkbutton(paramPannel, variable=entireTileCheckVar, text="Disable the entire Tile 0", command=clickEntireTileCheckbutton)
-    entireTileCheckbutton.select()
+    # entireTileCheckbutton.select()
     # paramCGRA.updateEntireTileCheckbutton(fuTypeList[i], fuVar.get())
     entireTileCheckbutton.grid(columnspan=5, row=3, column=0, padx=BORDER, pady=BORDER, sticky="E")
     widgets["entireTileCheckbutton"] = entireTileCheckbutton

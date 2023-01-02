@@ -51,6 +51,7 @@ xbarTypeList = ["W", "E", "N", "S", "NE", "NW", "SE", "SW"]
 
 widgets = {}
 images = {}
+entireTileCheckVar = tkinter.IntVar()
 fuCheckVars = {}
 xbarCheckVars = {}
 
@@ -281,12 +282,30 @@ def clickGenerateVerilog():
 def clickTile(ID):
     widgets["fuConfigPannel"].config(text='Tile '+str(ID)+' functional units')
     widgets["xbarConfigPannel"].config(text='Tile '+str(ID)+' crossbar incoming links')
+    widgets["entireTileCheckbutton"].config(text='Disable the entire Tile '+str(ID))
     paramCGRA.targetTileID = ID
     for fuType in fuTypeList:
         fuCheckVars[fuType].set(paramCGRA.tiles[ID].fuDict[fuType])
 
     for xbarType in xbarTypeList:
         xbarCheckVars[xbarType].set(paramCGRA.tiles[ID].xbarDict[xbarType])
+
+def clickEntireTileCheckbutton():
+    if entireTileCheckVar.get() == 0:
+        for fuType in fuTypeList:
+            fuCheckVars[fuType].set(0)
+            clickFuCheckbutton(fuType)
+            # paramCGRA.targetTileID tiles[ID].fuDict[fuType])
+            # fuCheckbutton.select()
+            # paramCGRA.updateFuCheckbutton(fuTypeList[i], fuVar.get())
+
+        for xbarType in xbarTypeList:
+            xbarCheckVars[xbarType].set(0)
+            clickXbarCheckbutton(xbarType)
+ 
+        paramCGRA.getTileOfID(paramCGRA.targetTileID).disabled = True
+    else:
+        paramCGRA.getTileOfID(paramCGRA.targetTileID).disabled = False
 
 
 def clickFuCheckbutton(fuType):
@@ -297,7 +316,7 @@ def clickFuCheckbutton(fuType):
 def clickXbarCheckbutton(xbarType):
     paramCGRA.updateXbarCheckbutton(xbarType, xbarCheckVars[xbarType].get())
     # need to refine/assemble the CGRA model here:
-        
+    
 
 def clickUpdate(root):
     rows = int(widgets["rowsEntry"].get())
@@ -507,7 +526,7 @@ def place_fu_options(master):
         fuCheckbutton.grid(row=i//4, column=i%4, padx=3, pady=3, sticky="W")
         
 def place_xbar_options(master):
-    for i in range(8):
+    for i in range(PORT_DIRECTION_COUNTS):
         xbarVar = tkinter.IntVar()
         xbarCheckVars[xbarTypeList[i]] = xbarVar
         xbarCheckbutton = tkinter.Checkbutton(master, variable=xbarVar, text=xbarTypeList[i], command=partial(clickXbarCheckbutton, xbarTypeList[i]))
@@ -519,56 +538,67 @@ def create_param_pannel(master, x, width, height):
     paramPannel = tkinter.LabelFrame(master, text='Configuration', bd=BORDER, relief='groove')
     paramPannel.place(height=height, width=width, x=x, y=INTERVAL)
     
-    paramPannel.columnconfigure(0, weight=1)
-    paramPannel.columnconfigure(1, weight=60)
-    paramPannel.columnconfigure(2, weight=1)
-    paramPannel.columnconfigure(3, weight=60)
+    paramPannel.columnconfigure(0, weight=3)
+    paramPannel.columnconfigure(1, weight=1)
+    paramPannel.columnconfigure(2, weight=100)
+    paramPannel.columnconfigure(3, weight=1)
+    paramPannel.columnconfigure(4, weight=100)
 
-    rowsLabel = ttk.Label(paramPannel, text='Rows:' )
-    rowsLabel.grid(row=0, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER)
-    rowsEntry = ttk.Entry(paramPannel, justify=tkinter.CENTER)
-    rowsEntry.grid(row=0, column=1, sticky=tkinter.W, padx=BORDER, pady=BORDER)
+    rowsLabel = tkinter.Label(paramPannel, text='Rows & Columns:' )
+    rowsLabel.grid(columnspan=2, row=0, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER)
+    rowsEntry = tkinter.Entry(paramPannel, justify=tkinter.CENTER)
+    rowsEntry.grid(row=0, column=2, sticky=tkinter.W, padx=BORDER, pady=BORDER)
     rowsEntry.insert(0, str(paramCGRA.rows))
     widgets["rowsEntry"] = rowsEntry
     
-    columnsLabel = ttk.Label(paramPannel, text='Columns:')
-    columnsLabel.grid(row=0, column=2, sticky=tkinter.E, padx=BORDER, pady=BORDER)
-    columnsEntry = ttk.Entry(paramPannel, justify=tkinter.CENTER)
-    columnsEntry.grid(row=0, column=3, sticky=tkinter.E, padx=BORDER, pady=BORDER)
+    xLabel = tkinter.Label(paramPannel, text='&')
+    xLabel.grid(row=0, column=3, sticky=tkinter.W, padx=BORDER, pady=BORDER)
+ 
+    # columnsLabel = tkinter.Label(paramPannel, text='Columns:')
+    # columnsLabel.grid(row=0, column=2, sticky=tkinter.E, padx=BORDER, pady=BORDER)
+    columnsEntry = tkinter.Entry(paramPannel, justify=tkinter.CENTER)
+    columnsEntry.grid(row=0, column=4, sticky=tkinter.W, padx=BORDER, pady=BORDER)
     columnsEntry.insert(0, str(paramCGRA.columns))
     widgets["columnsEntry"] = columnsEntry
     
-    configMemLabel = ttk.Label(paramPannel, text='ConfigMemSize (entries):')
-    configMemLabel.grid(columnspan=3, row=1, column=0, padx=BORDER, pady=BORDER)
+    configMemLabel = ttk.Label(paramPannel, text='Config Memory (entries/tile):')
+    configMemLabel.grid(columnspan=4, row=1, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER)
     configMemEntry = ttk.Entry(paramPannel, justify=tkinter.CENTER)
-    configMemEntry.grid(row=1, column=3, sticky=tkinter.E, padx=BORDER, pady=BORDER)
+    configMemEntry.grid(row=1, column=4, sticky=tkinter.W, padx=BORDER, pady=BORDER)
     configMemEntry.insert(0, paramCGRA.configMem)
     widgets["configMemEntry"] = configMemEntry
     
-    dataMemLabel = ttk.Label(paramPannel, text='DataSPMSize (KBs):')
-    dataMemLabel.grid(columnspan=3, row=2, column=0, padx=BORDER, pady=BORDER)
+    dataMemLabel = ttk.Label(paramPannel, text='Data SPM (KBs):')
+    dataMemLabel.grid(columnspan=2, row=2, column=0, padx=BORDER, pady=BORDER, sticky=tkinter.W)
     dataMemEntry = ttk.Entry(paramPannel, justify=tkinter.CENTER)
-    dataMemEntry.grid(row=2, column=3, sticky=tkinter.E, padx=BORDER, pady=BORDER)
+    dataMemEntry.grid(row=2, column=2, sticky=tkinter.W, padx=BORDER, pady=BORDER)
     dataMemEntry.insert(0, str(paramCGRA.dataMem))
     widgets["dataMemEntry"] = dataMemEntry
        
+    updateButton = tkinter.Button(paramPannel, text = "Update", relief='raised', command = partial(clickUpdate, master))
+    updateButton.grid(columnspan=2, row=2, column=3, sticky=tkinter.W, padx=BORDER)
+
+    # entireTileCheckVar = tkinter.IntVar()
+    entireTileCheckbutton = tkinter.Checkbutton(paramPannel, variable=entireTileCheckVar, text="Disable the entire Tile 0", command=clickEntireTileCheckbutton)
+    entireTileCheckbutton.select()
+    # paramCGRA.updateEntireTileCheckbutton(fuTypeList[i], fuVar.get())
+    entireTileCheckbutton.grid(columnspan=5, row=3, column=0, padx=BORDER, pady=BORDER, sticky="E")
+    widgets["entireTileCheckbutton"] = entireTileCheckbutton
+
     fuConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 functional units', bd = BORDER, relief='groove')
     # fuConfigPannel.config(text='xxx')
-    fuConfigPannel.grid(columnspan=4, row=3, column=0, padx=BORDER, pady=BORDER)
+    fuConfigPannel.grid(columnspan=5, row=4, column=0, padx=BORDER, pady=BORDER)
     widgets["fuConfigPannel"] = fuConfigPannel
     
     place_fu_options(fuConfigPannel)
     
-    xbarConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 crossbar incoming links', bd = BORDER, relief='groove')
+    xbarConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 crossbar outgoing links', bd = BORDER, relief='groove')
     # xbarConfigPannel.config(text='y')
-    xbarConfigPannel.grid(columnspan=4, row=4, column=0, padx=BORDER, pady=BORDER)
+    xbarConfigPannel.grid(columnspan=5, row=5, column=0, padx=BORDER, pady=BORDER)
     widgets["xbarConfigPannel"] = xbarConfigPannel
     
     place_xbar_options(xbarConfigPannel)   
-   
-    updateButton = tkinter.Button(paramPannel, text = "Update model", relief='raised', command = partial(clickUpdate, master))
-    updateButton.grid(columnspan=4, row=5, column=0, padx=BORDER, pady=BORDER)
- 
+
 
 def create_test_pannel(master, x, width, height):
     testPannel = tkinter.LabelFrame(master, text='Verification', bd = BORDER, relief='groove')

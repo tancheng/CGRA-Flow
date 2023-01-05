@@ -388,8 +388,10 @@ class ParamCGRA:
                         print(" oppositePort ", xbarPort2Type[oppositePort], " NOT in tile's inLinks")
                         s.removeUpdatedLink(outLink)
 
-                # for portType in tile.inLinks:
-                    # TODO: ...
+                for portType in tile.inLinks:
+                    inLink = tile.inLinks[portType]
+                    if inLink in s.updatedLinks:
+                        s.removeUpdatedLink(inLink)
 
 
 paramCGRA = ParamCGRA(ROWS, COLS, CONFIG_MEM_SIZE, DATA_MEM_SIZE)

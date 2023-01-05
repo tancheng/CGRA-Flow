@@ -41,8 +41,8 @@ COLS = 4
 GRID_WIDTH = (TILE_WIDTH+LINK_LENGTH) * COLS - LINK_LENGTH
 GRID_HEIGHT = (TILE_HEIGHT+LINK_LENGTH) * ROWS - LINK_LENGTH
 MEM_WIDTH = 50
-CONFIG_MEM = 8
-DATA_MEM = 4
+CONFIG_MEM_SIZE = 8
+DATA_MEM_SIZE = 4
 II = 4
 
 fuTypeList = ["Phi", "Add", "Shift", "Ld", "Sel", "Cmp", "MAC", "St", "Ret", "Mul", "Logic", "Br"]
@@ -58,6 +58,26 @@ xbarType2Port["NE"] = PORT_NORTHEAST
 xbarType2Port["NW"] = PORT_NORTHWEST
 xbarType2Port["SE"] = PORT_SOUTHEAST
 xbarType2Port["SW"] = PORT_SOUTHWEST
+
+xbarPort2Type = {}
+xbarPort2Type[PORT_WEST      ] = "W"
+xbarPort2Type[PORT_EAST      ] = "E"
+xbarPort2Type[PORT_NORTH     ] = "N"
+xbarPort2Type[PORT_SOUTH     ] = "S"
+xbarPort2Type[PORT_NORTHEAST ] = "NE"
+xbarPort2Type[PORT_NORTHWEST ] = "NW"
+xbarPort2Type[PORT_SOUTHEAST ] = "SE"
+xbarPort2Type[PORT_SOUTHWEST ] = "SW"
+
+xbarPortOpposites = {}
+xbarPortOpposites[PORT_WEST     ] = PORT_EAST
+xbarPortOpposites[PORT_EAST     ] = PORT_WEST
+xbarPortOpposites[PORT_NORTH    ] = PORT_SOUTH
+xbarPortOpposites[PORT_SOUTH    ] = PORT_NORTH
+xbarPortOpposites[PORT_NORTHWEST] = PORT_SOUTHEAST
+xbarPortOpposites[PORT_NORTHEAST] = PORT_SOUTHWEST
+xbarPortOpposites[PORT_SOUTHWEST] = PORT_NORTHEAST
+xbarPortOpposites[PORT_SOUTHEAST] = PORT_NORTHWEST
 
 widgets = {}
 images = {}
@@ -147,6 +167,9 @@ class ParamTile:
     
     def getSouth(s, baseX=0, baseY=0):
         return (baseX+s.posX+s.width//2, baseY+s.posY+s.height)
+
+    def getDimXY(s):
+        return s.dimX, s.dimY
  
     def getIndex(s, tileList):
         if s.disabled:
@@ -166,19 +189,31 @@ class ParamTile:
                 s.disabled = False
                 break
 
+class ParamSPM:
+    def __init__(s, posX):
+        s.posX = posX
+
+    def getPosX(s):
+        return s.posX
+
 
 class ParamLink:
-    def __init__(s, srcTile, dstTile, srcPort, dstPort, memAccessType=LINK_NO_MEM):
+    def __init__(s, srcTile, dstTile, srcPort, dstPort):
         s.srcTile = srcTile
         s.dstTile = dstTile
         s.srcPort = srcPort
         s.dstPort = dstPort
         s.disabled = False
-        s.memAccessType = memAccessType
-        if s.srcTile != None:
+        s.memAccessType = LINK_NO_MEM
+        if type(s.srcTile) != ParamSPM:
             s.srcTile.setOutLink(s.srcPort, s)
-        if s.dstTile != None:
+            if type(s.dstTile) == ParamSPM:
+                s.memAccessType = LINK_TO_MEM
+        if type(s.dstTile) != ParamSPM:
             s.dstTile.setInLink(s.dstPort, s)
+            if type(s.srcTile) == ParamSPM:
+                s.memAccessType = LINK_FROM_MEM
+
 
     def validatePorts(s):
         if s.memAccessType == LINK_NO_MEM:
@@ -190,29 +225,33 @@ class ParamLink:
             s.dstTile.hasFromMem = True
 
     def getSrcXY(s, baseX=0, baseY=0):
-        if s.srcTile != None:
+        if type(s.srcTile) != ParamSPM:
             return s.srcTile.getPosXYOnPort(s.srcPort, baseX, baseY)
         else:
             dstPosX, dstPosY = s.dstTile.getPosXYOnPort(s.dstPort, baseX, baseY)
-            return dstPosX-LINK_LENGTH, dstPosY
+            spmPosX = s.srcTile.getPosX()
+            return spmPosX, dstPosY
 
     def getDstXY(s, baseX=0, baseY=0):
-        if s.dstTile != None:
+        if type(s.dstTile) != ParamSPM:
             return s.dstTile.getPosXYOnPort(s.dstPort, baseX, baseY)
         else:
             srcPosX, srcPosY = s.srcTile.getPosXYOnPort(s.srcPort, baseX, baseY)
-            return srcPosX-LINK_LENGTH, srcPosY
+            spmPosX = s.dstTile.getPosX()
+            return spmPosX, srcPosY
 
 
 class ParamCGRA:
-    def __init__(s, rows, columns, configMem=CONFIG_MEM, dataMem=DATA_MEM):
+    def __init__(s, rows, columns, configMemSize=CONFIG_MEM_SIZE, dataMemSize=DATA_MEM_SIZE):
         s.rows = rows
         s.columns = columns
-        s.configMem = configMem
-        s.dataMem = dataMem
+        s.configMemSize = configMemSize
+        s.dataMemSize = dataMemSize
         s.tiles = []
-        s.links = []
+        s.templateLinks = []
+        s.updatedLinks = []
         s.targetTileID = 0
+        s.dataSPM = None
 
         for fuType in fuTypeList:
             if fuType in fuCheckVars:
@@ -222,9 +261,12 @@ class ParamCGRA:
             if xbarType in xbarCheckVars:
                 xbarCheckVars[xbarType].set(1)
 
-    def updateMem(s, configMem, dataMem):
-        s.configMem = configMem
-        s.dataMem = dataMem
+    def initDataSPM(s, dataSPM):
+        s.dataSPM = dataSPM
+
+    def updateMemSize(s, configMemSize, dataMemSize):
+        s.configMemSize = configMemSize
+        s.dataMemSize = dataMemSize
 
     def initTiles(s, tiles):
         for r in range(s.rows):
@@ -234,14 +276,28 @@ class ParamCGRA:
     def addTile(s, tile):
         s.tiles.append(tile)
 
-    def initLinks(s, links):
+    def initTemplateLinks(s, links):
         numOfLinks = s.rows*s.columns*2 + (s.rows-1)*s.columns*2 + (s.rows-1)*(s.columns-1)*2*2
 
         for link in links:
-            s.links.append(link)
+            s.templateLinks.append(link)
 
-    def addLink(s, link):
-        s.links.append(link)
+    def resetLinks(s):
+        for link in s.templateLinks:
+            if type(link.srcTile) != ParamSPM:
+                link.srcTile.setOutLink(link.srcPort, link)
+            if type(link.dstTile) != ParamSPM:
+                link.dstTile.setInLink(link.dstPort, link)
+        s.updatedLinks = s.templateLinks[:]
+
+    def addTemplateLink(s, link):
+        s.templateLinks.append(link)
+
+    def addUpdatedLink(s, link):
+        s.updatedLinks.append(link)
+
+    def removeUpdatedLink(s, link):
+        s.updatedLinks.remove(link)
 
     def updateFuCheckbutton(s, fuType, value):
         s.getTileOfID(s.targetTileID).fuDict[fuType] = value
@@ -259,6 +315,31 @@ class ParamCGRA:
                 return tile
         return None
 
+    def getNeighborOfPort(s, tile, xbarPortType):
+        curDimX, curDimY = tile.getDimXY()
+        neiDimX, neiDimY = curDimX, curDimY
+        if xbarPortType == PORT_EAST:
+            neiDimX += 1
+        elif xbarPortType == PORT_WEST:
+            neiDimX -= 1
+        elif xbarPortType == PORT_SOUTH:
+            neiDimY -= 1
+        elif xbarPortType == PORT_NORTH:
+            neiDimY += 1
+        elif xbarPortType == PORT_NORTHEAST:
+            neiDimX += 1
+            neiDimY += 1
+        elif xbarPortType == PORT_NORTHWEST:
+            neiDimX -= 1
+            neiDimY += 1
+        elif xbarPortType == PORT_SOUTHEAST:
+            neiDimX += 1
+            neiDimY -= 1
+        elif xbarPortType == PORT_SOUTHWEST:
+            neiDimX -= 1
+            neiDimY -= 1
+        return s.getTileOfDim(neiDimX, neiDimY)
+
     def getTileOfDim(s, dimX, dimY):
         for tile in s.tiles:
             if tile.dimX == dimX and tile.dimY == dimY:
@@ -269,12 +350,49 @@ class ParamCGRA:
     def updateTiles(s):
         pass
 
-    # some links can be fused as single one due to disabled tiles
+    # TODO: also need to consider adding back after removing...
     def updateLinks(s):
-        pass
+
+        s.resetLinks()
+        print("updateLinks()")
+        for tile in s.tiles:
+
+            if tile.disabled:
+                print("in tile: ", tile.ID)
+                for portType in tile.outLinks:
+                    print(" portType: ", xbarPort2Type[portType])
+                    outLink = tile.outLinks[portType]
+                    dstNeiTile = outLink.dstTile
+                    oppositePort = xbarPortOpposites[portType]
+                    if oppositePort in tile.inLinks:
+                        print(" oppositePort ", xbarPort2Type[oppositePort], " in tile's inLinks")
+                        inLink = tile.inLinks[oppositePort]
+                        srcNeiTile = inLink.srcTile
+
+                        # some links can be fused as single one due to disabled tiles
+                        if not inLink.disabled and not outLink.disabled and inLink in s.updatedLinks and outLink in s.updatedLinks:
+                            print("  doing fusion: srcTile: ", srcNeiTile, ", dstNeiTile: ", dstNeiTile, ", inLink.srcPort: ", inLink.srcPort, ", outLink.dstPort: ", outLink.dstPort)
+                            updatedLink = ParamLink(srcNeiTile, dstNeiTile, inLink.srcPort, outLink.dstPort)
+                            s.addUpdatedLink(updatedLink)
+                            s.removeUpdatedLink(inLink)
+                            s.removeUpdatedLink(outLink)
+                        # links that are diabled need to be removed. FIXME: this might be done before check tile's ability
+                        if inLink.disabled and inLink in s.updatedLinks:
+                            print("  doing remove inLink")
+                            s.removeUpdatedLink(inLink)
+                        if outLink.disabled and outLink in s.updatedLinks:
+                            print("  doing remove outLink")
+                            s.removeUpdatedLink(outLink)
+
+                    else:
+                        print(" oppositePort ", xbarPort2Type[oppositePort], " NOT in tile's inLinks")
+                        s.removeUpdatedLink(outLink)
+
+                # for portType in tile.inLinks:
+                    # TODO: ...
 
 
-paramCGRA = ParamCGRA(ROWS, COLS, CONFIG_MEM, DATA_MEM)
+paramCGRA = ParamCGRA(ROWS, COLS, CONFIG_MEM_SIZE, DATA_MEM_SIZE)
 targetKernelName = "not selected yet"
 
 def clickGenerateVerilog():
@@ -331,10 +449,10 @@ def clickEntireTileCheckbutton():
             # fuCheckbutton.select()
             # paramCGRA.updateFuCheckbutton(fuTypeList[i], fuVar.get())
 
-        for xbarType in xbarTypeList:
-            xbarCheckVars[xbarType].set(0)
-            clickXbarCheckbutton(xbarType)
-            xbarCheckbuttons[xbarType].configure(state="disabled")
+        # for xbarType in xbarTypeList:
+        #     xbarCheckVars[xbarType].set(0)
+        #     clickXbarCheckbutton(xbarType)
+        #     xbarCheckbuttons[xbarType].configure(state="disabled")
  
         paramCGRA.getTileOfID(paramCGRA.targetTileID).disabled = True
     else:
@@ -343,10 +461,10 @@ def clickEntireTileCheckbutton():
             clickFuCheckbutton(fuType)
             fuCheckbuttons[fuType].configure(state="normal")
 
-        for xbarType in xbarTypeList:
-            xbarCheckVars[xbarType].set(0)
-            clickXbarCheckbutton(xbarType)
-            xbarCheckbuttons[xbarType].configure(state="normal")
+        # for xbarType in xbarTypeList:
+        #     xbarCheckVars[xbarType].set(0)
+        #     clickXbarCheckbutton(xbarType)
+        #     xbarCheckbuttons[xbarType].configure(state="normal")
  
         paramCGRA.getTileOfID(paramCGRA.targetTileID).disabled = False
 
@@ -364,15 +482,15 @@ def clickXbarCheckbutton(xbarType):
 def clickUpdate(root):
     rows = int(widgets["rowsEntry"].get())
     columns = int(widgets["columnsEntry"].get())
-    configMem = int(widgets["configMemEntry"].get())
-    dataMem = int(widgets["dataMemEntry"].get())
+    configMemSize = int(widgets["configMemEntry"].get())
+    dataMemSize = int(widgets["dataMemEntry"].get())
 
     global paramCGRA
 
     if paramCGRA.rows != rows or paramCGRA.columns != columns:
         paramCGRA = ParamCGRA(rows, columns)
 
-    paramCGRA.updateMem(configMem, dataMem)
+    paramCGRA.updateMemSize(configMemSize, dataMemSize)
     paramCGRA.updateTiles()
     paramCGRA.updateLinks()
 
@@ -450,7 +568,7 @@ def clickMapDFG(II):
             canvas.create_window(posX, posY, window=button, height=tileHeight, width=tileWidth, anchor="nw")
 
         # draw links
-        for link in paramCGRA.links:
+        for link in paramCGRA.updatedLinks:
             srcX, srcY = link.getSrcXY(baseX+BORDER, BORDER)
             dstX, dstY = link.getDstXY(baseX+BORDER, BORDER)
             canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
@@ -477,11 +595,16 @@ def create_cgra_pannel(root, rows, columns):
     # padSize = TILE_SIZE + LINK_LENGTH
     padHeight = TILE_HEIGHT + LINK_LENGTH
     padWidth = TILE_WIDTH + LINK_LENGTH
-    
+
+    # construct data memory
+    dataSPM = ParamSPM(MEM_WIDTH)
+    paramCGRA.initDataSPM(dataSPM)
+
     # draw data memory
     memHeight = GRID_HEIGHT
     button = tkinter.Button(canvas, text = "Data\nSPM", fg = 'black', bg = 'gray', relief = 'raised', bd = BORDER, command = helloCallBack)
     button.place(height=memHeight, width=MEM_WIDTH, x = 0, y = 0)
+
             
     # construct tiles
     if len(paramCGRA.tiles) == 0:
@@ -496,19 +619,19 @@ def create_cgra_pannel(root, rows, columns):
 
     # draw tiles
     for tile in paramCGRA.tiles:
-        if tile.disabled:
-            button = tkinter.Button(canvas, text = "Tile "+str(tile.ID), fg='gray', relief='flat', bd=BORDER, command=partial(clickTile, tile.ID))
-        else:
+        # if tile.disabled:
+            # button = tkinter.Button(canvas, text = "Tile "+str(tile.ID), fg='gray', relief='flat', bd=BORDER, command=partial(clickTile, tile.ID))
+        if not tile.disabled:
             button = tkinter.Button(canvas, text = "Tile "+str(tile.ID), fg='black', bg='gray', relief='raised', bd=BORDER, command=partial(clickTile, tile.ID))
 
-        posX, posY = tile.getPosXY()
-        button.place(height=TILE_HEIGHT, width=TILE_WIDTH, x = posX, y = posY)
+            posX, posY = tile.getPosXY()
+            button.place(height=TILE_HEIGHT, width=TILE_WIDTH, x = posX, y = posY)
 
 
     # TODO: draw lines based on the links connected between tiles rather than pos
 
     # construct links
-    if len(paramCGRA.links) == 0:
+    if len(paramCGRA.templateLinks) == 0:
         for i in range(ROWS):
             for j in range(COLS):
                 if j < COLS-1:
@@ -517,8 +640,8 @@ def create_cgra_pannel(root, rows, columns):
                     tile1 = paramCGRA.getTileOfDim(j+1, i)
                     link0 = ParamLink(tile0, tile1, PORT_EAST, PORT_WEST)
                     link1 = ParamLink(tile1, tile0, PORT_WEST, PORT_EAST)
-                    paramCGRA.addLink(link0)
-                    paramCGRA.addLink(link1)
+                    paramCGRA.addTemplateLink(link0)
+                    paramCGRA.addTemplateLink(link1)
 
                 if i < ROWS-1 and j < COLS-1:
                     # diagonal left bottom to right top
@@ -526,8 +649,8 @@ def create_cgra_pannel(root, rows, columns):
                     tile1 = paramCGRA.getTileOfDim(j+1, i+1)
                     link0 = ParamLink(tile0, tile1, PORT_NORTHEAST, PORT_SOUTHWEST)
                     link1 = ParamLink(tile1, tile0, PORT_SOUTHWEST, PORT_NORTHEAST)
-                    paramCGRA.addLink(link0)
-                    paramCGRA.addLink(link1)
+                    paramCGRA.addTemplateLink(link0)
+                    paramCGRA.addTemplateLink(link1)
 
                 if i < ROWS-1 and j > 0:
                     # diagonal left top to right bottom
@@ -535,8 +658,8 @@ def create_cgra_pannel(root, rows, columns):
                     tile1 = paramCGRA.getTileOfDim(j-1, i+1)
                     link0 = ParamLink(tile0, tile1, PORT_NORTHWEST, PORT_SOUTHEAST)
                     link1 = ParamLink(tile1, tile0, PORT_SOUTHEAST, PORT_NORTHWEST)
-                    paramCGRA.addLink(link0)
-                    paramCGRA.addLink(link1)
+                    paramCGRA.addTemplateLink(link0)
+                    paramCGRA.addTemplateLink(link1)
 
                 if i < ROWS-1:
                     # vertical
@@ -544,20 +667,22 @@ def create_cgra_pannel(root, rows, columns):
                     tile1 = paramCGRA.getTileOfDim(j, i+1)
                     link0 = ParamLink(tile0, tile1, PORT_NORTH, PORT_SOUTH)
                     link1 = ParamLink(tile1, tile0, PORT_SOUTH, PORT_NORTH)
-                    paramCGRA.addLink(link0)
-                    paramCGRA.addLink(link1)
+                    paramCGRA.addTemplateLink(link0)
+                    paramCGRA.addTemplateLink(link1)
 
                 if j == 0:
                     # connect to memory
                     tile0 = paramCGRA.getTileOfDim(j, i)
-                    link0 = ParamLink(tile0, None, PORT_WEST, i, LINK_TO_MEM)
-                    link1 = ParamLink(None, tile0, i, PORT_WEST, LINK_FROM_MEM)
-                    paramCGRA.addLink(link0)
-                    paramCGRA.addLink(link1)
+                    link0 = ParamLink(tile0, paramCGRA.dataSPM, PORT_WEST, i)
+                    link1 = ParamLink(paramCGRA.dataSPM, tile0, i, PORT_WEST)
+                    paramCGRA.addTemplateLink(link0)
+                    paramCGRA.addTemplateLink(link1)
 
+
+    paramCGRA.updateLinks()
 
     # draw links
-    for link in paramCGRA.links:
+    for link in paramCGRA.updatedLinks:
         if link.disabled:
             pass
         else:
@@ -618,14 +743,14 @@ def create_param_pannel(master, x, width, height):
     configMemLabel.grid(columnspan=4, row=1, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER)
     configMemEntry = ttk.Entry(paramPannel, justify=tkinter.CENTER)
     configMemEntry.grid(row=1, column=4, sticky=tkinter.W, padx=BORDER, pady=BORDER)
-    configMemEntry.insert(0, paramCGRA.configMem)
+    configMemEntry.insert(0, paramCGRA.configMemSize)
     widgets["configMemEntry"] = configMemEntry
     
     dataMemLabel = ttk.Label(paramPannel, text='Data SPM (KBs):')
     dataMemLabel.grid(columnspan=2, row=2, column=0, padx=BORDER, pady=BORDER, sticky=tkinter.W)
     dataMemEntry = ttk.Entry(paramPannel, justify=tkinter.CENTER)
     dataMemEntry.grid(row=2, column=2, sticky=tkinter.W, padx=BORDER, pady=BORDER)
-    dataMemEntry.insert(0, str(paramCGRA.dataMem))
+    dataMemEntry.insert(0, str(paramCGRA.dataMemSize))
     widgets["dataMemEntry"] = dataMemEntry
        
     updateButton = tkinter.Button(paramPannel, text = "Update", relief='raised', command = partial(clickUpdate, master))

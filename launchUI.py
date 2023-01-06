@@ -103,23 +103,46 @@ class ParamTile:
         s.hasFromMem = False
         s.invalidOutPorts = set()
         s.invalidInPorts = set()
+        s.neverUsedOutPorts = set()
         s.fuDict = {}
         s.xbarDict = {}
         for i in range( PORT_DIRECTION_COUNTS ):
             s.invalidOutPorts.add(i)
             s.invalidInPorts.add(i)
+            s.neverUsedOutPorts.add(i)
         
         for xbarType in xbarTypeList:
-            s.xbarDict[xbarType] = 1
+            s.xbarDict[xbarType] = 0
 
         for fuType in fuTypeList:
             s.fuDict[fuType] = 1
 
+    def reset(s):
+        s.disabled = False
+
+        for i in range( PORT_DIRECTION_COUNTS ):
+            s.neverUsedOutPorts.add(i)
+ 
+        for xbarType in xbarTypeList:
+            s.xbarDict[xbarType] = 0
+
+        for fuType in fuTypeList:
+            s.fuDict[fuType] = 1
+
+    def resetOutLink(s, portType, link):
+        s.outLinks[portType] = link
+        s.xbarDict[xbarPort2Type[portType]] = 1
+        if portType in s.neverUsedOutPorts:
+            s.neverUsedOutPorts.remove(portType)
+
+    def resetInLink(s, portType, link):
+        s.inLinks[portType] = link
+    
     def setOutLink(s, portType, link):
         s.outLinks[portType] = link
 
     def setInLink(s, portType, link):
-        s.inLinks[portType] = link
+        s.resetInLink(portType, link)
 
     # position X/Y for drawing the tile
     def getPosXY(s, baseX=0, baseY=0):
@@ -206,11 +229,11 @@ class ParamLink:
         s.disabled = False
         s.memAccessType = LINK_NO_MEM
         if type(s.srcTile) != ParamSPM:
-            s.srcTile.setOutLink(s.srcPort, s)
+            s.srcTile.resetOutLink(s.srcPort, s)
             if type(s.dstTile) == ParamSPM:
                 s.memAccessType = LINK_TO_MEM
         if type(s.dstTile) != ParamSPM:
-            s.dstTile.setInLink(s.dstPort, s)
+            s.dstTile.resetInLink(s.dstPort, s)
             if type(s.srcTile) == ParamSPM:
                 s.memAccessType = LINK_FROM_MEM
 
@@ -253,13 +276,15 @@ class ParamCGRA:
         s.targetTileID = 0
         s.dataSPM = None
 
+    def updateFuXbarPannel(s):
+        targetTile = s.getTileOfID(s.targetTileID)
         for fuType in fuTypeList:
             if fuType in fuCheckVars:
-                fuCheckVars[fuType].set(1)
+                fuCheckVars[fuType].set(targetTile.fuDict[fuType])
 
         for xbarType in xbarTypeList:
             if xbarType in xbarCheckVars:
-                xbarCheckVars[xbarType].set(1)
+                xbarCheckVars[xbarType].set(targetTile.xbarDict[xbarType])
 
     def initDataSPM(s, dataSPM):
         s.dataSPM = dataSPM
@@ -282,13 +307,36 @@ class ParamCGRA:
         for link in links:
             s.templateLinks.append(link)
 
+    def resetTiles(s):
+
+        for tile in s.tiles:
+            tile.reset()
+
+            for fuType in fuTypeList:
+                fuCheckVars[fuType].set(tile.fuDict[fuType])
+                fuCheckbuttons[fuType].configure(state="normal")
+    
+            for xbarType in xbarTypeList:
+                xbarCheckVars[xbarType].set(tile.xbarDict[xbarType])
+                xbarCheckbuttons[xbarType].configure(state="normal")
+
+
+    def enableAllTemplateLinks(s):
+        for link in s.templateLinks:
+            link.disabled = False
+
     def resetLinks(s):
         for link in s.templateLinks:
             if type(link.srcTile) != ParamSPM:
-                link.srcTile.setOutLink(link.srcPort, link)
+                link.srcTile.resetOutLink(link.srcPort, link)
             if type(link.dstTile) != ParamSPM:
-                link.dstTile.setInLink(link.dstPort, link)
+                link.dstTile.resetInLink(link.dstPort, link)
+
         s.updatedLinks = s.templateLinks[:]
+
+        for portType in range( PORT_DIRECTION_COUNTS ):
+            if portType in s.getTileOfID(s.targetTileID).neverUsedOutPorts:
+                xbarCheckbuttons[xbarPort2Type[portType]].configure(state="disabled")
 
     def addTemplateLink(s, link):
         s.templateLinks.append(link)
@@ -298,6 +346,8 @@ class ParamCGRA:
 
     def removeUpdatedLink(s, link):
         s.updatedLinks.remove(link)
+        # src = link.srcTile
+        # src.xbarDict[link.srcPort] = 0
 
     def updateFuCheckbutton(s, fuType, value):
         s.getTileOfID(s.targetTileID).fuDict[fuType] = value
@@ -353,40 +403,45 @@ class ParamCGRA:
     # TODO: also need to consider adding back after removing...
     def updateLinks(s):
 
-        s.resetLinks()
-        print("updateLinks()")
+        for link in s.templateLinks:
+            if type(link.srcTile) != ParamSPM:
+                link.srcTile.setOutLink(link.srcPort, link)
+            if type(link.dstTile) != ParamSPM:
+                link.dstTile.setInLink(link.dstPort, link)
+        s.updatedLinks = s.templateLinks[:]
+
         for tile in s.tiles:
 
             if tile.disabled:
-                print("in tile: ", tile.ID)
                 for portType in tile.outLinks:
-                    print(" portType: ", xbarPort2Type[portType])
                     outLink = tile.outLinks[portType]
                     dstNeiTile = outLink.dstTile
                     oppositePort = xbarPortOpposites[portType]
                     if oppositePort in tile.inLinks:
-                        print(" oppositePort ", xbarPort2Type[oppositePort], " in tile's inLinks")
                         inLink = tile.inLinks[oppositePort]
                         srcNeiTile = inLink.srcTile
 
                         # some links can be fused as single one due to disabled tiles
                         if not inLink.disabled and not outLink.disabled and inLink in s.updatedLinks and outLink in s.updatedLinks:
-                            print("  doing fusion: srcTile: ", srcNeiTile, ", dstNeiTile: ", dstNeiTile, ", inLink.srcPort: ", inLink.srcPort, ", outLink.dstPort: ", outLink.dstPort)
                             updatedLink = ParamLink(srcNeiTile, dstNeiTile, inLink.srcPort, outLink.dstPort)
                             s.addUpdatedLink(updatedLink)
                             s.removeUpdatedLink(inLink)
                             s.removeUpdatedLink(outLink)
                         # links that are diabled need to be removed. FIXME: this might be done before check tile's ability
                         if inLink.disabled and inLink in s.updatedLinks:
-                            print("  doing remove inLink")
                             s.removeUpdatedLink(inLink)
                         if outLink.disabled and outLink in s.updatedLinks:
-                            print("  doing remove outLink")
                             s.removeUpdatedLink(outLink)
 
                     else:
-                        print(" oppositePort ", xbarPort2Type[oppositePort], " NOT in tile's inLinks")
+                        if outLink in s.updatedLinks:
+                            s.removeUpdatedLink(outLink)
+
+                for portType in tile.outLinks:
+                    outLink = tile.outLinks[portType]
+                    if outLink in s.updatedLinks:
                         s.removeUpdatedLink(outLink)
+
 
                 for portType in tile.inLinks:
                     inLink = tile.inLinks[portType]
@@ -423,8 +478,8 @@ def clickGenerateVerilog():
 
 def clickTile(ID):
     widgets["fuConfigPannel"].config(text='Tile '+str(ID)+' functional units')
-    widgets["xbarConfigPannel"].config(text='Tile '+str(ID)+' crossbar incoming links')
-    widgets["entireTileCheckbutton"].config(text='Disable the entire Tile '+str(ID))
+    widgets["xbarConfigPannel"].config(text='Tile '+str(ID)+' crossbar outgoing links')
+    widgets["entireTileCheckbutton"].config(text='Disable entire Tile '+str(ID))
     paramCGRA.targetTileID = ID
 
     disabled = paramCGRA.getTileOfID(ID).disabled
@@ -434,7 +489,7 @@ def clickTile(ID):
 
     for xbarType in xbarTypeList:
         xbarCheckVars[xbarType].set(paramCGRA.tiles[ID].xbarDict[xbarType])
-        xbarCheckbuttons[xbarType].configure(state="disabled" if disabled else "normal")
+        xbarCheckbuttons[xbarType].configure(state="disabled" if disabled or xbarType2Port[xbarType] in paramCGRA.tiles[ID].neverUsedOutPorts else "normal")
 
     entireTileCheckVar.set(1 if paramCGRA.getTileOfID(ID).disabled else 0)
  
@@ -497,7 +552,27 @@ def clickUpdate(root):
     paramCGRA.updateLinks()
 
     create_cgra_pannel(root, rows, columns)
-    clickTile(0)
+    # clickTile(0)
+
+def clickReset(root):
+    rows = int(widgets["rowsEntry"].get())
+    columns = int(widgets["columnsEntry"].get())
+    configMemSize = int(widgets["configMemEntry"].get())
+    dataMemSize = int(widgets["dataMemEntry"].get())
+
+    global paramCGRA
+
+    if paramCGRA.rows != rows or paramCGRA.columns != columns:
+        paramCGRA = ParamCGRA(rows, columns)
+
+    paramCGRA.updateMemSize(configMemSize, dataMemSize)
+    paramCGRA.resetTiles()
+    paramCGRA.enableAllTemplateLinks()
+    paramCGRA.resetLinks()
+
+    create_cgra_pannel(root, rows, columns)
+    # clickTile(0)
+
 
 def clickTest():
     # need to provide the paths for lib.so and kernel.bc
@@ -682,6 +757,7 @@ def create_cgra_pannel(root, rows, columns):
 
 
     paramCGRA.updateLinks()
+    paramCGRA.updateFuXbarPannel()
 
     # draw links
     for link in paramCGRA.updatedLinks:
@@ -706,13 +782,23 @@ def place_fu_options(master):
         
 def place_xbar_options(master):
     for i in range(PORT_DIRECTION_COUNTS):
+        portType = i
+        xbarType = xbarPort2Type[i]
         xbarVar = tkinter.IntVar()
-        xbarCheckVars[xbarTypeList[i]] = xbarVar
-        xbarCheckbutton = tkinter.Checkbutton(master, variable=xbarVar, text=xbarTypeList[i], command=partial(clickXbarCheckbutton, xbarTypeList[i]))
-        xbarCheckbuttons[xbarTypeList[i]] = xbarCheckbutton
-        xbarCheckbutton.select()
-        paramCGRA.updateXbarCheckbutton(xbarTypeList[i], xbarVar.get())
+        xbarCheckVars[xbarType] = xbarVar
+        xbarCheckbutton = tkinter.Checkbutton(master, variable=xbarVar, text=xbarType, command=partial(clickXbarCheckbutton, xbarType))
+        xbarCheckbuttons[xbarType] = xbarCheckbutton
+
+        if paramCGRA.getTileOfID(0).xbarDict[xbarType] == 1:
+            xbarCheckbutton.select()
+
+        paramCGRA.updateXbarCheckbutton(xbarType, xbarVar.get())
+
+        if portType in paramCGRA.getTileOfID(0).neverUsedOutPorts:
+            xbarCheckbutton.configure(state="disabled")
+
         xbarCheckbutton.grid(row=i//4, column=i%4, padx=BORDER, pady=BORDER, sticky="W")
+
                 
 def create_param_pannel(master, x, width, height):
     paramPannel = tkinter.LabelFrame(master, text='Configuration', bd=BORDER, relief='groove')
@@ -755,16 +841,19 @@ def create_param_pannel(master, x, width, height):
     dataMemEntry.insert(0, str(paramCGRA.dataMemSize))
     widgets["dataMemEntry"] = dataMemEntry
        
-    updateButton = tkinter.Button(paramPannel, text = "Update", relief='raised', command = partial(clickUpdate, master))
+    updateButton = tkinter.Button(paramPannel, text = " Reset ", relief='raised', command = partial(clickReset, master))
     updateButton.grid(columnspan=2, row=2, column=3, sticky=tkinter.W, padx=BORDER)
 
     # entireTileCheckVar = tkinter.IntVar()
     entireTileCheckVar.set(0)
-    entireTileCheckbutton = tkinter.Checkbutton(paramPannel, variable=entireTileCheckVar, text="Disable the entire Tile 0", command=clickEntireTileCheckbutton)
+    entireTileCheckbutton = tkinter.Checkbutton(paramPannel, variable=entireTileCheckVar, text="Disable entire Tile 0", command=clickEntireTileCheckbutton)
     # entireTileCheckbutton.select()
     # paramCGRA.updateEntireTileCheckbutton(fuTypeList[i], fuVar.get())
-    entireTileCheckbutton.grid(columnspan=5, row=3, column=0, padx=BORDER, pady=BORDER, sticky="E")
+    entireTileCheckbutton.grid(columnspan=3, row=3, column=0, padx=BORDER, pady=BORDER, sticky="W")
     widgets["entireTileCheckbutton"] = entireTileCheckbutton
+
+    resetButton = tkinter.Button(paramPannel, text = "Update", relief='raised', command = partial(clickUpdate, master))
+    resetButton.grid(columnspan=2, row=3, column=3, sticky=tkinter.W, padx=BORDER)
 
     fuConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 functional units', bd = BORDER, relief='groove')
     # fuConfigPannel.config(text='xxx')

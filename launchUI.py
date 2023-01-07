@@ -8,7 +8,7 @@ from tkinter import filedialog as fd
 from PIL import Image, ImageTk
 from functools import partial
 
-from VectorCGRA.cgra.translate.CGRARTL_test import *
+from vectorcgra.cgra.translate.CGRARTL_test import *
 
 PORT_NORTH     = 0
 PORT_SOUTH     = 1
@@ -201,13 +201,27 @@ class ParamTile:
 
 
 class ParamSPM:
-    def __init__(s, posX):
+    def __init__(s, posX, ports):
         s.posX = posX
-        s.ID = 0
+        s.ID = -1
+        s.ports = ports
+        s.inLinks = {}
+        s.outLinks = {}
 
     def getPosX(s):
         return s.posX
 
+    def setInLink(s, portType, link):
+        s.inLinks[portType] = link
+
+    def resetInLink(s, portType, link):
+        s.setInLink(portType, link)
+ 
+    def setOutLink(s, portType, link):
+        s.outLinks[portType] = link
+
+    def resetOutLink(s, portType, link):
+        s.setOutLink(portType, link)
 
 class ParamLink:
     def __init__(s, srcTile, dstTile, srcPort, dstPort):
@@ -216,10 +230,8 @@ class ParamLink:
         s.srcPort = srcPort
         s.dstPort = dstPort
         s.disabled = False
-        if type(s.srcTile) != ParamSPM:
-            s.srcTile.resetOutLink(s.srcPort, s)
-        if type(s.dstTile) != ParamSPM:
-            s.dstTile.resetInLink(s.dstPort, s)
+        s.srcTile.resetOutLink(s.srcPort, s)
+        s.dstTile.resetInLink(s.dstPort, s)
 
     def getSrcXY(s, baseX=0, baseY=0):
         if type(s.srcTile) != ParamSPM:
@@ -304,10 +316,8 @@ class ParamCGRA:
 
     def resetLinks(s):
         for link in s.templateLinks:
-            if type(link.srcTile) != ParamSPM:
-                link.srcTile.resetOutLink(link.srcPort, link)
-            if type(link.dstTile) != ParamSPM:
-                link.dstTile.resetInLink(link.dstPort, link)
+            link.srcTile.resetOutLink(link.srcPort, link)
+            link.dstTile.resetInLink(link.dstPort, link)
 
         s.updatedLinks = s.templateLinks[:]
 
@@ -329,14 +339,6 @@ class ParamCGRA:
     def updateFuCheckbutton(s, fuType, value):
         tile = s.getTileOfID(s.targetTileID)
         tile.fuDict[fuType] = value
-        if fuType == "Ld":
-            link = tile.inLinks[PORT_WEST]
-            srcObj = link.srcTile
-            if type(srcObj) == ParamSPM:
-                if value == 0:
-                    link.disabled = True
-                else:
-                    link.disabled = False
 
     def updateXbarCheckbutton(s, xbarType, value):
         tile = s.getTileOfID(s.targetTileID)
@@ -384,10 +386,8 @@ class ParamCGRA:
                 needRemoveLinks.add((link.srcTile, link.dstTile))
 
         for link in s.templateLinks:
-            if type(link.srcTile) != ParamSPM:
-                link.srcTile.setOutLink(link.srcPort, link)
-            if type(link.dstTile) != ParamSPM:
-                link.dstTile.setInLink(link.dstPort, link)
+            link.srcTile.setOutLink(link.srcPort, link)
+            link.dstTile.setInLink(link.dstPort, link)
         s.updatedLinks = s.templateLinks[:]
 
         for tile in s.tiles:
@@ -448,7 +448,7 @@ def clickGenerateVerilog():
     print(os.listdir("./"))
     for fileName in os.listdir("./"):
         if "__" in fileName and ".v" in fileName:
-            print("we found the file: ", fileName)
+            print("Found the file: ", fileName)
             f = open(fileName, "r")
             widgets["verilogText"].insert("1.0", f.read())
             found = True
@@ -464,7 +464,9 @@ def clickGenerateVerilog():
 def clickTile(ID):
     widgets["fuConfigPannel"].config(text='Tile '+str(ID)+' functional units')
     widgets["xbarConfigPannel"].config(text='Tile '+str(ID)+' crossbar outgoing links')
-    widgets["entireTileCheckbutton"].config(text='Disable entire Tile '+str(ID))
+    widgets["xbarConfigPannel"].grid(columnspan=5, row=5, column=0, padx=BORDER, pady=BORDER)
+    widgets["entireTileCheckbutton"].config(text='Disable entire Tile '+str(ID), state="normal")
+    widgets["spmConfigPannel"].grid_forget()
     paramCGRA.targetTileID = ID
 
     disabled = paramCGRA.getTileOfID(ID).disabled
@@ -478,6 +480,49 @@ def clickTile(ID):
 
     entireTileCheckVar.set(1 if paramCGRA.getTileOfID(ID).disabled else 0)
  
+
+def clickSPM():
+    widgets["fuConfigPannel"].config(text='Tile '+str(paramCGRA.targetTileID)+' functional units')
+
+    for fuType in fuTypeList:
+        fuCheckVars[fuType].set(paramCGRA.tiles[paramCGRA.targetTileID].fuDict[fuType])
+        fuCheckbuttons[fuType].configure(state="disabled")
+
+    widgets["xbarConfigPannel"].grid_forget()
+
+    spmConfigPannel = widgets["spmConfigPannel"]
+    spmConfigPannel.config(text='DataSPM outgoing links')
+    spmConfigPannel.grid(columnspan=5, row=5, column=0, padx=BORDER, pady=BORDER)
+
+    spmEnabledListbox = widgets["spmEnabledListbox"]
+    spmDisabledListbox = widgets["spmDisabledListbox"]
+
+    widgets["entireTileCheckbutton"].config(text='Disable entire Tile '+str(paramCGRA.targetTileID), state="disabled")
+
+
+def clickSPMPortDisable():
+    spmEnabledListbox = widgets["spmEnabledListbox"]
+    portIndex = spmEnabledListbox.curselection()
+    if portIndex:
+        port = spmEnabledListbox.get(portIndex)
+        spmEnabledListbox.delete(portIndex)
+        widgets["spmDisabledListbox"].insert(0, port)
+
+        link = paramCGRA.dataSPM.outLinks[port]
+        link.disabled = True
+
+def clickSPMPortEnable():
+    spmDisabledListbox = widgets["spmDisabledListbox"]
+    portIndex = spmDisabledListbox.curselection()
+    if portIndex:
+        port = spmDisabledListbox.get(portIndex)
+        spmDisabledListbox.delete(portIndex)
+
+        widgets["spmEnabledListbox"].insert(0, port)
+
+        link = paramCGRA.dataSPM.outLinks[port]
+        link.disabled = False
+
 
 def clickEntireTileCheckbutton():
 
@@ -546,6 +591,16 @@ def clickReset(root):
     paramCGRA.resetLinks()
 
     create_cgra_pannel(root, rows, columns)
+
+    for _ in range(paramCGRA.rows):
+        widgets["spmEnabledListbox"].delete(0)
+        widgets["spmDisabledListbox"].delete(0)
+
+    for port in paramCGRA.dataSPM.outLinks:
+        if not paramCGRA.dataSPM.outLinks[port].disabled:
+            widgets["spmEnabledListbox"].insert(0, port)
+        else:
+            widgets["spmDisabledListbox"].insert(0, port)
 
 
 def clickTest():
@@ -648,12 +703,13 @@ def create_cgra_pannel(root, rows, columns):
     padWidth = TILE_WIDTH + LINK_LENGTH
 
     # construct data memory
-    dataSPM = ParamSPM(MEM_WIDTH)
-    paramCGRA.initDataSPM(dataSPM)
+    if paramCGRA.dataSPM == None:
+        dataSPM = ParamSPM(MEM_WIDTH, rows)
+        paramCGRA.initDataSPM(dataSPM)
 
     # draw data memory
     memHeight = GRID_HEIGHT
-    button = tkinter.Button(canvas, text = "Data\nSPM", fg = 'black', bg = 'gray', relief = 'raised', bd = BORDER, command = helloCallBack)
+    button = tkinter.Button(canvas, text = "Data\nSPM", fg = 'black', bg = 'gray', relief = 'raised', bd = BORDER, command = clickSPM)
     button.place(height=memHeight, width=MEM_WIDTH, x = 0, y = 0)
 
             
@@ -834,12 +890,90 @@ def create_param_pannel(master, x, width, height):
     
     place_fu_options(fuConfigPannel)
     
-    xbarConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 crossbar outgoing links', bd = BORDER, relief='groove')
+    xbarConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 crossbar outgoing links', bd=BORDER, relief='groove')
     # xbarConfigPannel.config(text='y')
     xbarConfigPannel.grid(columnspan=5, row=5, column=0, padx=BORDER, pady=BORDER)
+    # xbarConfigPannel.config(width=width-30, height=80)
     widgets["xbarConfigPannel"] = xbarConfigPannel
     
     place_xbar_options(xbarConfigPannel)   
+
+    spmConfigPannel = tkinter.LabelFrame(paramPannel, text='Data SPM outgoing links', bd=BORDER, relief='groove')
+    spmConfigPannel.config(width=225, height=85)
+    # xbarConfigPannel.config(text='y')
+    widgets["spmConfigPannel"] = spmConfigPannel
+
+    spmEnabledOutVar = tkinter.IntVar()
+    spmDisabledOutVar = tkinter.IntVar()
+
+    spmEnabledLabel = tkinter.Label(spmConfigPannel)
+    spmDisabledLabel = tkinter.Label(spmConfigPannel)
+
+    spmEnabledScrollbar = tkinter.Scrollbar(spmEnabledLabel)
+    spmDisabledScrollbar = tkinter.Scrollbar(spmDisabledLabel)
+
+    spmEnabledListbox = tkinter.Listbox(spmEnabledLabel, listvariable=spmEnabledOutVar)
+    spmDisabledListbox = tkinter.Listbox(spmDisabledLabel, listvariable=spmDisabledOutVar)
+
+    widgets["spmEnabledListbox"] = spmEnabledListbox
+    widgets["spmDisabledListbox"] = spmDisabledListbox
+
+    spmDisableButton = tkinter.Button(spmConfigPannel, text="Disable", relief='raised', command=clickSPMPortDisable)
+    spmEnableButton = tkinter.Button(spmConfigPannel, text="Enable", relief='raised', command=clickSPMPortEnable)
+
+    spmEnabledScrollbar.config(command=spmEnabledListbox.yview)
+    spmEnabledListbox.config(yscrollcommand=spmEnabledScrollbar.set)
+    spmDisabledScrollbar.config(command=spmDisabledListbox.yview)
+    spmDisabledListbox.config(yscrollcommand=spmDisabledScrollbar.set)
+
+    # spmEnabledLabel.config(width=50, height=80)
+    spmEnabledListbox.config(width=50, height=50)
+    # spmEnabledListbox.place(x=BORDER, y=BORDER, width=0, height=20)
+    # spmEnabledLabel.grid(rowspan=2, row=0, column=0)
+    spmEnabledLabel.place(x=0, y=0, width=50, height=60)
+
+    spmEnabledScrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
+    spmEnabledListbox.pack()
+
+    # spmDisableButton.grid(row=0, column=1)
+    # spmEnableButton.grid(row=1, column=1)
+    spmDisableArrow0 = tkinter.Label(spmConfigPannel, text="=>")
+    spmDisableArrow1 = tkinter.Label(spmConfigPannel, text="=>")
+    spmEnableArrow0 = tkinter.Label(spmConfigPannel, text="<=")
+    spmEnableArrow1 = tkinter.Label(spmConfigPannel, text="<=")
+
+    spmDisableArrow0.place(x=55, y=BORDER, width=20, height=25)
+    spmDisableButton.place(x=80, y=BORDER, width=60, height=25)
+    spmDisableArrow1.place(x=145, y=BORDER, width=20, height=25)
+
+    spmEnableArrow0.place(x=55, y=BORDER+30, width=20, height=25)
+    spmEnableButton.place(x=80, y=BORDER+30, width=60, height=25)
+    spmEnableArrow1.place(x=145, y=BORDER+30, width=20, height=25)
+
+    # spmEnableButton.pack()
+
+    # spmDisableButton.place(x=30, y=30, width=20, height=20)
+    # spmEnableButton.place(x=30, y=60, width=20, height=20)
+
+    # spmDisabledListbox.place(x=50, y=BORDER, width=0, height=20)
+    # spmDisabledLabel.config(width=50, height=80)
+    spmDisabledListbox.config(width=50, height=50)
+    spmDisabledLabel.place(x=165, y=0, width=50, height=60)
+    # spmDisabledLabel.grid(rowspan=2, row=0, column=2)
+
+    spmDisabledScrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
+    spmDisabledListbox.pack()
+
+    # enabledPorts = [ i for i in range(paramCGRA.dataSPM.ports)]
+    # enabledPorts.reverse()
+
+    spmEnabledListbox.delete(0)
+    spmDisabledListbox.delete(0)
+    for port in paramCGRA.dataSPM.outLinks:
+        if not paramCGRA.dataSPM.outLinks[port].disabled:
+            spmEnabledListbox.insert(0, port)
+        else:
+            spmDisabledListbox.insert(0, port)
 
 
 def create_test_pannel(master, x, width, height):

@@ -8,7 +8,7 @@ from tkinter import filedialog as fd
 from PIL import Image, ImageTk
 from functools import partial
 
-from vectorcgra.cgra.translate.CGRARTL_test import *
+from vectorcgra.cgra.translate.CGRATemplateRTL_test import *
 
 PORT_NORTH     = 0
 PORT_SOUTH     = 1
@@ -111,10 +111,46 @@ class ParamTile:
         for fuType in fuTypeList:
             s.fuDict[fuType] = 1
 
+    def hasFromMem(s):
+        for link in s.inLinks.values():
+            if not link.disabled and link.isFromMem():
+                return True
+        return False
+
+    def hasToMem(s):
+        for link in s.outLinks.values():
+            if not link.disabled and link.isToMem():
+                return True
+        return False
+
+    def getInvalidInPorts(s):
+        invalidInPorts = set()
+        for port in range(PORT_DIRECTION_COUNTS):
+            if port not in s.inLinks:
+                invalidInPorts.add(port)
+                continue
+            link = s.inLinks[port]
+            if link.disabled or type(link.srcTile) == ParamSPM or link.srcTile.disabled:
+                invalidInPorts.add(port)
+                continue
+        return invalidInPorts
+
+    def getInvalidOutPorts(s):
+        invalidOutPorts = set()
+        for port in range(PORT_DIRECTION_COUNTS):
+            if port not in s.outLinks:
+                invalidOutPorts.add(port)
+                continue
+            link = s.outLinks[port]
+            if link.disabled or type(link.dstTile) == ParamSPM or link.dstTile.disabled:
+                invalidOutPorts.add(port)
+                continue
+        return invalidOutPorts
+
     def reset(s):
         s.disabled = False
 
-        for i in range( PORT_DIRECTION_COUNTS ):
+        for i in range(PORT_DIRECTION_COUNTS):
             s.neverUsedOutPorts.add(i)
  
         for xbarType in xbarTypeList:
@@ -201,12 +237,58 @@ class ParamTile:
 
 
 class ParamSPM:
-    def __init__(s, posX, ports):
+    def __init__(s, posX, numOfReadPorts, numOfWritePorts):
         s.posX = posX
         s.ID = -1
-        s.ports = ports
+        s.numOfReadPorts = numOfReadPorts
+        s.numOfWritePorts = numOfWritePorts
+        s.disabled = False
         s.inLinks = {}
         s.outLinks = {}
+
+    def getNumOfValidReadPorts(s):
+        ports = 0
+        for physicalPort in range(s.numOfReadPorts):
+            if physicalPort not in s.inLinks:
+                continue
+            if s.inLinks[physicalPort].disabled:
+                continue
+            ports += 1
+        return ports
+
+    def getNumOfValidWritePorts(s):
+        ports = 0
+        for physicalPort in range(s.numOfWritePorts):
+            if physicalPort not in s.outLinks:
+                continue
+            if s.outLinks[physicalPort].disabled:
+                continue
+            ports += 1
+        return ports
+
+    def getValidReadPort(s, logicalPort):
+        port = 0
+        for physicalPort in range(logicalPort+1):
+            if physicalPort not in s.inLinks:
+                continue
+            if s.inLinks[physicalPort].disabled:
+                continue
+            if physicalPort == logicalPort:
+                return port
+            port += 1
+        return -1
+
+    def getValidWritePort(s, logicalPort):
+        port = 0
+        for physicalPort in range(logicalPort+1):
+            if physicalPort not in s.outLinks:
+                continue
+            if s.outLinks[physicalPort].disabled:
+                continue
+            if physicalPort == logicalPort:
+                return port
+            port += 1
+        return -1
 
     def getPosX(s):
         return s.posX
@@ -232,6 +314,24 @@ class ParamLink:
         s.disabled = False
         s.srcTile.resetOutLink(s.srcPort, s)
         s.dstTile.resetInLink(s.dstPort, s)
+
+    def getMemReadPort(s):
+        if s.isFromMem():
+            spm = s.srcTile
+            return spm.getValidReadPort(s.srcPort)
+        return -1
+
+    def getMemWritePort(s):
+        if s.isToMem():
+            spm = s.dstTile
+            return spm.getValidWritePort(s.dstPort)
+        return -1
+
+    def isToMem(s):
+        return type(s.dstTile) == ParamSPM
+
+    def isFromMem(s):
+        return type(s.srcTile) == ParamSPM
 
     def getSrcXY(s, baseX=0, baseY=0):
         if type(s.srcTile) != ParamSPM:
@@ -264,6 +364,20 @@ class ParamCGRA:
 
     def checkAvailability(s):
         pass
+
+    def getValidTiles(s):
+        validTiles = []
+        for tile in s.tiles:
+            if not tile.disabled:
+                validTiles.append(tile)
+        return validTiles
+
+    def getValidLinks(s):
+        validLinks = []
+        for link in s.updatedLinks:
+            if not link.disabled and not link.srcTile.disabled and not link.dstTile.disabled:
+                validLinks.append(link)
+        return validLinks
 
     def updateFuXbarPannel(s):
         targetTile = s.getTileOfID(s.targetTileID)
@@ -316,6 +430,7 @@ class ParamCGRA:
 
     def resetLinks(s):
         for link in s.templateLinks:
+            link.disabled = False
             link.srcTile.resetOutLink(link.srcPort, link)
             link.dstTile.resetInLink(link.dstPort, link)
 
@@ -441,7 +556,7 @@ def clickGenerateVerilog():
     os.system("mkdir verilog")
     os.chdir("verilog")
 
-    test_cgra_universal()
+    test_cgra_universal(paramCGRA)
 
     widgets["verilogText"].delete("1.0", tkinter.END)
     found = False
@@ -459,7 +574,6 @@ def clickGenerateVerilog():
     os.system("rename s/\.v/\.log/g *")
 
     os.chdir("..")
-
 
 def clickTile(ID):
     widgets["fuConfigPannel"].config(text='Tile '+str(ID)+' functional units')
@@ -614,6 +728,8 @@ def clickTest():
 
     # os.system("pytest ../../VectorCGRA")
     testProc = subprocess.Popen(["pytest ../../VectorCGRA", '-u'], stdout=subprocess.PIPE, shell=True, bufsize=1)
+    failed = 0
+    total = 0
     with testProc.stdout:
         for line in iter(testProc.stdout.readline, b''):
             outputLine = line.decode("utf-8")
@@ -623,8 +739,11 @@ def clickTest():
                 widgets["testProgress"].configure(value=value)
                 widgets["testShow"].configure(text=str(value)+"%", fg="red")
                 master.update_idletasks()
+                total += 1
+                if ".py F" in outputLine:
+                    failed += 1
 
-    widgets["testShow"].configure(text="PASSED", fg="green")
+    widgets["testShow"].configure(text="PASSED" if failed==0 else str(total-failed)+"/"+str(total), fg="green")
     # (out, err) = testProc.communicate()
     # print("check test output:", out)
 
@@ -704,7 +823,7 @@ def create_cgra_pannel(root, rows, columns):
 
     # construct data memory
     if paramCGRA.dataSPM == None:
-        dataSPM = ParamSPM(MEM_WIDTH, rows)
+        dataSPM = ParamSPM(MEM_WIDTH, rows, rows)
         paramCGRA.initDataSPM(dataSPM)
 
     # draw data memory
@@ -985,22 +1104,29 @@ def create_test_pannel(master, x, width, height):
     testProgress['value'] = 0
     widgets["testProgress"] = testProgress
     testProgress.grid(row=0, column=1, padx=BORDER, pady=BORDER//2)
-    testShow = tkinter.Label(testPannel, text = " IDLE", fg='gray')
+    testShow = tkinter.Label(testPannel, text = "  IDLE ", fg='gray')
     widgets["testShow"] = testShow
-    testShow.grid(row=0, column=2, sticky=tkinter.E, padx=BORDER, pady=BORDER//2)
+    testShow.grid(row=0, column=2, padx=BORDER, pady=BORDER//2)
 
 def create_verilog_pannel(master, x, y, width, height):
     verilogPannel = tkinter.LabelFrame(master, text='SVerilog', bd = BORDER, relief='groove')
     verilogPannel.place(height=height, width=width, x=x, y=y)
-    
-    verilogText = tkinter.Text(verilogPannel, bd = BORDER, relief='groove')
+
+    verilogFrame = tkinter.Frame(verilogPannel, bd=BORDER, relief="groove")
+    verilogFrame.place(height=height-8*BORDER-40, width=width-4*BORDER, x=BORDER, y=BORDER)
+
+    verilogScroll=tkinter.Scrollbar(verilogFrame, orient='vertical')
+    verilogScroll.pack(side=tkinter.RIGHT, fill='y')
+
+    # verilogText = tkinter.Text(verilogPannel, bd = BORDER, relief='groove', yscrollcommand=v.set)
+    verilogText = tkinter.Text(verilogFrame, yscrollcommand=verilogScroll.set)
+    verilogScroll.config(command=verilogText.yview)
     widgets["verilogText"] = verilogText
-    verilogText.place(height=height-8*BORDER-40, width=width-4*BORDER, x=BORDER, y=BORDER)
-    
-    generateButton = tkinter.Button(verilogPannel, text="Generate", relief='raised', command=clickGenerateVerilog)
-    generateButton.place(x=width-4*BORDER-90, y=height-8*BORDER-30)
+    verilogText.pack()
+
+    generateVerilogButton = tkinter.Button(verilogPannel, text="Generate", relief='raised', command=clickGenerateVerilog)
+    generateVerilogButton.place(x=width-4*BORDER-90, y=height-8*BORDER-30)
  
-    
 def create_report_pannel(master, x, y, width):
     reportPannel = tkinter.LabelFrame(master, text='Report area/power', bd = BORDER, relief='groove')
     reportPannel.place(width=width, x=x, y=y)

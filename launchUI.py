@@ -2,11 +2,12 @@ import sys
 import os
 import time
 import subprocess
+import json
 import tkinter
 import tkinter.messagebox
 from tkinter import ttk
 from tkinter import filedialog as fd
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageFile
 from functools import partial
 
 from VectorCGRA.cgra.translate.CGRATemplateRTL_test import *
@@ -380,6 +381,7 @@ class ParamCGRA:
         s.dataSPM = None
         s.targetAppName = "not selected yet"
         s.targetKernelName = ""
+        s.compilationDone = False
 
     # return error message if the model is not valid
     def getErrorMessage(s):
@@ -822,8 +824,6 @@ def clickSelectApp():
     widgets["appPathLabel"].configure(state="disabled")
 
 def clickCompileApp():
-    # need to provide the paths for lib.so and kernel.bc
-    # compileProc = subprocess.Popen(["../CGRA-Mapper/test/run_test.sh"], stdout=subprocess.PIPE, shell=True)
     global paramCGRA
     fileName = paramCGRA.targetAppName
     if not fileName or fileName == "not selected yet":
@@ -842,9 +842,60 @@ def clickCompileApp():
         widgets["compileAppShow"].config(text=u'  \u2713\u2713\u2713', fg='green')
 
     os.chdir("..")
+    paramCGRA.compilationDone = True
 
-def clickGenerateDFG():
-    pass
+
+def clickShowDFG():
+    os.system("mkdir kernel")
+    os.chdir("kernel")
+    fileExist = os.path.exists("kernel.bc")
+    global paramCGRA
+
+    if not fileExist or not paramCGRA.compilationDone:
+        os.chdir("..")
+        tkinter.messagebox.showerror(title="DFG Generation", message="The compilation needs to be done first.")
+        return
+
+    genDFGJson = {
+            "kernel"                : "_Z6kernelPfS_S_",
+            "targetFunction"        : False,
+            "targetNested"          : True,
+            "targetLoopsID"         : [0],
+            "doCGRAMapping"         : False,
+            "row"                   : 4,
+            "column"                : 4,
+            "precisionAware"        : True,
+            "heterogeneity"         : False,
+            "isTrimmedDemo"         : True,
+            "heuristicMapping"      : True,
+            "diagonalVectorization" : False,
+            "bypassConstraint"      : 4,
+            "isStaticElasticCGRA"   : False,
+            "ctrlMemConstraint"     : 200,
+            "regConstraint"         : 8,
+        }
+     
+    json_object = json.dumps(genDFGJson, indent=4)
+     
+    # Writing to sample.json
+    with open("sample.json", "w") as outfile:
+             outfile.write(json_object)
+
+    genDFGCommand = "opt-12 -load ../../CGRA-Mapper/build/src/libmapperPass.so -mapperPass ./kernel.bc"
+    genDFGProc = subprocess.Popen([genDFGCommand, '-u'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    (out, err) = genDFGProc.communicate()
+
+    convertCommand = "dot -Tpng _Z6kernelPfS_S_.dot -o kernel.png"
+    convertProc = subprocess.Popen([convertCommand, '-u'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+
+    PIL_image = Image.open("kernel.png")
+    ImageFile.LOAD_TRUNCATED_IMAGES = True
+    PIL_image_small = PIL_image.resize((434, 294), Image.Resampling.LANCZOS)
+    dfgImage = ImageTk.PhotoImage(PIL_image_small)
+    images["dfgImage"] = dfgImage # This is important due to the garbage collection would remove local variable of image
+    widgets["dfgLabel"].config(image=dfgImage)
+ 
+    os.chdir("..")
 
 
 def clickMapDFG(II):
@@ -1271,7 +1322,7 @@ def create_kernel_pannel(master, x, y, width, height):
     widgets["kernelNameEntry"] = kernelNameEntry
     kernelNameEntry.grid(columnspan=2, row=1, column=1, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
 
-    generateDFGButton = tkinter.Button(kernelPannel, text = "Show DFG ", fg="black", command=clickGenerateDFG)
+    generateDFGButton = tkinter.Button(kernelPannel, text = "Show DFG ", fg="black", command=clickShowDFG)
     generateDFGButton.grid(row=1, column=3, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
 
     mapDFGButton = tkinter.Button(kernelPannel, text="Map", fg="black", command = partial(clickMapDFG, II))
@@ -1282,12 +1333,13 @@ def create_kernel_pannel(master, x, y, width, height):
     dfgWidth = width-4*BORDER
     dfgPannel.place(height=dfgHeight, width=dfgWidth, x=BORDER, y=70+BORDER)
     # dfgPannel.grid(columnspan=4, row=2, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
-    PIL_image = Image.open("../CGRA-Mapper/test/kernel.png")
-    PIL_image_small = PIL_image.resize((dfgWidth-10,dfgHeight-25), Image.Resampling.LANCZOS)
-    dfgImage = ImageTk.PhotoImage(PIL_image_small)
+    # PIL_image = Image.open("../CGRA-Mapper/test/kernel.png")
+    # PIL_image_small = PIL_image.resize((dfgWidth-10,dfgHeight-25), Image.Resampling.LANCZOS)
+    # dfgImage = ImageTk.PhotoImage(PIL_image_small)
     # dfgImage = ImageTk.PhotoImage(PIL_image)
-    images["dfgImage"] = dfgImage # This is important due to the garbage collection would remove local variable of image
-    dfgLabel = tkinter.Label(dfgPannel, image=dfgImage)
+    # images["dfgImage"] = dfgImage # This is important due to the garbage collection would remove local variable of image
+    dfgLabel = tkinter.Label(dfgPannel)#  image=dfgImage)
+    widgets["dfgLabel"] = dfgLabel
     dfgLabel.pack()
 
     # X = tkinter.Label(kernelPannel, text = 'Kernel input is coming soon...', fg = 'black')

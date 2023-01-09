@@ -378,6 +378,8 @@ class ParamCGRA:
         s.updatedLinks = []
         s.targetTileID = 0
         s.dataSPM = None
+        s.targetAppName = "not selected yet"
+        s.targetKernelName = ""
 
     # return error message if the model is not valid
     def getErrorMessage(s):
@@ -599,7 +601,6 @@ class ParamCGRA:
 
 
 paramCGRA = ParamCGRA(ROWS, COLS, CONFIG_MEM_SIZE, DATA_MEM_SIZE)
-targetKernelName = "not selected yet"
 
 def clickGenerateVerilog():
 
@@ -809,24 +810,42 @@ def clickTest():
 
     os.chdir("..")
 
-def clickSelectKernel():
+def clickSelectApp():
     global paramCGRA
-    kernelName = fd.askopenfilename(title="choose a kernel", initialdir="../", filetypes=(("C/C++ file", "*.cpp"), ("C/C++ file", "*.c"), ("C/C++ file", "*.C"), ("C/C++ file", "*.CPP")))
-    targetKernelName = kernelName
+    appName = fd.askopenfilename(title="choose an application", initialdir="../", filetypes=(("C/C++ file", "*.cpp"), ("C/C++ file", "*.c"), ("C/C++ file", "*.C"), ("C/C++ file", "*.CPP")))
+    paramCGRA.targetAppName = appName
+    print("check after select: ", appName)
 
-    widgets["kernelPathLabel"].configure(state="normal")
-    widgets["kernelPathLabel"].delete(0, tkinter.END)
-    widgets["kernelPathLabel"].insert(0, targetKernelName)
-    widgets["kernelPathLabel"].configure(state="disabled")
+    widgets["appPathLabel"].configure(state="normal")
+    widgets["appPathLabel"].delete(0, tkinter.END)
+    widgets["appPathLabel"].insert(0, paramCGRA.targetAppName)
+    widgets["appPathLabel"].configure(state="disabled")
 
-def clickCompileKernel():
+def clickCompileApp():
     # need to provide the paths for lib.so and kernel.bc
-    compileProc = subprocess.Popen(["../CGRA-Mapper/test/run_test.sh"], stdout=subprocess.PIPE, shell=True)
+    # compileProc = subprocess.Popen(["../CGRA-Mapper/test/run_test.sh"], stdout=subprocess.PIPE, shell=True)
+    global paramCGRA
+    fileName = paramCGRA.targetAppName
+    if not fileName or fileName == "not selected yet":
+        return
+
+    os.system("mkdir kernel")
+    os.chdir("kernel")
+
+    command = "clang-12 -emit-llvm -fno-unroll-loops -O3 -o kernel.bc -c " + fileName
+    compileProc = subprocess.Popen([command, '-u'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     (out, err) = compileProc.communicate()
-    print("check program output:", out)
+    if err:
+        widgets["compileAppShow"].config(text=u'  \u2717\u2717\u2717', fg='red')
+        print("Error message: ", err)
+    else:
+        widgets["compileAppShow"].config(text=u'  \u2713\u2713\u2713', fg='green')
+
+    os.chdir("..")
 
 def clickGenerateDFG():
     pass
+
 
 def clickMapDFG(II):
     # pad contains tile and links
@@ -1228,24 +1247,22 @@ def create_kernel_pannel(master, x, y, width, height):
     kernelPannel = tkinter.LabelFrame(master, text='Kernel', bd = BORDER, relief='groove')
     kernelPannel.place(height=height+3, width=width, x=x, y=y)
 
-    selectKernelButton = tkinter.Button(kernelPannel, text='Select app', fg='black', command=clickSelectKernel)
-    selectKernelButton.grid(row=0, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    selectAppButton = tkinter.Button(kernelPannel, text='Select app', fg='black', command=clickSelectApp)
+    selectAppButton.grid(row=0, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
 
-    kernelPathLabel = tkinter.Entry(kernelPannel, fg="black")
-    widgets["kernelPathLabel"] = kernelPathLabel
-    kernelPathLabel.insert(0, targetKernelName)
-    kernelPathLabel.configure(state="disabled")
-    kernelPathLabel.grid(columnspan=2, row=0, column=1, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    appPathLabel = tkinter.Entry(kernelPannel, fg="black")
+    widgets["appPathLabel"] = appPathLabel
+    appPathLabel.insert(0, paramCGRA.targetAppName)
+    appPathLabel.configure(state="disabled")
+    appPathLabel.grid(columnspan=2, row=0, column=1, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
 
-    # chooseKernelShow = tkinter.Label(kernelPannel, text = u'\u2713', fg='green')
-    # chooseKernelShow.place(height=20, width=200)
-    # chooseKernelShow.grid(row=0, column=3, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    compileAppButton = tkinter.Button(kernelPannel, text = "  Compile  ", fg="black", command=clickCompileApp)
+    compileAppButton.grid(row=0, column=3, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
 
-    compileKernelButton = tkinter.Button(kernelPannel, text = "  Compile  ", fg="black", command=clickCompileKernel)
-    compileKernelButton.grid(row=0, column=3, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
-
-    compileKernelShow = tkinter.Label(kernelPannel, text=u'  \u2713\u2713\u2713', fg='green')
-    compileKernelShow.grid(row=0, column=4, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    # compileAppShow = tkinter.Label(kernelPannel, text=u'  \u2713\u2713\u2713', fg='green')
+    compileAppShow = tkinter.Label(kernelPannel, text="  IDLE ", fg='gray')
+    compileAppShow.grid(row=0, column=4, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    widgets["compileAppShow"] = compileAppShow
 
     kernelNameLabel = tkinter.Label(kernelPannel, text=" Kernel name:", fg='black')
     kernelNameLabel.grid(row=1, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)

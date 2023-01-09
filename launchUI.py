@@ -3,12 +3,13 @@ import os
 import time
 import subprocess
 import tkinter
+import tkinter.messagebox
 from tkinter import ttk
 from tkinter import filedialog as fd
 from PIL import Image, ImageTk
 from functools import partial
 
-from vectorcgra.cgra.translate.CGRATemplateRTL_test import *
+from VectorCGRA.cgra.translate.CGRATemplateRTL_test import *
 
 PORT_NORTH     = 0
 PORT_SOUTH     = 1
@@ -134,6 +135,22 @@ class ParamTile:
                 invalidInPorts.add(port)
                 continue
         return invalidInPorts
+
+    def isDefaultFus(s):
+        for fuType in fuTypeList:
+            if s.fuDict[fuType] != 1:
+                return False
+        return True
+
+    def getAllValidFuTypes(s):
+        fuTypes = set()
+        for fuType in fuTypeList:
+            if s.fuDict[fuType] == 1:
+                if fuType == "Ld" or fuType == "St":
+                    fuTypes.add("Ld")
+                else:
+                    fuTypes.add(fuType)
+        return list(fuTypes)
 
     def getInvalidOutPorts(s):
         invalidOutPorts = set()
@@ -362,8 +379,40 @@ class ParamCGRA:
         s.targetTileID = 0
         s.dataSPM = None
 
-    def checkAvailability(s):
-        pass
+    # return error message if the model is not valid
+    def getErrorMessage(s):
+        # at least one tile can perform mem acess
+        memExist = False
+        # at least one tile exists
+        tileExist = False
+        for tile in s.tiles:
+            if not tile.disabled:
+                tileExist = True
+                # a tile contains at least one FU
+                fuExist = False
+                # the tile connect to mem need to able to access mem
+                memTileValid = False
+
+                for fuType in fuTypeList:
+                    if (fuType == "Ld" or fuType == "St") and (tile.hasToMem() or tile.hasFromMem()):
+                        memTileValid = True if tile.fuDict[fuType] == 1 else False
+                        if not memTileValid:
+                            return "Tile " + str(tile.ID) + " needs to contain the Load/Store functional units."
+                        memExist = True
+                    else:
+                        memTileValid = True
+                    if tile.fuDict[fuType] == 1:
+                        fuExist = True
+                if not fuExist:
+                    return "At least one functional unit needs to exist in tile " + str(tile.ID) + "."
+
+        if not tileExist:
+            return "At least one tile needs to exist in the CGRA."
+
+        if not memExist:
+            return "At least one tile including a Load/Store functional unit needs to directly connect to the data SPM."
+
+        return ""
 
     def getValidTiles(s):
         validTiles = []
@@ -553,6 +602,12 @@ paramCGRA = ParamCGRA(ROWS, COLS, CONFIG_MEM_SIZE, DATA_MEM_SIZE)
 targetKernelName = "not selected yet"
 
 def clickGenerateVerilog():
+
+    message = paramCGRA.getErrorMessage()
+    if message != "":
+        tkinter.messagebox.showerror(title="CGRA Model Checking", message=message)
+        return
+
     os.system("mkdir verilog")
     os.chdir("verilog")
 
@@ -662,6 +717,12 @@ def clickEntireTileCheckbutton():
 
 
 def clickFuCheckbutton(fuType):
+    if fuType == "Ld":
+        fuCheckVars["St"].set(fuCheckVars["Ld"].get())
+        paramCGRA.updateFuCheckbutton("St", fuCheckVars["St"].get())
+    elif fuType == "St":
+        fuCheckVars["Ld"].set(fuCheckVars["St"].get())
+        paramCGRA.updateFuCheckbutton("Ld", fuCheckVars["Ld"].get())
     paramCGRA.updateFuCheckbutton(fuType, fuCheckVars[fuType].get())
 
 def clickXbarCheckbutton(xbarType):
@@ -685,8 +746,7 @@ def clickUpdate(root):
 
     create_cgra_pannel(root, rows, columns)
 
-    paramCGRA.checkAvailability()
-
+    widgets["verilogText"].delete("1.0", tkinter.END)
 
 def clickReset(root):
     rows = int(widgets["rowsEntry"].get())
@@ -1168,32 +1228,42 @@ def create_kernel_pannel(master, x, y, width, height):
     kernelPannel = tkinter.LabelFrame(master, text='Kernel', bd = BORDER, relief='groove')
     kernelPannel.place(height=height+3, width=width, x=x, y=y)
 
-    selectKernelButton = tkinter.Button(kernelPannel, text='Select', fg='black', command=clickSelectKernel)
+    selectKernelButton = tkinter.Button(kernelPannel, text='Select app', fg='black', command=clickSelectKernel)
     selectKernelButton.grid(row=0, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
 
     kernelPathLabel = tkinter.Entry(kernelPannel, fg="black")
     widgets["kernelPathLabel"] = kernelPathLabel
     kernelPathLabel.insert(0, targetKernelName)
     kernelPathLabel.configure(state="disabled")
-    kernelPathLabel.grid(row=0, column=1, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    kernelPathLabel.grid(columnspan=2, row=0, column=1, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
 
     # chooseKernelShow = tkinter.Label(kernelPannel, text = u'\u2713', fg='green')
     # chooseKernelShow.place(height=20, width=200)
     # chooseKernelShow.grid(row=0, column=3, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
 
-    compileKernelButton = tkinter.Button(kernelPannel, text = "Compile", fg="black", command=clickCompileKernel)
-    compileKernelButton.grid(row=0, column=2, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    compileKernelButton = tkinter.Button(kernelPannel, text = "  Compile  ", fg="black", command=clickCompileKernel)
+    compileKernelButton.grid(row=0, column=3, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
 
-    compileKernelShow = tkinter.Label(kernelPannel, text=u'\u2713', fg='green')
-    compileKernelShow.grid(row=0, column=3, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    compileKernelShow = tkinter.Label(kernelPannel, text=u'  \u2713\u2713\u2713', fg='green')
+    compileKernelShow.grid(row=0, column=4, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+
+    kernelNameLabel = tkinter.Label(kernelPannel, text=" Kernel name:", fg='black')
+    kernelNameLabel.grid(row=1, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+
+    kernelNameEntry= tkinter.Entry(kernelPannel, fg="black")
+    widgets["kernelNameEntry"] = kernelNameEntry
+    kernelNameEntry.grid(columnspan=2, row=1, column=1, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+
+    generateDFGButton = tkinter.Button(kernelPannel, text = "Show DFG ", fg="black", command=clickGenerateDFG)
+    generateDFGButton.grid(row=1, column=3, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
 
     mapDFGButton = tkinter.Button(kernelPannel, text="Map", fg="black", command = partial(clickMapDFG, II))
-    mapDFGButton.grid(row=0, column=4, sticky=tkinter.E, padx=BORDER, pady=BORDER//2)
+    mapDFGButton.grid(row=1, column=4, sticky=tkinter.E, padx=BORDER, pady=BORDER//2)
 
     dfgPannel = tkinter.LabelFrame(kernelPannel, text='Data-Flow Graph', fg="black", bd=BORDER, relief='groove')
-    dfgHeight = height-40-4*BORDER
+    dfgHeight = height-80-4*BORDER
     dfgWidth = width-4*BORDER
-    dfgPannel.place(height=dfgHeight, width=dfgWidth, x=BORDER, y=30+BORDER)
+    dfgPannel.place(height=dfgHeight, width=dfgWidth, x=BORDER, y=70+BORDER)
     # dfgPannel.grid(columnspan=4, row=2, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
     PIL_image = Image.open("../CGRA-Mapper/test/kernel.png")
     PIL_image_small = PIL_image.resize((dfgWidth-10,dfgHeight-25), Image.Resampling.LANCZOS)

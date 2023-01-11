@@ -45,7 +45,6 @@ GRID_HEIGHT = (TILE_HEIGHT+LINK_LENGTH) * ROWS - LINK_LENGTH
 MEM_WIDTH = 50
 CONFIG_MEM_SIZE = 8
 DATA_MEM_SIZE = 4
-II = 4
 
 fuTypeList = ["Phi", "Add", "Shift", "Ld", "Sel", "Cmp", "MAC", "St", "Ret", "Mul", "Logic", "Br"]
 
@@ -380,8 +379,8 @@ class ParamCGRA:
         s.targetTileID = 0
         s.dataSPM = None
         s.targetAppName = "not selected yet"
-        s.targetKernelName = ""
         s.compilationDone = False
+        s.targetKernels = []
 
     # return error message if the model is not valid
     def getErrorMessage(s):
@@ -812,16 +811,16 @@ def clickTest():
 
     os.chdir("..")
 
-def clickSelectApp():
+def clickSelectApp(event):
     global paramCGRA
     appName = fd.askopenfilename(title="choose an application", initialdir="../", filetypes=(("C/C++ file", "*.cpp"), ("C/C++ file", "*.c"), ("C/C++ file", "*.C"), ("C/C++ file", "*.CPP")))
     paramCGRA.targetAppName = appName
     print("check after select: ", appName)
 
-    widgets["appPathLabel"].configure(state="normal")
-    widgets["appPathLabel"].delete(0, tkinter.END)
-    widgets["appPathLabel"].insert(0, paramCGRA.targetAppName)
-    widgets["appPathLabel"].configure(state="disabled")
+    # widgets["appPathEntry"].configure(state="normal")
+    widgets["appPathEntry"].delete(0, tkinter.END)
+    widgets["appPathEntry"].insert(0, paramCGRA.targetAppName)
+    # widgets["appPathEntry"].configure(state="disabled")
 
 def clickCompileApp():
     global paramCGRA
@@ -832,17 +831,41 @@ def clickCompileApp():
     os.system("mkdir kernel")
     os.chdir("kernel")
 
-    command = "clang-12 -emit-llvm -fno-unroll-loops -O3 -o kernel.bc -c " + fileName
-    compileProc = subprocess.Popen([command, '-u'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    (out, err) = compileProc.communicate()
-    if err:
-        widgets["compileAppShow"].config(text=u'  \u2717\u2717\u2717', fg='red')
-        print("Error message: ", err)
-    else:
-        widgets["compileAppShow"].config(text=u'  \u2713\u2713\u2713', fg='green')
+    compileCommand = "clang-12 -emit-llvm -fno-unroll-loops -O3 -o kernel.bc -c " + fileName
+    compileProc = subprocess.Popen([compileCommand, '-u'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    (compileOut, compileErr) = compileProc.communicate()
 
+    disassembleCommand = "llvm-dis-12 kernel.bc -o kernel.ll"
+    disassembleProc = subprocess.Popen([disassembleCommand, '-u'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    (disassembleOut, disassembleErr) = disassembleProc.communicate()
+
+    if compileErr:
+        widgets["compileAppShow"].config(text=u'\u2717\u2717\u2717', fg='red')
+        os.chdir("..")
+        print("Compile error message: ", compileErr)
+        return
+    if disassembleErr:
+        widgets["compileAppShow"].config(text=u'\u2717\u2717\u2717', fg='red')
+        os.chdir("..")
+        print("Disassemble error message: ", disassembleErr)
+        return
+    
+    widgets["compileAppShow"].config(text=u'\u2713\u2713\u2713', fg='green')
     os.chdir("..")
     paramCGRA.compilationDone = True
+
+    # collect the potentially targeting kernel/function
+    irFile = open('kernel.ll', 'r')
+    irLines = irFile.readlines()
+      
+    # Strips the newline character
+    for line in irLines:
+        if "define " in line and "{" in line and "@" in line:
+            funcName = line.split("@")[1].split("(")[0]
+            if "main" not in funcName:
+                paramCGRA.targetKernels.append(funcName)
+
+    irFile.close()
 
 
 def clickShowDFG():
@@ -869,24 +892,24 @@ def clickShowDFG():
             "isTrimmedDemo"         : True,
             "heuristicMapping"      : True,
             "diagonalVectorization" : False,
-            "bypassConstraint"      : 4,
+            "bypassConstraint"      : 8,
             "isStaticElasticCGRA"   : False,
             "ctrlMemConstraint"     : 200,
-            "regConstraint"         : 8,
+            "regConstraint"         : 12,
         }
      
     json_object = json.dumps(genDFGJson, indent=4)
      
-    # Writing to sample.json
-    with open("sample.json", "w") as outfile:
-             outfile.write(json_object)
+    with open("param.json", "w") as outfile:
+        outfile.write(json_object)
 
     genDFGCommand = "opt-12 -load ../../CGRA-Mapper/build/src/libmapperPass.so -mapperPass ./kernel.bc"
-    genDFGProc = subprocess.Popen([genDFGCommand, '-u'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    genDFGProc = subprocess.Popen([genDFGCommand, "-u"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     (out, err) = genDFGProc.communicate()
 
     convertCommand = "dot -Tpng _Z6kernelPfS_S_.dot -o kernel.png"
-    convertProc = subprocess.Popen([convertCommand, '-u'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    convertProc = subprocess.Popen([convertCommand, "-u"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    (out, err) = convertProc.communicate()
 
     PIL_image = Image.open("kernel.png")
     ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -897,8 +920,107 @@ def clickShowDFG():
  
     os.chdir("..")
 
+def clickHeuristicMapDFG():
+    mapDFG(True)
 
-def clickMapDFG(II):
+def clickExhaustiveMapDFG():
+    mapDFG(False)
+
+def mapDFG(heuristic):
+    os.system("mkdir kernel")
+    os.chdir("kernel")
+    fileExist = os.path.exists("kernel.bc")
+    global paramCGRA
+
+    if not fileExist or not paramCGRA.compilationDone:
+        os.chdir("..")
+        tkinter.messagebox.showerror(title="DFG Generation", message="The compilation needs to be done first.")
+        return
+
+    mappingJson = {
+            "kernel"                : "_Z6kernelPfS_S_",
+            "targetFunction"        : False,
+            "targetNested"          : True,
+            "targetLoopsID"         : [0],
+            "doCGRAMapping"         : True,
+            "row"                   : paramCGRA.rows,
+            "column"                : paramCGRA.columns,
+            "precisionAware"        : True,
+            "heterogeneity"         : False,
+            "isTrimmedDemo"         : True,
+            "heuristicMapping"      : heuristic,
+            "parameterizableCGRA"   : True,
+            "diagonalVectorization" : False,
+            "bypassConstraint"      : 8,
+            "isStaticElasticCGRA"   : False,
+            "ctrlMemConstraint"     : paramCGRA.configMemSize,
+            "regConstraint"         : 12,
+        }
+     
+    mappingJsonObject = json.dumps(mappingJson, indent=4)
+     
+    with open("param.json", "w") as outfile:
+        outfile.write(mappingJsonObject)
+
+    paramCGRAJson = {}
+    paramCGRAJson["tiles"] = {}
+    for tile in paramCGRA.tiles:
+        curDict = {}
+        if tile.disabled:
+            curDict["disabled"] = True
+        else:
+            curDict["disabled"] = False
+            if tile.isDefaultFus():
+                curDict["supportAllFUs"] = True
+            else:
+                curDict["supportAllFUs"] = False
+                curDict["supportedFUs"] = []
+                for fuType in tile.fuDict:
+                    if tile.fuDict[fuType] == 1:
+                        curDict["supportedFUs"].append(fuType)
+            
+            if (tile.hasFromMem() and tile.fuDict["Ld"] == 1) and\
+               (tile.hasToMem()   and tile.fuDict["St"] == 1):
+                curDict["accessMem"] = True
+
+        paramCGRAJson["tiles"][str(tile.ID)] = curDict
+
+    paramCGRAJson["links"] = []
+    for link in paramCGRA.updatedLinks:
+        curDict = {}
+        srcTile = link.srcTile
+        dstTile = link.dstTile
+        if not link.disabled and not srcTile.disabled and not dstTile.disabled and type(srcTile) != ParamSPM and type(dstTile) != ParamSPM:
+            curDict["srcTile"] = srcTile.ID
+            curDict["dstTile"] = dstTile.ID
+            paramCGRAJson["links"].append(curDict)
+
+    paramCGRAJsonObject = json.dumps(paramCGRAJson, indent=4)
+     
+    # Writing to sample.json
+    with open("paramCGRA.json", "w") as outfile:
+        outfile.write(paramCGRAJsonObject)
+
+    mappingCommand = "opt-12 -load ../../CGRA-Mapper/build/src/libmapperPass.so -mapperPass ./kernel.bc"
+
+    # mappingProc = subprocess.Popen([mappingCommand, '-u'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    # (out, err) = mappingProc.communicate()
+    mappingProc = subprocess.Popen([mappingCommand, '-u'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, bufsize=1)
+    success = False
+    mappingII = -1
+    with mappingProc.stdout:
+        for line in iter(mappingProc.stdout.readline, b''):
+            outputLine = line.decode("utf-8")
+            print(outputLine)
+            if "Mapping Success" in outputLine:
+                success = True
+            if "Mapping II: " in outputLine:
+                mappingII = int(outputLine.split(": ")[1])
+            if success and mappingII != -1:
+                break
+
+    os.chdir("..")
+
     # pad contains tile and links
     tileWidth = paramCGRA.tiles[0].width
     tileHeight = paramCGRA.tiles[0].height
@@ -909,9 +1031,9 @@ def clickMapDFG(II):
     canvas = widgets["mappingCanvas"]
     canvas.delete("all")
     cgraWidth = GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + 20
-    canvas.configure(scrollregion=(0, 0, II*cgraWidth, GRID_HEIGHT))
+    canvas.configure(scrollregion=(0, 0, mappingII*cgraWidth, GRID_HEIGHT))
     
-    for ii in range(II):
+    for ii in range(mappingII):
         # draw data memory
         spmLabel = tkinter.Label(canvas, text="Data\nSPM", fg='black', bg='gray', relief='raised', bd=BORDER)
         canvas.create_window(baseX+BORDER, BORDER, window=spmLabel, height=GRID_HEIGHT, width=MEM_WIDTH, anchor="nw")
@@ -1295,23 +1417,25 @@ def create_layout_pannel(master, x, width, height):
 
 
 def create_kernel_pannel(master, x, y, width, height):
-    kernelPannel = tkinter.LabelFrame(master, text='Kernel', bd = BORDER, relief='groove')
+    kernelPannel = tkinter.LabelFrame(master, text="Kernel", bd=BORDER, relief='groove')
     kernelPannel.place(height=height+3, width=width, x=x, y=y)
 
-    selectAppButton = tkinter.Button(kernelPannel, text='Select app', fg='black', command=clickSelectApp)
-    selectAppButton.grid(row=0, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    selectAppLabel = tkinter.Label(kernelPannel, text=" Application:", fg='black')
+    selectAppLabel.grid(row=0, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
 
-    appPathLabel = tkinter.Entry(kernelPannel, fg="black")
-    widgets["appPathLabel"] = appPathLabel
-    appPathLabel.insert(0, paramCGRA.targetAppName)
-    appPathLabel.configure(state="disabled")
-    appPathLabel.grid(columnspan=2, row=0, column=1, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    appPathEntry = tkinter.Entry(kernelPannel, fg="black")
+    widgets["appPathEntry"] = appPathEntry
+    appPathEntry.insert(0, paramCGRA.targetAppName)
+    # appPathEntry.configure(state="disabled")
+    appPathEntry.grid(columnspan=2, row=0, column=1, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    appPathEntry.bind("<Button-1>", clickSelectApp)
 
-    compileAppButton = tkinter.Button(kernelPannel, text = "  Compile  ", fg="black", command=clickCompileApp)
+    compileAppButton = tkinter.Button(kernelPannel, text=" Compile app  ", fg="black", command=clickCompileApp)
+    compileAppButton.configure(width=10)
     compileAppButton.grid(row=0, column=3, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
 
     # compileAppShow = tkinter.Label(kernelPannel, text=u'  \u2713\u2713\u2713', fg='green')
-    compileAppShow = tkinter.Label(kernelPannel, text="  IDLE ", fg='gray')
+    compileAppShow = tkinter.Label(kernelPannel, text="IDLE", fg='gray')
     compileAppShow.grid(row=0, column=4, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
     widgets["compileAppShow"] = compileAppShow
 
@@ -1322,15 +1446,17 @@ def create_kernel_pannel(master, x, y, width, height):
     widgets["kernelNameEntry"] = kernelNameEntry
     kernelNameEntry.grid(columnspan=2, row=1, column=1, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
 
-    generateDFGButton = tkinter.Button(kernelPannel, text = "Show DFG ", fg="black", command=clickShowDFG)
-    generateDFGButton.grid(row=1, column=3, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    generateDFGButton = tkinter.Button(kernelPannel, text = "Generate DFG", fg="black", command=clickShowDFG)
+    generateDFGButton.configure(width=10)
+    generateDFGButton.grid(columnspan=2, row=1, column=3, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
 
-    mapDFGButton = tkinter.Button(kernelPannel, text="Map", fg="black", command = partial(clickMapDFG, II))
-    mapDFGButton.grid(row=1, column=4, sticky=tkinter.E, padx=BORDER, pady=BORDER//2)
+    generateDFGShow = tkinter.Label(kernelPannel, text="IDLE", fg='gray')
+    generateDFGShow.grid(row=1, column=4, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    widgets["generateDFGShow"] = generateDFGShow
 
     dfgPannel = tkinter.LabelFrame(kernelPannel, text='Data-Flow Graph', fg="black", bd=BORDER, relief='groove')
     dfgHeight = height-80-4*BORDER
-    dfgWidth = width-4*BORDER
+    dfgWidth = width-4*BORDER-120
     dfgPannel.place(height=dfgHeight, width=dfgWidth, x=BORDER, y=70+BORDER)
     # dfgPannel.grid(columnspan=4, row=2, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
     # PIL_image = Image.open("../CGRA-Mapper/test/kernel.png")
@@ -1342,9 +1468,71 @@ def create_kernel_pannel(master, x, y, width, height):
     widgets["dfgLabel"] = dfgLabel
     dfgLabel.pack()
 
-    # X = tkinter.Label(kernelPannel, text = 'Kernel input is coming soon...', fg = 'black')
-    # X.pack()
-                
+    recMIILabel = tkinter.Label(kernelPannel, text=" RecMII: ", fg='black')
+    recMIILabel.place(x=4*BORDER+dfgWidth, y=90+BORDER)
+
+    recMIIEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER)
+    widgets["recMIIEntry"] = recMIIEntry
+    recMIIEntry.insert(0, "0")
+    recMIIEntry.configure(width=4)
+    recMIIEntry.place(x=4*BORDER+dfgWidth+60, y=90+BORDER)
+
+    resMIILabel = tkinter.Label(kernelPannel, text=" ResMII: ", fg='black')
+    resMIILabel.place(x=4*BORDER+dfgWidth, y=120+BORDER)
+
+    resMIIEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER)
+    widgets["recMIIEntry"] = resMIIEntry
+    resMIIEntry.insert(0, "0")
+    resMIIEntry.configure(width=4)
+    resMIIEntry.place(x=4*BORDER+dfgWidth+60, y=120+BORDER)
+
+    mappingOptionLabel = tkinter.Label(kernelPannel, text="Mapping algo:", fg='black')
+    mappingOptionLabel.place(x=4*BORDER+dfgWidth, y=155+BORDER)
+
+    heuristicCheckVar = tkinter.IntVar()
+    heuristicRationbutton = tkinter.Radiobutton(kernelPannel, text="Heuristic", variable=heuristicCheckVar, value=1)
+    heuristicRationbutton.place(x=2*BORDER+dfgWidth, y=180+BORDER)
+
+    exhaustiveCheckVar = tkinter.IntVar()
+    exhaustiveRationbutton = tkinter.Radiobutton(kernelPannel, text="Exhaustive", variable=exhaustiveCheckVar, value=2)
+    exhaustiveRationbutton.place(x=2*BORDER+dfgWidth, y=200+BORDER)
+
+    mapDFGButton = tkinter.Button(kernelPannel, text="Map DFG", fg="black", command = clickHeuristicMapDFG)
+    mapDFGButton.configure(width=9)
+    mapDFGButton.place(x=4*BORDER+dfgWidth, y=230+BORDER)
+
+    terminateMapButton = tkinter.Button(kernelPannel, text="Terminate", fg="black", command = clickHeuristicMapDFG)
+    terminateMapButton.configure(width=9)
+    terminateMapButton.place(x=4*BORDER+dfgWidth, y=265+BORDER)
+
+    mapSecLabel = tkinter.Label(kernelPannel, text="   time: ", fg='black')
+    mapSecLabel.place(x=4*BORDER+dfgWidth, y=305+BORDER)
+
+    mapTimeEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER)
+    widgets["mapTimeEntry"] = mapTimeEntry
+    mapTimeEntry.insert(0, "0")
+    mapTimeEntry.configure(width=4)
+    mapTimeEntry.place(x=4*BORDER+dfgWidth+60, y=305+BORDER)
+
+    mapIILabel = tkinter.Label(kernelPannel, text=" map II: ", fg='black')
+    mapIILabel.place(x=4*BORDER+dfgWidth, y=332+BORDER)
+
+    mapIIEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER)
+    widgets["mapIIEntry"] = mapIIEntry
+    mapIIEntry.insert(0, "0")
+    mapIIEntry.configure(width=4)
+    mapIIEntry.place(x=4*BORDER+dfgWidth+60, y=332+BORDER)
+
+    speedupLabel = tkinter.Label(kernelPannel, text="speedup: ", fg='black')
+    speedupLabel.place(x=3*BORDER+dfgWidth, y=360+BORDER)
+
+    mapSpeedupEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER)
+    widgets["mapSpeedupEntry"] = mapSpeedupEntry
+    mapSpeedupEntry.insert(0, "0")
+    mapSpeedupEntry.configure(width=4)
+    mapSpeedupEntry.place(x=4*BORDER+dfgWidth+60, y=360+BORDER)
+
+
 
 def create_mapping_pannel(root, x, y, width):
 

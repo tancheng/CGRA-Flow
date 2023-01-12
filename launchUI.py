@@ -107,6 +107,8 @@ class ParamTile:
         s.neverUsedOutPorts = set()
         s.fuDict = {}
         s.xbarDict = {}
+        s.mapping = {}
+
         for i in range( PORT_DIRECTION_COUNTS ):
             s.neverUsedOutPorts.add(i)
         
@@ -170,6 +172,7 @@ class ParamTile:
 
     def reset(s):
         s.disabled = False
+        s.mapping = {}
 
         for i in range(PORT_DIRECTION_COUNTS):
             s.neverUsedOutPorts.add(i)
@@ -335,6 +338,7 @@ class ParamLink:
         s.disabled = False
         s.srcTile.resetOutLink(s.srcPort, s)
         s.dstTile.resetInLink(s.dstPort, s)
+        s.mapping = set()
 
     def getMemReadPort(s):
         if s.isFromMem():
@@ -493,6 +497,7 @@ class ParamCGRA:
             link.disabled = False
             link.srcTile.resetOutLink(link.srcPort, link)
             link.dstTile.resetInLink(link.dstPort, link)
+            link.mapping = set()
 
         s.updatedLinks = s.templateLinks[:]
 
@@ -551,6 +556,11 @@ class ParamCGRA:
         for tile in unreachableTiles:
             tile.disabled = True
 
+    def getUpdatedLink(s, srcTile, dstTile):
+        for link in s.updatedLinks:
+            if link.srcTile == srcTile and link.dstTile == dstTile:
+                return link
+        return None
 
     # TODO: also need to consider adding back after removing...
     def updateLinks(s):
@@ -802,7 +812,7 @@ def clickTest():
     total = 0
     with testProc.stdout:
         for line in iter(testProc.stdout.readline, b''):
-            outputLine = line.decode("utf-8")
+            outputLine = line.decode("ISO-8859-1")
             print(outputLine)
             if "%]" in outputLine:
                 value = int(outputLine.split("[")[1].split("%]")[0])
@@ -1056,7 +1066,7 @@ def clickMapDFG():
     mappingII = -1
     with mappingProc.stdout:
         for line in iter(mappingProc.stdout.readline, b''):
-            outputLine = line.decode("utf-8")
+            outputLine = line.decode("ISO-8859-1")
             print(outputLine)
             if "Mapping Success" in outputLine:
                 success = True
@@ -1070,7 +1080,9 @@ def clickMapDFG():
     widgets["mapSpeedupEntry"].delete(0, tkinter.END)
     widgets["mapSpeedupEntry"].insert(0, paramCGRA.DFGNodeCount/mappingII)
 
-    os.chdir("..")
+    if not success:
+        tkinter.messagebox.showerror(title="DFG mapping", message="Mapping failed.")
+        return
 
     # pad contains tile and links
     tileWidth = paramCGRA.tiles[0].width
@@ -1079,11 +1091,37 @@ def clickMapDFG():
     padHeight = tileHeight + LINK_LENGTH
     baseX = 0
 
+    # load schedule.json for mapping demonstration
+    f = open("schedule.json")
+    schedule = json.load(f)
+    
+    # Iterating through the json
+    for strTileID in schedule["tiles"]:
+        tileID = int(strTileID)
+        tile = paramCGRA.getTileOfID(tileID)
+        for strCycle in schedule["tiles"][strTileID]:
+            cycle = int(strCycle)
+            optID = schedule["tiles"][strTileID][strCycle]
+            tile.mapping[cycle] = optID[0]
+
+
+    for strSrcTileID in schedule["links"]:
+        for strDstTileID in schedule["links"][strSrcTileID]:
+            srcTile = paramCGRA.getTileOfID(int(strSrcTileID))
+            dstTile = paramCGRA.getTileOfID(int(strDstTileID))
+            link = paramCGRA.getUpdatedLink(srcTile, dstTile)
+            for cycle in schedule["links"][strSrcTileID][strDstTileID]:
+                link.mapping.add(cycle)
+
+    f.close()
+    os.chdir("..")
+
     canvas = widgets["mappingCanvas"]
     canvas.delete("all")
     cgraWidth = GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + 20
     canvas.configure(scrollregion=(0, 0, mappingII*cgraWidth, GRID_HEIGHT))
     
+
     for ii in range(mappingII):
         # draw data memory
         spmLabel = tkinter.Label(canvas, text="Data\nSPM", fg='black', bg='gray', relief='raised', bd=BORDER)
@@ -1092,15 +1130,23 @@ def clickMapDFG():
         # draw tiles
         for tile in paramCGRA.tiles:
             if not tile.disabled:
-                button = tkinter.Label(canvas, text = "Tile "+str(tile.ID), fg='black', bg='gray', relief='raised', bd=BORDER)
+                button = None
+                if ii in tile.mapping:
+                    button = tkinter.Label(canvas, text = "Opt "+str(tile.mapping[ii]), fg="black", bg="goldenrod", relief="raised", bd=BORDER)
+                else:
+                    button = tkinter.Label(canvas, text = "Tile "+str(tile.ID), fg="black", bg="grey", relief="raised", bd=BORDER)
                 posX, posY = tile.getPosXY(baseX+BORDER, BORDER)
                 canvas.create_window(posX, posY, window=button, height=tileHeight, width=tileWidth, anchor="nw")
 
         # draw links
         for link in paramCGRA.updatedLinks:
-            srcX, srcY = link.getSrcXY(baseX+BORDER, BORDER)
-            dstX, dstY = link.getDstXY(baseX+BORDER, BORDER)
-            canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
+            if not link.disabled:
+                srcX, srcY = link.getSrcXY(baseX+BORDER, BORDER)
+                dstX, dstY = link.getDstXY(baseX+BORDER, BORDER)
+                if ii in link.mapping:
+                    canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST, fill="red")
+                else:
+                    canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST, fill="black")
  
         cycleLabel = tkinter.Label(canvas, text="Cycle "+str(ii))
         canvas.create_window(baseX+280, GRID_HEIGHT+10+BORDER, window=cycleLabel, height=20, width=80)

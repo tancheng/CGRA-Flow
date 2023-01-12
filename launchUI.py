@@ -618,6 +618,45 @@ class ParamCGRA:
                 if type(link.srcTile) == ParamTile:
                     link.srcTile.xbarDict[xbarPort2Type[link.srcPort]] = 0
 
+class ToolTip(object):
+
+    def __init__(self, widget):
+        self.widget = widget
+        self.tipwindow = None
+        self.id = None
+        self.x = self.y = 0
+
+    def showtip(self, text):
+        "Display text in tooltip window"
+        self.text = text
+        if self.tipwindow or not self.text:
+            return
+        x, y, cx, cy = self.widget.bbox("insert")
+        x = x + self.widget.winfo_rootx() + 57
+        y = y + cy + self.widget.winfo_rooty() +27
+        self.tipwindow = tw = tkinter.Toplevel(self.widget)
+        tw.wm_overrideredirect(1)
+        tw.wm_geometry("+%d+%d" % (x, y))
+        label = tkinter.Label(tw, text=self.text, justify=tkinter.LEFT,
+                              background="#ffffe0", relief=tkinter.SOLID, borderwidth=1,
+                              font=("tahoma", "8", "normal"))
+        label.pack(ipadx=1)
+
+    def hidetip(self):
+        tw = self.tipwindow
+        self.tipwindow = None
+        if tw:
+            tw.destroy()
+
+def CreateToolTip(widget, text):
+    toolTip = ToolTip(widget)
+    def enter(event):
+        toolTip.showtip(text)
+    def leave(event):
+        toolTip.hidetip()
+    widget.bind('<Enter>', enter)
+    widget.bind('<Leave>', leave)
+
 
 paramCGRA = ParamCGRA(ROWS, COLS, CONFIG_MEM_SIZE, DATA_MEM_SIZE)
 
@@ -1470,6 +1509,7 @@ def create_verilog_pannel(master, x, y, width, height):
 
     # verilogText = tkinter.Text(verilogPannel, bd = BORDER, relief='groove', yscrollcommand=v.set)
     verilogText = tkinter.Text(verilogFrame, yscrollcommand=verilogScroll.set)
+    CreateToolTip(verilogText, text = "The code might be too big to be copied, the\ngenerated verilog (.log) can be found in the\n'verilog' folder.")
     verilogScroll.config(command=verilogText.yview)
     widgets["verilogText"] = verilogText
     verilogText.pack()
@@ -1508,7 +1548,8 @@ def create_report_pannel(master, x, y, width):
 def create_layout_pannel(master, x, width, height):
     layoutPannel = tkinter.LabelFrame(master, text='Layout', bd = BORDER, relief='groove')
     layoutPannel.place(height=height, width=width, x=x, y=INTERVAL)
-    showButton = tkinter.Button(layoutPannel, text = "Display layout", relief='raised', command = helloCallBack)
+    showButton = tkinter.Button(layoutPannel, text = "Display layout", relief='raised')
+    CreateToolTip(showButton, text = "The layout demonstration is\nunder development.")
     showButton.pack()
     X = tkinter.Label(layoutPannel, fg="black")
     X.pack()
@@ -1631,6 +1672,7 @@ def create_kernel_pannel(master, x, y, width, height):
 
     speedupLabel = tkinter.Label(kernelPannel, text="speedup: ", fg='black')
     speedupLabel.place(x=3*BORDER+dfgWidth, y=360+BORDER)
+    CreateToolTip(speedupLabel, text = "The speedup is the improvement of\nthe execution cycles with respect to\na single-issue in-order CPU.")
 
     mapSpeedupEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER)
     widgets["mapSpeedupEntry"] = mapSpeedupEntry

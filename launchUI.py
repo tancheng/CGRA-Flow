@@ -1,8 +1,10 @@
 import sys
 import os
 import time
+import threading
 import subprocess
 import json
+import math
 import tkinter
 import tkinter.messagebox
 from tkinter import ttk
@@ -90,7 +92,7 @@ xbarCheckVars = {}
 xbarCheckbuttons = {}
 
 kernelOptions = tkinter.StringVar()
-kernelOptions.set("not selected yet")
+kernelOptions.set("Not selected yet")
 
 class ParamTile:
     def __init__(s, ID, dimX, dimY, posX, posY, tileWidth, tileHeight):
@@ -386,7 +388,7 @@ class ParamCGRA:
         s.updatedLinks = []
         s.targetTileID = 0
         s.dataSPM = None
-        s.targetAppName = "not selected yet"
+        s.targetAppName = "   Not selected yet"
         s.compilationDone = False
         s.targetKernels = []
         s.targetKernelName = None
@@ -795,17 +797,32 @@ def clickUpdate(root):
     dataMemSize = int(widgets["dataMemEntry"].get())
 
     global paramCGRA
+    oldCGRA = paramCGRA
 
     if paramCGRA.rows != rows or paramCGRA.columns != columns:
         paramCGRA = ParamCGRA(rows, columns)
 
+    create_cgra_pannel(root, rows, columns)
+
+    # kernel related information and be kept to avoid redundant compilation
     paramCGRA.updateMemSize(configMemSize, dataMemSize)
     paramCGRA.updateTiles()
     paramCGRA.updateLinks()
-
-    create_cgra_pannel(root, rows, columns)
+    paramCGRA.targetAppName = oldCGRA.targetAppName
+    paramCGRA.compilationDone = oldCGRA.compilationDone
+    paramCGRA.targetKernels = oldCGRA.targetKernels
+    paramCGRA.targetKernelName = oldCGRA.targetKernelName
+    paramCGRA.DFGNodeCount = oldCGRA.DFGNodeCount
+    paramCGRA.recMII = oldCGRA.recMII
 
     widgets["verilogText"].delete("1.0", tkinter.END)
+    widgets["resMIIEntry"].delete(0, tkinter.END)
+    if len(paramCGRA.getValidTiles()) > 0 and paramCGRA.DFGNodeCount > 0:
+        paramCGRA.resMII = math.ceil((paramCGRA.DFGNodeCount+0.0)/len(paramCGRA.getValidTiles())) // 1
+        widgets["resMIIEntry"].insert(0, paramCGRA.resMII)
+    else:
+        widgets["resMIIEntry"].insert(0, 0)
+
 
 def clickReset(root):
     rows = int(widgets["rowsEntry"].get())
@@ -814,6 +831,7 @@ def clickReset(root):
     dataMemSize = int(widgets["dataMemEntry"].get())
 
     global paramCGRA
+    oldCGRA = paramCGRA
 
     if paramCGRA.rows != rows or paramCGRA.columns != columns:
         paramCGRA = ParamCGRA(rows, columns)
@@ -834,6 +852,22 @@ def clickReset(root):
             widgets["spmEnabledListbox"].insert(0, port)
         else:
             widgets["spmDisabledListbox"].insert(0, port)
+
+    # kernel related information and be kept to avoid redundant compilation
+    paramCGRA.targetAppName = oldCGRA.targetAppName
+    paramCGRA.compilationDone = oldCGRA.compilationDone
+    paramCGRA.targetKernels = oldCGRA.targetKernels
+    paramCGRA.targetKernelName = oldCGRA.targetKernelName
+    paramCGRA.DFGNodeCount = oldCGRA.DFGNodeCount
+    paramCGRA.recMII = oldCGRA.recMII
+
+    widgets["verilogText"].delete(0, tkinter.END)
+    widgets["resMIIEntry"].delete(0, tkinter.END)
+    if len(paramCGRA.getValidTiles()) > 0 and paramCGRA.DFGNodeCount > 0:
+        paramCGRA.resMII = math.ceil((paramCGRA.DFGNodeCount+0.0)/len(paramCGRA.getValidTiles())) // 1
+        widgets["resMIIEntry"].insert(0, paramCGRA.resMII)
+    else:
+        widgets["resMIIEntry"].insert(0, 0)
 
 
 def clickTest():
@@ -870,9 +904,9 @@ def clickTest():
 
 def clickSelectApp(event):
     global paramCGRA
+    paramCGRA.compilationDone = False 
     appName = fd.askopenfilename(title="choose an application", initialdir="../", filetypes=(("C/C++ file", "*.cpp"), ("C/C++ file", "*.c"), ("C/C++ file", "*.C"), ("C/C++ file", "*.CPP")))
     paramCGRA.targetAppName = appName
-    print("check after select: ", appName)
 
     # widgets["appPathEntry"].configure(state="normal")
     widgets["appPathEntry"].delete(0, tkinter.END)
@@ -884,7 +918,7 @@ def clickSelectApp(event):
 def clickCompileApp():
     global paramCGRA
     fileName = paramCGRA.targetAppName
-    if not fileName or fileName == "not selected yet":
+    if not fileName or fileName == "   Not selected yet":
         return
 
     os.system("mkdir kernel")
@@ -939,9 +973,52 @@ def clickCompileApp():
 def clickKernelMenu(*args):
     global paramCGRA
     name = kernelOptions.get()
-    if name == None or name == " " or name == "not selected yet":
+    if name == None or name == " " or name == "Not selected yet":
         return
     paramCGRA.targetKernelName = name
+
+def dumpParamCGRA2JSON(fileName):
+    global paramCGRA
+    paramCGRAJson = {}
+    paramCGRAJson["tiles"] = {}
+    for tile in paramCGRA.tiles:
+        curDict = {}
+        if tile.disabled:
+            curDict["disabled"] = True
+        else:
+            curDict["disabled"] = False
+            if tile.isDefaultFus():
+                curDict["supportAllFUs"] = True
+            else:
+                curDict["supportAllFUs"] = False
+                curDict["supportedFUs"] = []
+                for fuType in tile.fuDict:
+                    if tile.fuDict[fuType] == 1:
+                        curDict["supportedFUs"].append(fuType)
+            
+            if (tile.hasFromMem() and tile.fuDict["Ld"] == 1) and\
+               (tile.hasToMem()   and tile.fuDict["St"] == 1):
+                curDict["accessMem"] = True
+
+        paramCGRAJson["tiles"][str(tile.ID)] = curDict
+
+    paramCGRAJson["links"] = []
+    for link in paramCGRA.updatedLinks:
+        curDict = {}
+        srcTile = link.srcTile
+        dstTile = link.dstTile
+        if not link.disabled and not srcTile.disabled and not dstTile.disabled and type(srcTile) != ParamSPM and type(dstTile) != ParamSPM:
+            curDict["srcTile"] = srcTile.ID
+            curDict["dstTile"] = dstTile.ID
+            paramCGRAJson["links"].append(curDict)
+
+    paramCGRAJsonObject = json.dumps(paramCGRAJson, indent=4)
+     
+    # Writing to sample.json
+    with open(fileName, "w") as outfile:
+        outfile.write(paramCGRAJsonObject)
+
+
 
 def clickShowDFG():
     os.system("mkdir kernel")
@@ -981,7 +1058,10 @@ def clickShowDFG():
     with open("param.json", "w") as outfile:
         outfile.write(json_object)
 
+    dumpParamCGRA2JSON("paramCGRA.json")
+
     genDFGCommand = "opt-12 -load ../../CGRA-Mapper/build/src/libmapperPass.so -mapperPass ./kernel.bc"
+    print("trying to run opt-12")
     genDFGProc = subprocess.Popen([genDFGCommand, "-u"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 
     with genDFGProc.stdout:
@@ -990,13 +1070,14 @@ def clickShowDFG():
             print(outputLine)
             if "DFG node count: " in outputLine:
                 paramCGRA.DFGNodeCount = int(outputLine.split("DFG node count: ")[1].split(";")[0])
-            if "[ResMII: " in outputLine:
-                paramCGRA.resMII = int(outputLine.split("[ResMII: ")[1].split("]")[0])
             if "[RecMII: " in outputLine:
                 paramCGRA.recMII = int(outputLine.split("[RecMII: ")[1].split("]")[0])
-            if paramCGRA.recMII != -1 and paramCGRA.resMII != -1:
-                break
 
+    (out, err) = genDFGProc.communicate()
+    print("opt-12 out: ", out)
+    print("opt-12 err: ", err)
+
+    paramCGRA.resMII = math.ceil((paramCGRA.DFGNodeCount+0.0)/len(paramCGRA.getValidTiles())) // 1
     widgets["resMIIEntry"].delete(0, tkinter.END)
     widgets["resMIIEntry"].insert(0, paramCGRA.resMII)
 
@@ -1018,110 +1099,40 @@ def clickShowDFG():
  
     os.chdir("..")
 
+mappingProc = None
 
-def clickMapDFG():
-    heuristic = mappingAlgoCheckVar.get() == 0
+def countTime():
+    global mappingProc
+    timeCost = 0.0
+    while mappingProc == None or mappingProc.poll() is None:
+        time.sleep(0.1)
+        widgets["mapTimeEntry"].delete(0, tkinter.END)
+        widgets["mapTimeEntry"].insert(0, round(timeCost, 1))
+        timeCost += 0.1
 
-    os.system("mkdir kernel")
-    os.chdir("kernel")
-    fileExist = os.path.exists("kernel.bc")
-    global paramCGRA
-
-    if not fileExist or not paramCGRA.compilationDone or paramCGRA.targetKernelName == None:
-        os.chdir("..")
-        tkinter.messagebox.showerror(title="DFG mapping", message="The compilation and kernel selection need to be done first.")
-        return
-
-    mappingJson = {
-            "kernel"                : paramCGRA.targetKernelName,
-            "targetFunction"        : False,
-            "targetNested"          : True,
-            "targetLoopsID"         : [0],
-            "doCGRAMapping"         : True,
-            "row"                   : paramCGRA.rows,
-            "column"                : paramCGRA.columns,
-            "precisionAware"        : True,
-            "heterogeneity"         : False,
-            "isTrimmedDemo"         : True,
-            "heuristicMapping"      : heuristic,
-            "parameterizableCGRA"   : True,
-            "diagonalVectorization" : False,
-            "bypassConstraint"      : 8,
-            "isStaticElasticCGRA"   : False,
-            "ctrlMemConstraint"     : paramCGRA.configMemSize,
-            "regConstraint"         : 12,
-        }
-     
-    mappingJsonObject = json.dumps(mappingJson, indent=4)
-     
-    with open("param.json", "w") as outfile:
-        outfile.write(mappingJsonObject)
-
-    paramCGRAJson = {}
-    paramCGRAJson["tiles"] = {}
-    for tile in paramCGRA.tiles:
-        curDict = {}
-        if tile.disabled:
-            curDict["disabled"] = True
-        else:
-            curDict["disabled"] = False
-            if tile.isDefaultFus():
-                curDict["supportAllFUs"] = True
-            else:
-                curDict["supportAllFUs"] = False
-                curDict["supportedFUs"] = []
-                for fuType in tile.fuDict:
-                    if tile.fuDict[fuType] == 1:
-                        curDict["supportedFUs"].append(fuType)
-            
-            if (tile.hasFromMem() and tile.fuDict["Ld"] == 1) and\
-               (tile.hasToMem()   and tile.fuDict["St"] == 1):
-                curDict["accessMem"] = True
-
-        paramCGRAJson["tiles"][str(tile.ID)] = curDict
-
-    paramCGRAJson["links"] = []
-    for link in paramCGRA.updatedLinks:
-        curDict = {}
-        srcTile = link.srcTile
-        dstTile = link.dstTile
-        if not link.disabled and not srcTile.disabled and not dstTile.disabled and type(srcTile) != ParamSPM and type(dstTile) != ParamSPM:
-            curDict["srcTile"] = srcTile.ID
-            curDict["dstTile"] = dstTile.ID
-            paramCGRAJson["links"].append(curDict)
-
-    paramCGRAJsonObject = json.dumps(paramCGRAJson, indent=4)
-     
-    # Writing to sample.json
-    with open("paramCGRA.json", "w") as outfile:
-        outfile.write(paramCGRAJsonObject)
-
+def drawSchedule():
+    global mappingProc
     mappingCommand = "opt-12 -load ../../CGRA-Mapper/build/src/libmapperPass.so -mapperPass ./kernel.bc"
-
-    # mappingProc = subprocess.Popen([mappingCommand, '-u'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    # (out, err) = mappingProc.communicate()
-    mappingProc = subprocess.Popen([mappingCommand, '-u'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, bufsize=1)
+    mappingProc = subprocess.Popen(["exec " + mappingCommand, '-u'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, bufsize=1)
+    (out, err) = mappingProc.communicate()
     success = False
     mappingII = -1
-    with mappingProc.stdout:
-        for line in iter(mappingProc.stdout.readline, b''):
-            outputLine = line.decode("ISO-8859-1")
-            print(outputLine)
-            if "Mapping Success" in outputLine:
-                success = True
-            if "Mapping II: " in outputLine:
-                mappingII = int(outputLine.split(": ")[1])
-            if success and mappingII != -1:
-                break
+    line = out.decode("ISO-8859-1")
+    if "Mapping Success" in line:
+        success = True
+    if "[Mapping II: " in line:
+        strMapII = line.split("[Mapping II: ")[1].split("]")[0]
+        mappingII = int(strMapII)
+
+    if not success or mappingII == -1:
+        tkinter.messagebox.showerror(title="DFG mapping", message="Mapping failed.")
+        os.chdir("..")
+        return
 
     widgets["mapIIEntry"].delete(0, tkinter.END)
     widgets["mapIIEntry"].insert(0, mappingII)
     widgets["mapSpeedupEntry"].delete(0, tkinter.END)
     widgets["mapSpeedupEntry"].insert(0, paramCGRA.DFGNodeCount/mappingII)
-
-    if not success:
-        tkinter.messagebox.showerror(title="DFG mapping", message="Mapping failed.")
-        return
 
     # pad contains tile and links
     tileWidth = paramCGRA.tiles[0].width
@@ -1171,7 +1182,7 @@ def clickMapDFG():
             if not tile.disabled:
                 button = None
                 if ii in tile.mapping:
-                    button = tkinter.Label(canvas, text = "Opt "+str(tile.mapping[ii]), fg="black", bg="goldenrod", relief="raised", bd=BORDER)
+                    button = tkinter.Label(canvas, text = "Opt "+str(tile.mapping[ii]), fg="black", bg="cornflowerblue", relief="raised", bd=BORDER)
                 else:
                     button = tkinter.Label(canvas, text = "Tile "+str(tile.ID), fg="black", bg="grey", relief="raised", bd=BORDER)
                 posX, posY = tile.getPosXY(baseX+BORDER, BORDER)
@@ -1192,6 +1203,77 @@ def clickMapDFG():
 
         baseX += GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + 20
         canvas.create_line(baseX-5, INTERVAL, baseX-5, GRID_HEIGHT, width=2, dash=(10,2))
+
+def clickTerminateMapping():
+    global mappingProc
+    if mappingProc == None:
+        return
+
+    if mappingProc.poll() is None:
+        mappingProc.kill()
+
+    path = os.getcwd()
+    if path.split("\\")[-1] == "kernel":
+        os.chdir("..")
+
+
+def clickMapDFG():
+    global mappingProc
+    mappingProc = None
+    heuristic = mappingAlgoCheckVar.get() == 0
+
+    os.system("mkdir kernel")
+    os.chdir("kernel")
+    fileExist = os.path.exists("kernel.bc")
+    global paramCGRA
+
+    if not fileExist or not paramCGRA.compilationDone or paramCGRA.targetKernelName == None:
+        os.chdir("..")
+        # tkinter.messagebox.showerror(title="DFG mapping", message="The compilation and kernel selection need to be done first.")
+        if not fileExist:
+            tkinter.messagebox.showerror(title="DFG mapping", message="The kernel.bc doesn't exist.")
+        if not paramCGRA.compilationDone:
+            tkinter.messagebox.showerror(title="DFG mapping", message="The compilation needs to be done first.")
+        if paramCGRA.targetKernelName == None:
+            tkinter.messagebox.showerror(title="DFG mapping", message="The kernel name is not selected yet.")
+        return
+
+    mappingJson = {
+            "kernel"                : paramCGRA.targetKernelName,
+            "targetFunction"        : False,
+            "targetNested"          : True,
+            "targetLoopsID"         : [0],
+            "doCGRAMapping"         : True,
+            "row"                   : paramCGRA.rows,
+            "column"                : paramCGRA.columns,
+            "precisionAware"        : True,
+            "heterogeneity"         : False,
+            "isTrimmedDemo"         : True,
+            "heuristicMapping"      : heuristic,
+            "parameterizableCGRA"   : True,
+            "diagonalVectorization" : False,
+            "bypassConstraint"      : 8,
+            "isStaticElasticCGRA"   : False,
+            "ctrlMemConstraint"     : paramCGRA.configMemSize,
+            "regConstraint"         : 12,
+        }
+     
+    mappingJsonObject = json.dumps(mappingJson, indent=4)
+     
+    with open("param.json", "w") as outfile:
+        outfile.write(mappingJsonObject)
+
+    dumpParamCGRA2JSON("paramCGRA.json")
+
+    mappingCommand = "opt-12 -load ../../CGRA-Mapper/build/src/libmapperPass.so -mapperPass ./kernel.bc"
+
+    widgets["mapTimeEntry"].delete(0, tkinter.END)
+    widgets["mapTimeEntry"].insert(0, 0)
+
+    drawer = threading.Thread(target=drawSchedule)
+    drawer.start()
+    timer = threading.Thread(target=countTime)
+    timer.start()
 
 
 def create_cgra_pannel(root, rows, columns):
@@ -1582,7 +1664,7 @@ def create_kernel_pannel(master, x, y, width, height):
     kernelNameLabel = tkinter.Label(kernelPannel, text=" Kernel name:", fg='black')
     kernelNameLabel.grid(row=1, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
 
-    tempOptions = [ "not selected yet" ]
+    tempOptions = [ "Not selected yet" ]
     kernelNameMenu = tkinter.OptionMenu(kernelPannel, kernelOptions, *tempOptions)
     kernelOptions.trace("w", clickKernelMenu)
     widgets["kernelNameMenu"] = kernelNameMenu
@@ -1648,11 +1730,11 @@ def create_kernel_pannel(master, x, y, width, height):
     mapDFGButton.configure(width=9)
     mapDFGButton.place(x=4*BORDER+dfgWidth, y=230+BORDER)
 
-    terminateMapButton = tkinter.Button(kernelPannel, text="Terminate", fg="black", command=clickMapDFG)
+    terminateMapButton = tkinter.Button(kernelPannel, text="Terminate", fg="black", command=clickTerminateMapping)
     terminateMapButton.configure(width=9)
     terminateMapButton.place(x=4*BORDER+dfgWidth, y=265+BORDER)
 
-    mapSecLabel = tkinter.Label(kernelPannel, text="   time: ", fg='black')
+    mapSecLabel = tkinter.Label(kernelPannel, text="Time (s): ", fg='black')
     mapSecLabel.place(x=4*BORDER+dfgWidth, y=305+BORDER)
 
     mapTimeEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER)
@@ -1661,7 +1743,7 @@ def create_kernel_pannel(master, x, y, width, height):
     mapTimeEntry.configure(width=4)
     mapTimeEntry.place(x=4*BORDER+dfgWidth+60, y=305+BORDER)
 
-    mapIILabel = tkinter.Label(kernelPannel, text=" map II: ", fg='black')
+    mapIILabel = tkinter.Label(kernelPannel, text=" Map II: ", fg='black')
     mapIILabel.place(x=4*BORDER+dfgWidth, y=332+BORDER)
 
     mapIIEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER)
@@ -1670,7 +1752,7 @@ def create_kernel_pannel(master, x, y, width, height):
     mapIIEntry.configure(width=4)
     mapIIEntry.place(x=4*BORDER+dfgWidth+60, y=332+BORDER)
 
-    speedupLabel = tkinter.Label(kernelPannel, text="speedup: ", fg='black')
+    speedupLabel = tkinter.Label(kernelPannel, text="Speedup: ", fg='black')
     speedupLabel.place(x=3*BORDER+dfgWidth, y=360+BORDER)
     CreateToolTip(speedupLabel, text = "The speedup is the improvement of\nthe execution cycles with respect to\na single-issue in-order CPU.")
 

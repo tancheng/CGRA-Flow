@@ -316,8 +316,8 @@ class ParamSPM:
             port += 1
         return -1
 
-    def getPosX(s):
-        return s.posX
+    def getPosX(s, baseX):
+        return s.posX + baseX
 
     def setInLink(s, portType, link):
         s.inLinks[portType] = link
@@ -365,7 +365,7 @@ class ParamLink:
             return s.srcTile.getPosXYOnPort(s.srcPort, baseX, baseY)
         else:
             dstPosX, dstPosY = s.dstTile.getPosXYOnPort(s.dstPort, baseX, baseY)
-            spmPosX = s.srcTile.getPosX()
+            spmPosX = s.srcTile.getPosX(baseX)
             return spmPosX, dstPosY
 
     def getDstXY(s, baseX=0, baseY=0):
@@ -373,7 +373,7 @@ class ParamLink:
             return s.dstTile.getPosXYOnPort(s.dstPort, baseX, baseY)
         else:
             srcPosX, srcPosY = s.srcTile.getPosXYOnPort(s.srcPort, baseX, baseY)
-            spmPosX = s.dstTile.getPosX()
+            spmPosX = s.dstTile.getPosX(baseX)
             return spmPosX, srcPosY
 
 

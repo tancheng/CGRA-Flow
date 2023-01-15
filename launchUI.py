@@ -390,6 +390,7 @@ class ParamCGRA:
         s.dataSPM = None
         s.targetAppName = "   Not selected yet"
         s.compilationDone = False
+        s.verilogDone = False
         s.targetKernels = []
         s.targetKernelName = None
         s.DFGNodeCount = -1
@@ -408,16 +409,14 @@ class ParamCGRA:
                 # a tile contains at least one FU
                 fuExist = False
                 # the tile connect to mem need to able to access mem
-                memTileValid = False
-
-                for fuType in fuTypeList:
-                    if (fuType == "Ld" or fuType == "St") and (tile.hasToMem() or tile.hasFromMem()):
-                        memTileValid = True if tile.fuDict[fuType] == 1 else False
-                        if not memTileValid:
-                            return "Tile " + str(tile.ID) + " needs to contain the Load/Store functional units."
+                if tile.hasToMem() or tile.hasFromMem():
+                    # for now, the compiler doesn't support seperate read or write, both of them need to locate in the same tile
+                    if tile.hasToMem() and tile.hasFromMem() and tile.fuDict["Ld"] == 1 and tile.fuDict["St"] == 1:
                         memExist = True
                     else:
-                        memTileValid = True
+                        return "Tile " + str(tile.ID) + " needs to contain the Load/Store functional units."
+
+                for fuType in fuTypeList:
                     if tile.fuDict[fuType] == 1:
                         fuExist = True
                 if not fuExist:
@@ -662,34 +661,6 @@ def CreateToolTip(widget, text):
 
 paramCGRA = ParamCGRA(ROWS, COLS, CONFIG_MEM_SIZE, DATA_MEM_SIZE)
 
-def clickGenerateVerilog():
-
-    message = paramCGRA.getErrorMessage()
-    if message != "":
-        tkinter.messagebox.showerror(title="CGRA Model Checking", message=message)
-        return
-
-    os.system("mkdir verilog")
-    os.chdir("verilog")
-
-    test_cgra_universal(paramCGRA)
-
-    widgets["verilogText"].delete("1.0", tkinter.END)
-    found = False
-    print(os.listdir("./"))
-    for fileName in os.listdir("./"):
-        if "__" in fileName and ".v" in fileName:
-            print("Found the file: ", fileName)
-            f = open(fileName, "r")
-            widgets["verilogText"].insert("1.0", f.read())
-            found = True
-            break
-
-    if not found:
-        widgets["verilogText"].insert(tkinter.END, "Error exists during Verilog generation")
-    os.system("rename s/\.v/\.log/g *")
-
-    os.chdir("..")
 
 def clickTile(ID):
     widgets["fuConfigPannel"].config(text='Tile '+str(ID)+' functional units')
@@ -814,6 +785,7 @@ def clickUpdate(root):
     paramCGRA.targetKernelName = oldCGRA.targetKernelName
     paramCGRA.DFGNodeCount = oldCGRA.DFGNodeCount
     paramCGRA.recMII = oldCGRA.recMII
+    paramCGRA.verilogDone = False
 
     widgets["verilogText"].delete("1.0", tkinter.END)
     widgets["resMIIEntry"].delete(0, tkinter.END)
@@ -901,6 +873,102 @@ def clickTest():
     # print("check test output:", out)
 
     os.chdir("..")
+
+
+def clickGenerateVerilog():
+
+    message = paramCGRA.getErrorMessage()
+    if message != "":
+        tkinter.messagebox.showerror(title="CGRA Model Checking", message=message)
+        return
+
+    os.system("mkdir verilog")
+    os.chdir("verilog")
+
+    # pymtl function that is used to generate synthesizable verilog
+    test_cgra_universal(paramCGRA)
+
+    widgets["verilogText"].delete("1.0", tkinter.END)
+    found = False
+    print(os.listdir("./"))
+    for fileName in os.listdir("./"):
+        if "__" in fileName and ".v" in fileName:
+            print("Found the file: ", fileName)
+            f = open(fileName, "r")
+            widgets["verilogText"].insert("1.0", f.read())
+            found = True
+            break
+
+    paramCGRA.verilogDone = True
+    if not found:
+        paramCGRA.verilogDone = False
+        widgets["verilogText"].insert(tkinter.END, "Error exists during Verilog generation")
+    os.system("rename s/\.v/\.log/g *")
+
+    os.chdir("..")
+
+
+def clickSynthesize():
+
+    global paramCGRA
+
+    if not paramCGRA.verilogDone:
+        tkinter.messagebox.showerror(title="Sythesis", message="The verilog generation needs to be done first.")
+        return
+
+    os.system("mkdir verilog")
+    os.chdir("verilog")
+    os.system("cp ../../cacti/spm_template.cfg ./.")
+
+    sizePattern = "[SPM_SIZE]"
+    readPortPattern = "[READ_PORT_COUNT]"
+    writePortPattern = "[WRITE_PORT_COUNT]"
+      
+    updatedSizePattern = str(paramCGRA.dataMemSize * 1024)
+    updatedReadPortPattern = str(paramCGRA.dataSPM.getNumOfValidReadPorts())
+    updatedWritePortPattern = str(paramCGRA.dataSPM.getNumOfValidWritePorts())
+      
+    with open(r'spm_template.cfg', 'r') as file:
+        data = file.read()
+
+        data = data.replace(sizePattern, updatedSizePattern)
+        data = data.replace(readPortPattern, updatedReadPortPattern)
+        data = data.replace(writePortPattern, updatedWritePortPattern)
+      
+    with open(r'spm_template.cfg', 'w') as file:
+        file.write(data)
+
+    os.chdir("../../cacti")
+    os.system("cp ../build/verilog/spm_template.cfg ./spm_temp.cfg")
+
+    cactiCommand = "./cacti -infile spm_temp.cfg"
+    cactiProc = subprocess.Popen([cactiCommand, '-u'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, bufsize=1)
+    (out, err) = cactiProc.communicate()
+    success = False
+    line = out.decode("ISO-8859-1")
+
+    if "Power Components:" in line:
+        success = True
+        strSPMPower = line.split("Data array: Total dynamic read energy/access  (nJ): ")[1].split("\n")[0]
+        strSPMTiming = line.split("Data side (with Output driver) (ns): ")[1].split("\n")[0]
+        spmPower = float(strSPMPower) / float(strSPMTiming) * 1000
+
+        widgets["reportSPMPowerData"].delete(0, tkinter.END)
+        widgets["reportSPMPowerData"].insert(0, str(spmPower))
+
+        strSPMArea = line.split("Data array: Area (mm2): ")[1].split("\n")[0]
+        spmArea = float(strSPMArea)
+
+        widgets["reportSPMAreaData"].delete(0, tkinter.END)
+        widgets["reportSPMAreaData"].insert(0, str(spmArea))
+
+
+    else:
+        tkinter.messagebox.showerror(title="Sythesis", message="Execution of Cacti failed.")
+
+
+    os.chdir("../build")
+
 
 def clickSelectApp(event):
     global paramCGRA
@@ -1580,51 +1648,76 @@ def create_test_pannel(master, x, width, height):
     testShow.grid(row=0, column=2, padx=BORDER, pady=BORDER//2)
 
 def create_verilog_pannel(master, x, y, width, height):
-    verilogPannel = tkinter.LabelFrame(master, text='SVerilog', bd = BORDER, relief='groove')
+    verilogPannel = tkinter.LabelFrame(master, text="SVerilog", bd=BORDER, relief="groove")
     verilogPannel.place(height=height, width=width, x=x, y=y)
+    CreateToolTip(verilogPannel, text = "The code might be too big to be copied, the\ngenerated verilog (.log) can be found in the\n'verilog' folder.")
 
     verilogFrame = tkinter.Frame(verilogPannel, bd=BORDER, relief="groove")
     verilogFrame.place(height=height-8*BORDER-40, width=width-4*BORDER, x=BORDER, y=BORDER)
 
-    verilogScroll=tkinter.Scrollbar(verilogFrame, orient='vertical')
-    verilogScroll.pack(side=tkinter.RIGHT, fill='y')
+    verilogScroll=tkinter.Scrollbar(verilogFrame, orient="vertical")
+    verilogScroll.pack(side=tkinter.RIGHT, fill="y")
 
     # verilogText = tkinter.Text(verilogPannel, bd = BORDER, relief='groove', yscrollcommand=v.set)
     verilogText = tkinter.Text(verilogFrame, yscrollcommand=verilogScroll.set)
-    CreateToolTip(verilogText, text = "The code might be too big to be copied, the\ngenerated verilog (.log) can be found in the\n'verilog' folder.")
     verilogScroll.config(command=verilogText.yview)
     widgets["verilogText"] = verilogText
     verilogText.pack()
 
     generateVerilogButton = tkinter.Button(verilogPannel, text="Generate", relief='raised', command=clickGenerateVerilog)
     generateVerilogButton.place(x=width-4*BORDER-90, y=height-8*BORDER-30)
- 
+
+
 def create_report_pannel(master, x, y, width):
     reportPannel = tkinter.LabelFrame(master, text='Report area/power', bd = BORDER, relief='groove')
-    reportPannel.place(width=width, x=x, y=y)
-    reportButton = tkinter.Button(reportPannel, text = "Synthesize", relief='raised', command = helloCallBack)
+    CreateToolTip(reportPannel, text = "Power is in mW and area is in mm^2.")
+    reportPannel.place(width=width, height=110, x=x, y=y)
+
+    reportButton = tkinter.Button(reportPannel, text="Synthesize", relief="raised", command=clickSynthesize)
     reportButton.grid(row=0, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
     reportProgress = ttk.Progressbar(reportPannel, orient='horizontal', mode='determinate', length=width/1.7)
     reportProgress['value'] = 30
     reportProgress.grid(columnspan=3, row=0, column=1, padx=BORDER, pady=BORDER//2)
     
-    reportTileAreaLabel = tkinter.Label(reportPannel, text = "Area of tiles:")
-    reportTileAreaLabel.grid(row=1, column=0, sticky=tkinter.E, padx=BORDER, pady=BORDER//2)
-    reportTileAreaData = tkinter.Label(reportPannel, text = "0")
-    reportTileAreaData.grid(row=1, column=1, sticky=tkinter.E, padx=BORDER, pady=BORDER//2)
-    reportTilePowerLabel = tkinter.Label(reportPannel, text = "Power of tiles:")
-    reportTilePowerLabel.grid(row=1, column=2, sticky=tkinter.E, padx=BORDER, pady=BORDER//2)
-    reportTilePowerData = tkinter.Label(reportPannel, text = "0")
-    reportTilePowerData.grid(row=1, column=3, sticky=tkinter.E, padx=BORDER, pady=BORDER//2)
+    reportTileAreaLabel = tkinter.Label(reportPannel, text = " Tiles area:")
+    reportTileAreaLabel.place(x=BORDER, y=BORDER+32, width=70, height=25)
+    # reportTileAreaLabel.grid(row=1, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+
+    reportTileAreaData = tkinter.Entry(reportPannel, justify=tkinter.CENTER)
+    widgets["reportTileAreaData"] = reportTileAreaData
+    # reportTileAreaData.configure(width=4)
+    # reportTileAreaData.grid(row=1, column=1, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    reportTileAreaData.place(x=BORDER+80, y=BORDER+32, width=50, height=20)
+
+    reportTilePowerLabel = tkinter.Label(reportPannel, text = "Tiles power:")
+    reportTilePowerLabel.grid(row=1, column=2, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    reportTilePowerLabel.place(x=BORDER+140, y=BORDER+32, width=80, height=25)
+
+    reportTilePowerData = tkinter.Entry(reportPannel, justify=tkinter.CENTER)
+    widgets["reportTilePowerData"] = reportTilePowerData
+    # reportTilePowerData.configure(width=4)
+    # reportTilePowerData.grid(row=1, column=3, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    reportTilePowerData.place(x=BORDER+230, y=BORDER+32, width=50, height=20)
     
-    reportSPMAreaLabel = tkinter.Label(reportPannel, text = "Area of SPM:")
-    reportSPMAreaLabel.grid(row=2, column=0, sticky=tkinter.E, padx=BORDER, pady=BORDER//2)
-    reportSPMAreaData = tkinter.Label(reportPannel, text = "0")
-    reportSPMAreaData.grid(row=2, column=1, sticky=tkinter.E, padx=BORDER, pady=BORDER//2)
-    reportSPMPowerLabel = tkinter.Label(reportPannel, text = "Power of SPM:")
-    reportSPMPowerLabel.grid(row=2, column=2, sticky=tkinter.E, padx=BORDER, pady=BORDER//2)
-    reportSPMPowerData = tkinter.Label(reportPannel, text = "0")
-    reportSPMPowerData.grid(row=2, column=3, sticky=tkinter.E, padx=BORDER, pady=BORDER//2)
+    reportSPMAreaLabel = tkinter.Label(reportPannel, text = " SPM area:")
+    # reportSPMAreaLabel.grid(row=2, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    reportSPMAreaLabel.place(x=BORDER, y=BORDER+58, width=70, height=25)
+
+    reportSPMAreaData = tkinter.Entry(reportPannel, justify=tkinter.CENTER)
+    # reportSPMAreaData.configure(width=4)
+    # reportSPMAreaData.grid(row=2, column=1, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    reportSPMAreaData.place(x=BORDER+80, y=BORDER+58, width=50, height=20)
+    widgets["reportSPMAreaData"] = reportSPMAreaData
+
+    reportSPMPowerLabel = tkinter.Label(reportPannel, text = "SPM power:")
+    # reportSPMPowerLabel.grid(row=2, column=2, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    reportSPMPowerLabel.place(x=BORDER+140, y=BORDER+58, width=80, height=25)
+
+    reportSPMPowerData = tkinter.Entry(reportPannel, justify=tkinter.CENTER)
+    # reportSPMPowerData.configure(width=4)
+    # reportSPMPowerData.grid(row=2, column=3, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    reportSPMPowerData.place(x=BORDER+230, y=BORDER+58, width=50, height=20)
+    widgets["reportSPMPowerData"] = reportSPMPowerData
     
     
 def create_layout_pannel(master, x, width, height):

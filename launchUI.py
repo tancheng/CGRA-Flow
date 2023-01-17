@@ -28,9 +28,6 @@ LINK_NO_MEM   = 0
 LINK_FROM_MEM = 1
 LINK_TO_MEM   = 2
 
-def helloCallBack():
-    pass
-
 TILE_HEIGHT = 60
 TILE_WIDTH = 60
 LINK_LENGTH = 40
@@ -93,6 +90,8 @@ xbarCheckbuttons = {}
 
 kernelOptions = tkinter.StringVar()
 kernelOptions.set("Not selected yet")
+
+synthesisRunning = False
 
 class ParamTile:
     def __init__(s, ID, dimX, dimY, posX, posY, tileWidth, tileHeight):
@@ -910,13 +909,61 @@ def clickGenerateVerilog():
     os.chdir("..")
 
 
+def setReportProgress(value):
+    widgets["reportProgress"].configure(value=value)
+
+def countSynthesisTime():
+    global synthesisRunning
+    timeCost = 0.0
+    while synthesisRunning:
+        time.sleep(0.1)
+        widgets["synthesisTimeEntry"].delete(0, tkinter.END)
+        widgets["synthesisTimeEntry"].insert(0, round(timeCost, 1))
+        timeCost += 0.1
+
+def runYosys():
+    global synthesisRunning
+    os.system("make 3")
+
+    statsFile = open("3-open-yosys-synthesis/stats.txt", 'r')
+    statsLines = statsFile.readlines()
+      
+    tileArea = 0.0
+    for line in statsLines:
+        if "Chip area for module " in line:
+            tileArea = round(float(line.split(": ")[1]) / 1000000, 2)
+            break
+
+    statsFile.close()
+
+    widgets["reportTileAreaData"].delete(0, tkinter.END)
+    widgets["reportTileAreaData"].insert(0, tileArea)
+
+    widgets["reportTilePowerData"].delete(0, tkinter.END)
+    widgets["reportTilePowerData"].insert(0, "-")
+
+    widgets["reportProgress"].configure(value=100)
+
+    os.chdir("../../../build")
+
+    synthesisRunning = False
+
+
 def clickSynthesize():
 
     global paramCGRA
+    global synthesisRunning
+
+    if synthesisRunning:
+        return
 
     if not paramCGRA.verilogDone:
         tkinter.messagebox.showerror(title="Sythesis", message="The verilog generation needs to be done first.")
         return
+
+    synthesisRunning = True
+    synthesisTimerRun = threading.Thread(target=countSynthesisTime)
+    synthesisTimerRun.start()
 
     os.system("mkdir verilog")
     os.chdir("verilog")
@@ -930,17 +977,17 @@ def clickSynthesize():
     updatedReadPortPattern = str(paramCGRA.dataSPM.getNumOfValidReadPorts())
     updatedWritePortPattern = str(paramCGRA.dataSPM.getNumOfValidWritePorts())
       
-    with open(r'../../cacti/spm_template.cfg', 'r') as file:
+    with open(r'../../tools/cacti/spm_template.cfg', 'r') as file:
         data = file.read()
 
         data = data.replace(sizePattern, updatedSizePattern)
         data = data.replace(readPortPattern, updatedReadPortPattern)
         data = data.replace(writePortPattern, updatedWritePortPattern)
       
-    with open(r'../../cacti/spm_temp.cfg', 'w') as file:
+    with open(r'../../tools/cacti/spm_temp.cfg', 'w') as file:
         file.write(data)
 
-    os.chdir("../../cacti")
+    os.chdir("../../tools/cacti")
 
     cactiCommand = "./cacti -infile spm_temp.cfg"
     cactiProc = subprocess.Popen([cactiCommand, '-u'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, bufsize=1)
@@ -967,48 +1014,33 @@ def clickSynthesize():
     else:
         tkinter.messagebox.showerror(title="Sythesis", message="Execution of Cacti failed.")
 
-    widgets["reportProgress"].configure(value=20)
+    progress = threading.Thread(target=setReportProgress, args=[20])
+    progress.start()
 
+    os.chdir("../../build/verilog")
     # mflowgen synthesis:
-    os.system("../../sv2v/bin/sv2v design.v > design.v")
-    widgets["reportProgress"].configure(value=40)
+    os.system("../../tools/sv2v/bin/sv2v design.v > design_sv2v.v")
+    progress = threading.Thread(target=setReportProgress, args=[40])
+    progress.start()
 
-    os.system("sed -i 's/CGRATemplateRTL__.*/CGRATemplateRTL/g' design.v")
-    widgets["reportProgress"].configure(value=50)
+    os.system("sed -i 's/CGRATemplateRTL__.*/CGRATemplateRTL (/g' design_sv2v.v")
+    progress = threading.Thread(target=setReportProgress, args=[50])
+    progress.start()
 
     # os.system("mv design.v ../../mflowgen1/designs/cgra/rtl/outputs/design.v")
-    os.system("cp design.v ../../mflowgenx/designs/cgra/rtl/outputs/.")
-    os.chdir("../../mflowgenx")
+    os.system("cp design_sv2v.v ../../tools/mflowgen/designs/cgra/rtl/outputs/design.v")
+    os.chdir("../../tools/mflowgen")
     os.system("mkdir ./build")
     os.chdir("./build")
+    os.system("rm -r ./*")
     os.system("mflowgen run --design ../designs/cgra")
 
     os.system("make 2")
-    widgets["reportProgress"].configure(value=70)
+    progress = threading.Thread(target=setReportProgress, args=[70])
+    progress.start()
 
-    os.system("make 3")
-    widgets["reportProgress"].configure(value=90)
-
-    statsFile = open("3-open-yosys-synthesis/stats.txt", 'r')
-    statsLines = statsFile.readlines()
-      
-    tileArea = 0.0
-    for line in statsLines:
-        if "Chip area for module " in line:
-            tileArea = round(float(line.split(": ")[1]) / 1000000, 2)
-            break
-
-    statsFile.close()
-
-    widgets["reportTileAreaData"].delete(0, tkinter.END)
-    widgets["reportTileAreaData"].insert(0, tileArea)
-
-    widgets["reportTilePowerData"].delete(0, tkinter.END)
-    widgets["reportTilePowerData"].insert(0, "-")
-
-    widgets["reportProgress"].configure(value=100)
-
-    os.chdir("../../build")
+    yosysRun = threading.Thread(target=runYosys)
+    yosysRun.start()
 
 
 def clickSelectApp(event):
@@ -1210,7 +1242,7 @@ def clickShowDFG():
 
 mappingProc = None
 
-def countTime():
+def countMapTime():
     global mappingProc
     timeCost = 0.0
     while mappingProc == None or mappingProc.poll() is None:
@@ -1381,7 +1413,7 @@ def clickMapDFG():
 
     drawer = threading.Thread(target=drawSchedule)
     drawer.start()
-    timer = threading.Thread(target=countTime)
+    timer = threading.Thread(target=countMapTime)
     timer.start()
 
 
@@ -1711,54 +1743,55 @@ def create_verilog_pannel(master, x, y, width, height):
 
 def create_report_pannel(master, x, y, width):
     reportPannel = tkinter.LabelFrame(master, text='Report area/power', bd = BORDER, relief='groove')
-    CreateToolTip(reportPannel, text = "Area is in mm^2 and power is in mW.")
     reportPannel.place(width=width, height=110, x=x, y=y)
 
     reportButton = tkinter.Button(reportPannel, text="Synthesize", relief="raised", command=clickSynthesize)
-    reportButton.grid(row=0, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
-    reportProgress = ttk.Progressbar(reportPannel, orient='horizontal', mode='determinate', length=width/1.7)
+    # reportButton.grid(row=0, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    reportButton.place(x=BORDER, y=BORDER, width=90, height=28)
+    # reportProgress = ttk.Progressbar(reportPannel, orient='horizontal', mode='determinate', length=width/1.7)
+    reportProgress = ttk.Progressbar(reportPannel, orient="horizontal", mode="determinate")
     reportProgress['value'] = 0
     widgets["reportProgress"] = reportProgress
-    reportProgress.grid(columnspan=3, row=0, column=1, padx=BORDER, pady=BORDER//2)
+    # reportProgress.grid(columnspan=2, row=0, column=1, padx=BORDER, pady=BORDER//2)
+    reportProgress.place(x=BORDER+100, y=BORDER*2, width=120, height=20)
+
+    synthesisTimeEntry = tkinter.Entry(reportPannel, fg="black", justify=tkinter.CENTER)
+    widgets["synthesisTimeEntry"] = synthesisTimeEntry
+    synthesisTimeEntry.place(x=BORDER+230, y=BORDER*2, width=50, height=20)
+    # synthesisTimeEntry.insert(0, "0")
+    # synthesisTimeEntry.configure(width=4)
+    # synthesisTimeEntry.grid(row=0, column=3, padx=BORDER, pady=BORDER//2)
     
     reportTileAreaLabel = tkinter.Label(reportPannel, text = " Tiles area:")
-    reportTileAreaLabel.place(x=BORDER, y=BORDER+32, width=70, height=25)
-    # reportTileAreaLabel.grid(row=1, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    CreateToolTip(reportTileAreaLabel, text = "Area is in mm^2.")
+    reportTileAreaLabel.place(x=BORDER, y=BORDER+30, width=70, height=25)
 
     reportTileAreaData = tkinter.Entry(reportPannel, justify=tkinter.CENTER)
     widgets["reportTileAreaData"] = reportTileAreaData
-    # reportTileAreaData.configure(width=4)
-    # reportTileAreaData.grid(row=1, column=1, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
     reportTileAreaData.place(x=BORDER+80, y=BORDER+32, width=50, height=20)
 
     reportTilePowerLabel = tkinter.Label(reportPannel, text = "Tiles power:")
+    CreateToolTip(reportTilePowerLabel, text = "Yosys is not able to provide\npower estimation.")
     reportTilePowerLabel.grid(row=1, column=2, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
-    reportTilePowerLabel.place(x=BORDER+140, y=BORDER+32, width=80, height=25)
+    reportTilePowerLabel.place(x=BORDER+140, y=BORDER+30, width=80, height=25)
 
     reportTilePowerData = tkinter.Entry(reportPannel, justify=tkinter.CENTER)
     widgets["reportTilePowerData"] = reportTilePowerData
-    CreateToolTip(reportTilePowerLabel, text = "Yosys is not able to\nprovide power estimation.")
-    # reportTilePowerData.configure(width=4)
-    # reportTilePowerData.grid(row=1, column=3, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
     reportTilePowerData.place(x=BORDER+230, y=BORDER+32, width=50, height=20)
     
     reportSPMAreaLabel = tkinter.Label(reportPannel, text = " SPM area:")
-    # reportSPMAreaLabel.grid(row=2, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
-    reportSPMAreaLabel.place(x=BORDER, y=BORDER+58, width=70, height=25)
+    CreateToolTip(reportSPMAreaLabel, text = "Area is in mm^2.")
+    reportSPMAreaLabel.place(x=BORDER, y=BORDER+56, width=70, height=25)
 
     reportSPMAreaData = tkinter.Entry(reportPannel, justify=tkinter.CENTER)
-    # reportSPMAreaData.configure(width=4)
-    # reportSPMAreaData.grid(row=2, column=1, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
     reportSPMAreaData.place(x=BORDER+80, y=BORDER+58, width=50, height=20)
     widgets["reportSPMAreaData"] = reportSPMAreaData
 
     reportSPMPowerLabel = tkinter.Label(reportPannel, text = "SPM power:")
-    # reportSPMPowerLabel.grid(row=2, column=2, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
-    reportSPMPowerLabel.place(x=BORDER+140, y=BORDER+58, width=80, height=25)
+    CreateToolTip(reportSPMPowerLabel, text = "Power is in mW.")
+    reportSPMPowerLabel.place(x=BORDER+140, y=BORDER+56, width=80, height=25)
 
     reportSPMPowerData = tkinter.Entry(reportPannel, justify=tkinter.CENTER)
-    # reportSPMPowerData.configure(width=4)
-    # reportSPMPowerData.grid(row=2, column=3, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
     reportSPMPowerData.place(x=BORDER+230, y=BORDER+58, width=50, height=20)
     widgets["reportSPMPowerData"] = reportSPMPowerData
     
@@ -1782,7 +1815,7 @@ def create_kernel_pannel(master, x, y, width, height):
 
     appPathEntry = tkinter.Entry(kernelPannel, fg="black")
     widgets["appPathEntry"] = appPathEntry
-    appPathEntry.configure(width=20)
+    appPathEntry.configure(width=16)
     appPathEntry.insert(0, paramCGRA.targetAppName)
     # appPathEntry.configure(state="disabled")
     appPathEntry.grid(columnspan=2, row=0, column=1, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
@@ -1793,7 +1826,7 @@ def create_kernel_pannel(master, x, y, width, height):
     compileAppButton.grid(row=0, column=3, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
 
     # compileAppShow = tkinter.Label(kernelPannel, text=u'  \u2713\u2713\u2713', fg='green')
-    compileAppShow = tkinter.Label(kernelPannel, text="IDLE", fg='gray')
+    compileAppShow = tkinter.Label(kernelPannel, text=" IDLE", fg='gray')
     compileAppShow.grid(row=0, column=4, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
     widgets["compileAppShow"] = compileAppShow
 
@@ -1804,7 +1837,7 @@ def create_kernel_pannel(master, x, y, width, height):
     kernelNameMenu = tkinter.OptionMenu(kernelPannel, kernelOptions, *tempOptions)
     kernelOptions.trace("w", clickKernelMenu)
     widgets["kernelNameMenu"] = kernelNameMenu
-    kernelNameMenu.configure(width=15)
+    kernelNameMenu.configure(width=12)
     kernelNameMenu.grid(columnspan=2, row=1, column=1, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
 
     # kernelNameEntry= tkinter.Entry(kernelPannel, fg="black")
@@ -1815,7 +1848,7 @@ def create_kernel_pannel(master, x, y, width, height):
     generateDFGButton.configure(width=10)
     generateDFGButton.grid(columnspan=2, row=1, column=3, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
 
-    generateDFGShow = tkinter.Label(kernelPannel, text="IDLE", fg='gray')
+    generateDFGShow = tkinter.Label(kernelPannel, text=" IDLE", fg='gray')
     generateDFGShow.grid(row=1, column=4, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
     widgets["generateDFGShow"] = generateDFGShow
 

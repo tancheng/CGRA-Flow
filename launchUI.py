@@ -903,7 +903,9 @@ def clickGenerateVerilog():
     if not found:
         paramCGRA.verilogDone = False
         widgets["verilogText"].insert(tkinter.END, "Error exists during Verilog generation")
-    os.system("rename s/\.v/\.log/g *")
+
+    os.system("mv CGRATemplateRTL__*.v design.v")
+    # os.system("rename s/\.v/\.log/g *")
 
     os.chdir("..")
 
@@ -918,8 +920,8 @@ def clickSynthesize():
 
     os.system("mkdir verilog")
     os.chdir("verilog")
-    os.system("cp ../../cacti/spm_template.cfg ./.")
 
+    # Cacti SPM power/area estimation:
     sizePattern = "[SPM_SIZE]"
     readPortPattern = "[READ_PORT_COUNT]"
     writePortPattern = "[WRITE_PORT_COUNT]"
@@ -928,18 +930,17 @@ def clickSynthesize():
     updatedReadPortPattern = str(paramCGRA.dataSPM.getNumOfValidReadPorts())
     updatedWritePortPattern = str(paramCGRA.dataSPM.getNumOfValidWritePorts())
       
-    with open(r'spm_template.cfg', 'r') as file:
+    with open(r'../../cacti/spm_template.cfg', 'r') as file:
         data = file.read()
 
         data = data.replace(sizePattern, updatedSizePattern)
         data = data.replace(readPortPattern, updatedReadPortPattern)
         data = data.replace(writePortPattern, updatedWritePortPattern)
       
-    with open(r'spm_template.cfg', 'w') as file:
+    with open(r'../../cacti/spm_temp.cfg', 'w') as file:
         file.write(data)
 
     os.chdir("../../cacti")
-    os.system("cp ../build/verilog/spm_template.cfg ./spm_temp.cfg")
 
     cactiCommand = "./cacti -infile spm_temp.cfg"
     cactiProc = subprocess.Popen([cactiCommand, '-u'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, bufsize=1)
@@ -966,8 +967,48 @@ def clickSynthesize():
     else:
         tkinter.messagebox.showerror(title="Sythesis", message="Execution of Cacti failed.")
 
+    widgets["reportProgress"].configure(value=20)
 
-    os.chdir("../build")
+    # mflowgen synthesis:
+    os.system("../../sv2v/bin/sv2v design.v > design.v")
+    widgets["reportProgress"].configure(value=40)
+
+    os.system("sed -i 's/CGRATemplateRTL__.*/CGRATemplateRTL/g' design.v")
+    widgets["reportProgress"].configure(value=50)
+
+    # os.system("mv design.v ../../mflowgen1/designs/cgra/rtl/outputs/design.v")
+    os.system("cp design.v ../../mflowgenx/designs/cgra/rtl/outputs/.")
+    os.chdir("../../mflowgenx")
+    os.system("mkdir ./build")
+    os.chdir("./build")
+    os.system("mflowgen run --design ../designs/cgra")
+
+    os.system("make 2")
+    widgets["reportProgress"].configure(value=70)
+
+    os.system("make 3")
+    widgets["reportProgress"].configure(value=90)
+
+    statsFile = open("3-open-yosys-synthesis/stats.txt", 'r')
+    statsLines = statsFile.readlines()
+      
+    tileArea = 0.0
+    for line in statsLines:
+        if "Chip area for module " in line:
+            tileArea = round(float(line.split(": ")[1]) / 1000000, 2)
+            break
+
+    statsFile.close()
+
+    widgets["reportTileAreaData"].delete(0, tkinter.END)
+    widgets["reportTileAreaData"].insert(0, tileArea)
+
+    widgets["reportTilePowerData"].delete(0, tkinter.END)
+    widgets["reportTilePowerData"].insert(0, "-")
+
+    widgets["reportProgress"].configure(value=100)
+
+    os.chdir("../../build")
 
 
 def clickSelectApp(event):
@@ -1650,7 +1691,7 @@ def create_test_pannel(master, x, width, height):
 def create_verilog_pannel(master, x, y, width, height):
     verilogPannel = tkinter.LabelFrame(master, text="SVerilog", bd=BORDER, relief="groove")
     verilogPannel.place(height=height, width=width, x=x, y=y)
-    CreateToolTip(verilogPannel, text = "The code might be too big to be copied, the\ngenerated verilog (.log) can be found in the\n'verilog' folder.")
+    CreateToolTip(verilogPannel, text = "The code might be too big to be copied,\nthe generated verilog can be found in\nthe 'verilog' folder.")
 
     verilogFrame = tkinter.Frame(verilogPannel, bd=BORDER, relief="groove")
     verilogFrame.place(height=height-8*BORDER-40, width=width-4*BORDER, x=BORDER, y=BORDER)
@@ -1670,13 +1711,14 @@ def create_verilog_pannel(master, x, y, width, height):
 
 def create_report_pannel(master, x, y, width):
     reportPannel = tkinter.LabelFrame(master, text='Report area/power', bd = BORDER, relief='groove')
-    CreateToolTip(reportPannel, text = "Power is in mW and area is in mm^2.")
+    CreateToolTip(reportPannel, text = "Area is in mm^2 and power is in mW.")
     reportPannel.place(width=width, height=110, x=x, y=y)
 
     reportButton = tkinter.Button(reportPannel, text="Synthesize", relief="raised", command=clickSynthesize)
     reportButton.grid(row=0, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
     reportProgress = ttk.Progressbar(reportPannel, orient='horizontal', mode='determinate', length=width/1.7)
-    reportProgress['value'] = 30
+    reportProgress['value'] = 0
+    widgets["reportProgress"] = reportProgress
     reportProgress.grid(columnspan=3, row=0, column=1, padx=BORDER, pady=BORDER//2)
     
     reportTileAreaLabel = tkinter.Label(reportPannel, text = " Tiles area:")
@@ -1695,6 +1737,7 @@ def create_report_pannel(master, x, y, width):
 
     reportTilePowerData = tkinter.Entry(reportPannel, justify=tkinter.CENTER)
     widgets["reportTilePowerData"] = reportTilePowerData
+    CreateToolTip(reportTilePowerLabel, text = "Yosys is not able to\nprovide power estimation.")
     # reportTilePowerData.configure(width=4)
     # reportTilePowerData.grid(row=1, column=3, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
     reportTilePowerData.place(x=BORDER+230, y=BORDER+32, width=50, height=20)

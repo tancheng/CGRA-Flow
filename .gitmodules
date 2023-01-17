@@ -4,15 +4,18 @@
 [submodule "CGRA-Benchmark"]
 	path = CGRA-Benchmark
 	url = https://github.com/tancheng/CGRA-Benchmark
-[submodule "mflowgen"]
-	path = mflowgen
-	url = https://github.com/mflowgen/mflowgen.git
-[submodule "OpenROAD-flow-scripts"]
-	path = OpenROAD-flow-scripts
-	url = https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts.git
 [submodule "VectorCGRA"]
 	path = VectorCGRA
 	url = https://github.com/tancheng/VectorCGRA.git
 [submodule "mlir-cgra"]
 	path = mlir-cgra
 	url = https://github.com/tancheng/mlir-cgra.git
+[submodule "tools/mflowgen"]
+	path = tools/mflowgen
+	url = https://github.com/tancheng/mflowgen.git
+[submodule "tools/sv2v"]
+	path = tools/sv2v
+	url = https://github.com/zachjs/sv2v.git
+[submodule "tools/cacti"]
+	path = tools/cacti
+	url = https://github.com/tancheng/cacti.git

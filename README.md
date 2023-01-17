@@ -11,12 +11,11 @@
 ========================================================
 </pre>
 
-CGRA-Flow is an integrated framework for CGRA synthesis and development. It collects various open-source CGRA repos/components.
+CGRA-Flow is an integrated framework for CGRA compilation, exploration, synthesis, and development. It collects and integrates various open-source CGRA repos/components. A simple user interface is implemented to demonstrate some features of different components (not all the advanced features are demonstrated but hope this can inspire your own research).
 
 User Interface
 --------------------------------------------------------------------------
-![tk](https://user-images.githubusercontent.com/6756658/208831278-0d5e417d-cdb3-483a-b12d-0477f16b08d3.PNG)
-
+![Capture](https://user-images.githubusercontent.com/6756658/213010564-fa74b34e-218f-435e-9e8e-ef5a40f8899d.PNG)
 
 License
 --------------------------------------------------------------------------

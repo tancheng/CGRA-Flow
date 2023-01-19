@@ -95,7 +95,6 @@ jobs:
     - name: Build for mflowgen
       working-directory: ${{github.workspace}}/tools/mflowgen
       run: |
-        TOP = ${PWD}
         pip install -e .
     
     - name: Test for mflowgen
@@ -116,3 +115,14 @@ jobs:
       working-directory: ${{github.workspace}}/tools/sv2v
       run: make 
       
+
+    - name: Install dependencies for tkinter
+      run: |
+        apt-get install python3.7-tkinter
+        pip install pillow
+
+    - name: Test for tkinter
+      run: |
+        mkdir build && cd build
+        python ../launch.py
+ 

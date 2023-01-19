@@ -29,7 +29,13 @@ jobs:
       run: |
         git submodule update --init
         
+
+    - name: Install dependencies for tkinter
+      run: |
+        sudo apt-get install python3-tk
+        pip install pillow
         
+
     - name: Install LLVM and Clang for CGRA-Mapper
       uses: egor-tensin/setup-clang@v1
       with:
@@ -116,11 +122,6 @@ jobs:
       working-directory: ${{github.workspace}}/tools/sv2v
       run: make 
       
-
-    - name: Install dependencies for tkinter
-      run: |
-        sudo apt-get install python3.7-tk
-        pip install pillow
 
     - name: Test for tkinter
       working-directory: ${{github.workspace}}

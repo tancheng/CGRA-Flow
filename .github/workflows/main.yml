@@ -45,7 +45,7 @@ jobs:
 
     - name: Test for CGRA-Mapper
       working-directory: ${{github.workspace}}/CGRA-Mapper/test
-      run: sudo ln -sf /usr/bin/opt-12 /usr/bin/opt && source compile.sh && source run.sh
+      run: sudo ln -sf /usr/bin/opt-12 /usr/bin/opt && source compile.sh
       
     - name: Set up Python ${{ matrix.python-version }} for VectorCGRA
       uses: actions/setup-python@v3

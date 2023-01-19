@@ -2,7 +2,7 @@ name: build
 
 on:
   push:
-    branches: [ "setup-actions" ]
+    branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
 

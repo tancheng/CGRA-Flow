@@ -10,11 +10,11 @@
 
 ========================================================
 </pre>
-[![Github Action](https://github.com/tancheng/CGRA-Flow/actions/workflows/make.yml/badge.svg)](https://github.com/tancheng/CGRA-Flow/actions/workflows/make.yml)
+[![Github Action](https://github.com/tancheng/CGRA-Flow/actions/workflows/main.yml/badge.svg)](https://github.com/tancheng/CGRA-Flow/actions/workflows/main.yml)
 [![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![Linux](https://svgshare.com/i/Zhy.svg)](https://svgshare.com/i/Zhy.svg)
 
-CGRA-Flow is an integrated framework for CGRA compilation, exploration, synthesis, and development. It collects and integrates various open-source CGRA repos/components. A simple user interface is implemented to demonstrate some features of different components (not all the advanced features are demonstrated but hope this can inspire your own research).
+CGRA-Flow is an integrated framework for CGRA compilation, exploration, synthesis, and development. It collects and integrates various open-source CGRA repos/components.
 
 User Interface Snapshot/Demo
 --------------------------------------------------------------------------
@@ -36,6 +36,7 @@ Installation
 --------------------------------------------------------
 
 CGRA-Flow requires Python3.7.
+
 Refer to the build [scripts](https://github.com/tancheng/CGRA-Flow/blob/master/.github/workflows/main.yml) or look into specific repo for the installation.
 
 
@@ -61,7 +62,7 @@ Citation
 
 Publications leveraging (parts of) CGRA-Flow toolchain
 --------------------------------------------------------------------------
-- Saambhavi Baskaran, et al. "An Architecture Interface and Offload Model for Low-Overhead, Near-Data, Distributed Accelerators."_ 2022 55th IEEE/ACM International Symposium on Microarchitecture (MICRO'22). IEEE, 2022.
+- Saambhavi Baskaran, et al. _"An Architecture Interface and Offload Model for Low-Overhead, Near-Data, Distributed Accelerators."_ 2022 55th IEEE/ACM International Symposium on Microarchitecture (MICRO'22). IEEE, 2022.
 - Lei Jiang, et al. _"MATCHA: A Fast and Energy-Efficient Accelerator for Fully Homomorphic Encryption over the Torus."_ Proceedings of the 59th Annual Design Automation Conference 2022 (DAC'22).
 - Cheng Tan, et al. _"DRIPS: Dynamic Rebalancing of Pipelined Streaming Applications on CGRAs."_ 2022 IEEE International Symposium on High-Performance Computer Architecture (HPCA'22). IEEE, 2022.
 - Cheng Tan, et al. _"ARENA: Asynchronous Reconfigurable Accelerator Ring to Enable Data-Centric Parallel Computing."_ IEEE Transactions on Parallel and Distributed Systems (TPDS'21).

@@ -85,7 +85,7 @@ jobs:
         cd VectorCGRA
         mkdir -p build && cd build
         source ${HOME}/venv/bin/activate
-        pytest .. -v --tb=short
+        pytest ../cgra/ -v --tb=short
         
         
     - name: Install dependencies for mflowgen

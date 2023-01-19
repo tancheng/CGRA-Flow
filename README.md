@@ -62,8 +62,8 @@ Citation
 
 Publications leveraging (parts of) CGRA-Flow toolchain
 --------------------------------------------------------------------------
-- Saambhavi Baskaran, et al. _"An Architecture Interface and Offload Model for Low-Overhead, Near-Data, Distributed Accelerators."_ 2022 55th IEEE/ACM International Symposium on Microarchitecture (MICRO'22). IEEE, 2022.
-- Lei Jiang, et al. _"MATCHA: A Fast and Energy-Efficient Accelerator for Fully Homomorphic Encryption over the Torus."_ Proceedings of the 59th Annual Design Automation Conference 2022 (DAC'22).
-- Cheng Tan, et al. _"DRIPS: Dynamic Rebalancing of Pipelined Streaming Applications on CGRAs."_ 2022 IEEE International Symposium on High-Performance Computer Architecture (HPCA'22). IEEE, 2022.
-- Cheng Tan, et al. _"ARENA: Asynchronous Reconfigurable Accelerator Ring to Enable Data-Centric Parallel Computing."_ IEEE Transactions on Parallel and Distributed Systems (TPDS'21).
-- Christopher Torng, et al. _"Ultra-Elastic CGRAs for Irregular Loop Specialization."_ 2021 IEEE International Symposium on High-Performance Computer Architecture (HPCA'21).
+- _"An Architecture Interface and Offload Model for Low-Overhead, Near-Data, Distributed Accelerators."_ MICRO'22.
+- _"MATCHA: A Fast and Energy-Efficient Accelerator for Fully Homomorphic Encryption over the Torus."_ DAC'22.
+- _"DRIPS: Dynamic Rebalancing of Pipelined Streaming Applications on CGRAs."_ HPCA'22.
+- _"ARENA: Asynchronous Reconfigurable Accelerator Ring to Enable Data-Centric Parallel Computing."_ TPDS'21.
+- _"Ultra-Elastic CGRAs for Irregular Loop Specialization."_ HPCA'21.

@@ -10,10 +10,13 @@
 
 ========================================================
 </pre>
+[![Github Action](https://github.com/tancheng/CGRA-Flow/actions/workflows/make.yml/badge.svg)](https://github.com/tancheng/CGRA-Flow/actions/workflows/make.yml)
+[![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
+[![Linux](https://svgshare.com/i/Zhy.svg)](https://svgshare.com/i/Zhy.svg)
 
 CGRA-Flow is an integrated framework for CGRA compilation, exploration, synthesis, and development. It collects and integrates various open-source CGRA repos/components. A simple user interface is implemented to demonstrate some features of different components (not all the advanced features are demonstrated but hope this can inspire your own research).
 
-User Interface
+User Interface Snapshot
 --------------------------------------------------------------------------
 ![Capture](https://user-images.githubusercontent.com/6756658/213010564-fa74b34e-218f-435e-9e8e-ef5a40f8899d.PNG)
 
@@ -31,3 +34,24 @@ Installation
 
 Look into specific repo for the installation and execution.
 
+
+Citation
+--------------------------------------------------------------------------
+```
+@inproceedings{tan2020opencgra,
+  title={OpenCGRA: An open-source unified framework for modeling, testing, and evaluating CGRAs},
+  author={Tan, Cheng and Xie, Chenhao and Li, Ang and Barker, Kevin J and Tumeo, Antonino},
+  booktitle={2020 IEEE 38th International Conference on Computer Design (ICCD)},
+  pages={381--388},
+  year={2020},
+  organization={IEEE}
+}
+```
+
+Publications leveraging (parts of) CGRA-Flow toolchain
+--------------------------------------------------------------------------
+- Saambhavi Baskaran, et al. "An Architecture Interface and Offload Model for Low-Overhead, Near-Data, Distributed Accelerators."_ 2022 55th IEEE/ACM International Symposium on Microarchitecture (MICRO'22). IEEE, 2022.
+- Lei Jiang, et al. _"MATCHA: A Fast and Energy-Efficient Accelerator for Fully Homomorphic Encryption over the Torus."_ Proceedings of the 59th Annual Design Automation Conference 2022 (DAC'22).
+- Cheng Tan, et al. _"DRIPS: Dynamic Rebalancing of Pipelined Streaming Applications on CGRAs."_ 2022 IEEE International Symposium on High-Performance Computer Architecture (HPCA'22). IEEE, 2022.
+- Cheng Tan, et al. _"ARENA: Asynchronous Reconfigurable Accelerator Ring to Enable Data-Centric Parallel Computing."_ IEEE Transactions on Parallel and Distributed Systems (TPDS'21).
+- Christopher Torng, et al. _"Ultra-Elastic CGRAs for Irregular Loop Specialization."_ 2021 IEEE International Symposium on High-Performance Computer Architecture (HPCA'21).

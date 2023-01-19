@@ -120,6 +120,7 @@ jobs:
     - name: Install dependencies for tkinter
       run: |
         sudo apt-get install python3-tk
+        source ${HOME}/venv/bin/activate
         pip install pillow
 
     - name: Test for tkinter

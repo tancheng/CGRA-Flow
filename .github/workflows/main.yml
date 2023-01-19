@@ -119,7 +119,7 @@ jobs:
 
     - name: Install dependencies for tkinter
       run: |
-        sudo apt-get install python3.7-tkinter
+        sudo apt-get install python3.7-tk
         pip install pillow
 
     - name: Test for tkinter

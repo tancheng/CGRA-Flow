@@ -2,7 +2,7 @@ name: build
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "setup-actions" ]
   pull_request:
     branches: [ "master" ]
 
@@ -27,7 +27,7 @@ jobs:
     # Update references
     - name: Git Sumbodule Update
       run: |
-        git pull --recurse-submodules
+        git submodule update --init
         
         
     - name: Install LLVM and Clang for CGRA-Mapper

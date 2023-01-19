@@ -1361,7 +1361,7 @@ def clickTerminateMapping():
 def clickMapDFG():
     global mappingProc
     mappingProc = None
-    heuristic = mappingAlgoCheckVar.get() == 0
+    heuristic = mappingAlgoCheckVar.get() == 1
 
     os.system("mkdir kernel")
     os.chdir("kernel")
@@ -1887,11 +1887,11 @@ def create_kernel_pannel(master, x, y, width, height):
     mappingOptionLabel = tkinter.Label(kernelPannel, text="Mapping algo:", fg='black')
     mappingOptionLabel.place(x=4*BORDER+dfgWidth, y=155+BORDER)
 
-    heuristicRatiobutton = tkinter.Radiobutton(kernelPannel, text="Heuristic", variable=mappingAlgoCheckVar, value=0)
+    heuristicRatiobutton = tkinter.Radiobutton(kernelPannel, text="Heuristic", variable=mappingAlgoCheckVar, value=1)
     widgets["heuristicRatiobutton"] = heuristicRatiobutton
     heuristicRatiobutton.place(x=2*BORDER+dfgWidth, y=180+BORDER)
 
-    exhaustiveRatiobutton = tkinter.Radiobutton(kernelPannel, text="Exhaustive", variable=mappingAlgoCheckVar, value=1)
+    exhaustiveRatiobutton = tkinter.Radiobutton(kernelPannel, text="Exhaustive", variable=mappingAlgoCheckVar, value=0)
     widgets["exhaustiveRatiobutton"] = exhaustiveRatiobutton
     exhaustiveRatiobutton.place(x=2*BORDER+dfgWidth, y=200+BORDER)
 

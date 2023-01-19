@@ -27,9 +27,9 @@ jobs:
     # Update references
     - name: Git Sumbodule Update
       run: |
-        git pull --recurse-submodules
+        git submodule update --init
         
-        
+
     - name: Install LLVM and Clang for CGRA-Mapper
       uses: egor-tensin/setup-clang@v1
       with:
@@ -44,7 +44,7 @@ jobs:
       run: make
 
     - name: Test for CGRA-Mapper
-      working-directory: ${{github.workspace}}/test
+      working-directory: ${{github.workspace}}/CGRA-Mapper/test
       run: sudo ln -sf /usr/bin/opt-12 /usr/bin/opt && source compile.sh && source run.sh
       
     - name: Set up Python ${{ matrix.python-version }} for VectorCGRA
@@ -85,7 +85,7 @@ jobs:
         cd VectorCGRA
         mkdir -p build && cd build
         source ${HOME}/venv/bin/activate
-        pytest .. -v --tb=short
+        pytest ../cgra/ -v --tb=short
         
         
     - name: Install dependencies for mflowgen
@@ -95,10 +95,10 @@ jobs:
     - name: Build for mflowgen
       working-directory: ${{github.workspace}}/tools/mflowgen
       run: |
-        TOP = ${PWD}
         pip install -e .
     
     - name: Test for mflowgen
+      working-directory: ${{github.workspace}}/tools/mflowgen
       run: |
         mkdir build && cd build
         mflowgen run --design ../designs/GcdUnit
@@ -110,9 +110,22 @@ jobs:
       
       
     - name: Install dependencies for sv2v
-      run: wget -qO- https://get.haskellstack.org/ | sh
+      run: stack upgrade
       
     - name: Build for sv2v
       working-directory: ${{github.workspace}}/tools/sv2v
       run: make 
       
+
+    - name: Install dependencies for tkinter
+      run: |
+        sudo apt-get install python3-tk
+        source ${HOME}/venv/bin/activate
+        pip install pillow
+
+    - name: Test for tkinter
+      working-directory: ${{github.workspace}}/
+      run: |
+        mkdir build && cd build
+        source ${HOME}/venv/bin/activate
+

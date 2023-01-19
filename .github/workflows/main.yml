@@ -110,7 +110,7 @@ jobs:
       
       
     - name: Install dependencies for sv2v
-      run: wget -qO- https://get.haskellstack.org/ | sh
+      run: stack upgrade
       
     - name: Build for sv2v
       working-directory: ${{github.workspace}}/tools/sv2v

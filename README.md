@@ -16,9 +16,12 @@
 
 CGRA-Flow is an integrated framework for CGRA compilation, exploration, synthesis, and development. It collects and integrates various open-source CGRA repos/components. A simple user interface is implemented to demonstrate some features of different components (not all the advanced features are demonstrated but hope this can inspire your own research).
 
-User Interface Snapshot
+User Interface Snapshot/Demo
 --------------------------------------------------------------------------
 ![Capture](https://user-images.githubusercontent.com/6756658/213010564-fa74b34e-218f-435e-9e8e-ef5a40f8899d.PNG)
+
+A demo at repl.it (https://repl.it/@ChengTan/cgra-flow) shows some features of CGRA-Flow (the verilog generation and evaluation are not available due to the limited support of python environment). To explore all the features, please setup CGRA-Flow locally.
+
 
 License
 --------------------------------------------------------------------------
@@ -32,8 +35,16 @@ CGRA-Flow is offered under the terms of the Open Source Initiative BSD 3-Clause 
 Installation
 --------------------------------------------------------
 
-Look into specific repo for the installation and execution.
+CGRA-Flow requires Python3.7.
+Refer to the build [scripts](https://github.com/tancheng/CGRA-Flow/blob/master/.github/workflows/main.yml) or look into specific repo for the installation.
 
+
+Execution
+--------------------------------------------------------
+```
+ $ mkdir build && cd build
+ $ python ../launchUI.py
+```
 
 Citation
 --------------------------------------------------------------------------

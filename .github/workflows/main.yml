@@ -128,5 +128,4 @@ jobs:
       run: |
         mkdir build && cd build
         source ${HOME}/venv/bin/activate
-        python ../launchUI.py
- 
+

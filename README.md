@@ -25,22 +25,20 @@ A demo at repl.it (https://repl.it/@ChengTan/cgra-flow) shows some features of C
 Docker
 --------------------------------------------------------
 The docker image is available [here](https://hub.docker.com/layers/cgra/cgra-flow/demo/images/sha256-7ca327d24f555376d91cba6fa30e3fbaa4a4c0d4053a82ac9059c374a3dee5bd?context=repo).
-```
- $ docker pull cgra/cgra-flow:demo
-```
+
 As CGRA-Flow requires GUI, a script is provided for setting up the display:
-```
- $ sh ./run_docker.sh
+```sh
+ docker pull cgra/cgra-flow:demo
+ sh ./run_docker.sh
+ # Don't forget to activate the python virtual environment once you are in the container:
+ source /WORK_REPO/venv/bin/activate
 ```
 Otherwise, if you don't need the GUI, development can be performed in the container with the environment well set up:
+```sh
+ docker pull cgra/cgra-flow:demo
+ docker run -it cgra/cgra-flow:demo
+ source /WORK_REPO/venv/bin/activate
 ```
- $ docker run -it cgra/cgra-flow:demo
-```
-Don't forget to activate the python virtual environment once you are in the container:
-```
- $ source /WORK_REPO/venv/bin/activate
-```
-
 
 Installation
 --------------------------------------------------------
@@ -52,9 +50,9 @@ Refer to the build [scripts](https://github.com/tancheng/CGRA-Flow/blob/master/.
 
 Execution
 --------------------------------------------------------
-```
- $ mkdir build && cd build
- $ python ../launchUI.py
+```sh
+ mkdir build && cd build
+ python ../launchUI.py
 ```
 
 Citation

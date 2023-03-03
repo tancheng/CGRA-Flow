@@ -25,15 +25,21 @@ A demo at repl.it (https://repl.it/@ChengTan/cgra-flow) shows some features of C
 Docker
 --------------------------------------------------------
 The docker image is available [here](https://hub.docker.com/layers/cgra/cgra-flow/demo/images/sha256-7ca327d24f555376d91cba6fa30e3fbaa4a4c0d4053a82ac9059c374a3dee5bd?context=repo).
-
-
-License
---------------------------------------------------------------------------
-
-CGRA-Flow is offered under the terms of the Open Source Initiative BSD 3-Clause License. More information about this license can be found here:
-
-  - http://choosealicense.com/licenses/bsd-3-clause
-  - http://opensource.org/licenses/BSD-3-Clause
+```
+ $ docker pull cgra/cgra-flow:demo
+```
+As CGRA-Flow requires GUI, a script is provided for setting up the display:
+```
+ $ sh ./run_docker.sh
+```
+Otherwise, if you don't need the GUI, development can be performed in the container with the environment well set up:
+```
+ $ docker run -it cgra/cgra-flow:demo
+```
+Don't forget to activate the python virtual environment once you are in the container:
+```
+ $ source /WORK_REPO/venv/bin/activate
+```
 
 
 Installation
@@ -41,7 +47,7 @@ Installation
 
 CGRA-Flow requires Python3.7.
 
-Refer to the build [scripts](https://github.com/tancheng/CGRA-Flow/blob/master/.github/workflows/main.yml) or look into specific repo for the installation.
+Refer to the build [scripts](https://github.com/tancheng/CGRA-Flow/blob/master/.github/workflows/main.yml) or look into specific repo for the manual installation if you don't want to use docker.
 
 
 Execution
@@ -71,3 +77,13 @@ Publications leveraging (parts of) CGRA-Flow toolchain
 - _"DRIPS: Dynamic Rebalancing of Pipelined Streaming Applications on CGRAs."_ HPCA'22.
 - _"ARENA: Asynchronous Reconfigurable Accelerator Ring to Enable Data-Centric Parallel Computing."_ TPDS'21.
 - _"Ultra-Elastic CGRAs for Irregular Loop Specialization."_ HPCA'21.
+
+
+
+License
+--------------------------------------------------------------------------
+
+CGRA-Flow is offered under the terms of the Open Source Initiative BSD 3-Clause License. More information about this license can be found here:
+
+  - http://choosealicense.com/licenses/bsd-3-clause
+  - http://opensource.org/licenses/BSD-3-Clause

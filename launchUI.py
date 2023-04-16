@@ -1182,7 +1182,7 @@ def clickShowDFG():
             "doCGRAMapping"         : False,
             "row"                   : paramCGRA.rows,
             "column"                : paramCGRA.columns,
-            "precisionAware"        : True,
+            "precisionAware"        : False,
             "heterogeneity"         : False,
             "isTrimmedDemo"         : True,
             "heuristicMapping"      : True,
@@ -1225,7 +1225,7 @@ def clickShowDFG():
     widgets["recMIIEntry"].delete(0, tkinter.END)
     widgets["recMIIEntry"].insert(0, paramCGRA.recMII)
 
-    convertCommand = "dot -Tpng _Z6kernelPfS_S_.dot -o kernel.png"
+    convertCommand = "dot -Tpng " + paramCGRA.targetKernelName + ".dot -o kernel.png"
     convertProc = subprocess.Popen([convertCommand, "-u"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     (out, err) = convertProc.communicate()
 
@@ -1387,7 +1387,7 @@ def clickMapDFG():
             "doCGRAMapping"         : True,
             "row"                   : paramCGRA.rows,
             "column"                : paramCGRA.columns,
-            "precisionAware"        : True,
+            "precisionAware"        : False,
             "heterogeneity"         : False,
             "isTrimmedDemo"         : True,
             "heuristicMapping"      : heuristic,

@@ -40,6 +40,13 @@ Otherwise, if you don't need the GUI, development can be performed in the contai
  source /WORK_REPO/venv/bin/activate
 ```
 
+Execution
+--------------------------------------------------------
+```sh
+ mkdir build && cd build
+ python ../launchUI.py
+```
+
 Installation
 --------------------------------------------------------
 
@@ -47,13 +54,6 @@ CGRA-Flow requires Python3.7.
 
 Refer to the build [scripts](https://github.com/tancheng/CGRA-Flow/blob/master/.github/workflows/main.yml) or look into specific repo for the manual installation if you don't want to use docker.
 
-
-Execution
---------------------------------------------------------
-```sh
- mkdir build && cd build
- python ../launchUI.py
-```
 
 Citation
 --------------------------------------------------------------------------

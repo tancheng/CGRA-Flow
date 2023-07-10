@@ -13,7 +13,7 @@
 [![Github Action](https://github.com/tancheng/CGRA-Flow/actions/workflows/main.yml/badge.svg)](https://github.com/tancheng/CGRA-Flow/actions/workflows/main.yml)
 [![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
-CGRA-Flow is an integrated framework for CGRA compilation, exploration, synthesis, and development. It collects and integrates various open-source CGRA repos/components.
+CGRA-Flow is an integrated framework for CGRA compilation, exploration, synthesis, and development.
 
 User Interface Snapshot/Demo
 --------------------------------------------------------------------------
@@ -69,6 +69,7 @@ Citation
 
 Publications leveraging (parts of) CGRA-Flow toolchain
 --------------------------------------------------------------------------
+- _"MESA: Microarchitecture Extensions for Spatial Architecture Generation."_ ISCA'23.
 - _"An Architecture Interface and Offload Model for Low-Overhead, Near-Data, Distributed Accelerators."_ MICRO'22.
 - _"MATCHA: A Fast and Energy-Efficient Accelerator for Fully Homomorphic Encryption over the Torus."_ DAC'22.
 - _"DRIPS: Dynamic Rebalancing of Pipelined Streaming Applications on CGRAs."_ HPCA'22.

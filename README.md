@@ -28,7 +28,12 @@ The docker image is available [here](https://hub.docker.com/layers/cgra/cgra-flo
 As CGRA-Flow requires GUI, a script is provided for setting up the display:
 ```sh
  docker pull cgra/cgra-flow:demo
+
+ # if this is your first time establishing a container for CGRA-Flow:
  sh ./run_docker.sh
+ # else, use the following command to reopen the same container: 
+ sh ./start_docker.sh
+
  # Don't forget to activate the python virtual environment once you are in the container:
  source /WORK_REPO/venv/bin/activate
 ```

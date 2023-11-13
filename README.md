@@ -95,3 +95,11 @@ CGRA-Flow is offered under the terms of the Open Source Initiative BSD 3-Clause 
 
   - http://choosealicense.com/licenses/bsd-3-clause
   - http://opensource.org/licenses/BSD-3-Clause
+
+
+
+OpenAI GPT (coming soon)
+--------------------------------------------------------------------------
+[Arch Wizard](https://chat.openai.com/g/g-fUWqOuKFe-arch-wizard).
+
+![](https://github.com/tancheng/CGRA-Flow/assets/6756658/07db560a-65aa-4bed-8f0a-f0b3c07df893)

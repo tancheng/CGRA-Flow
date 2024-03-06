@@ -5,7 +5,7 @@ IMAGE=cgra/cgra-flow:demo
 NIC=$(sudo cat /proc/net/dev | awk 'END {print $1}' | sed 's/^[\t]*//g' | sed 's/[:]*$//g')
 
 # Grab the ip address of this box
-IPADDR=$(ifconfig $NIC | grep "inet " | awk '{print $2}')
+IPADDR=$(ifconfig "$NIC" | grep "inet " | awk '{print $2}')
 
 DISP_NUM=100 # fixed display number to 100 
 
@@ -19,6 +19,6 @@ sudo docker run \
     -it \
     --name=CGRA-Flow \
     -v $XSOCK:$XSOCK:rw \
-    -e DISPLAY=$IPADDR:$DISP_NUM \
+    -e DISPLAY="$IPADDR":$DISP_NUM \
     $IMAGE
 

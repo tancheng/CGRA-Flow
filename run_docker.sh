@@ -7,7 +7,7 @@ NIC=$(sudo cat /proc/net/dev | awk 'END {print $1}' | sed 's/^[\t]*//g' | sed 's
 # Grab the ip address of this box
 IPADDR=$(ifconfig "$NIC" | grep "inet " | awk '{print $2}')
 
-DISP_NUM=100 # fixed display number to 100 
+DISP_NUM=12 # fixed display number to 100 
 
 PORT_NUM=$((6000 + DISP_NUM))
 
@@ -17,8 +17,11 @@ XSOCK=/tmp/.X11-unix
 
 sudo docker run \
     -it \
-    --name=CGRA-Flow \
+    --name=CGRA-Flow-v2 \
     -v $XSOCK:$XSOCK:rw \
+    -v /etc/localtime:/etc/localtime:ro \
     -e DISPLAY="$IPADDR":$DISP_NUM \
+    -e GDK_SCALE \
+    -e GDIK_DPI_SCALE \
     $IMAGE
 

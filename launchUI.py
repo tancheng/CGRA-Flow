@@ -11,7 +11,6 @@ from tkinter import ttk
 from tkinter import filedialog as fd
 from PIL import Image, ImageTk, ImageFile
 from functools import partial
-from Downloads.OpenCGRA.cgra.translate.CGRARTL_test import test_cgra_universal
 
 from VectorCGRA.cgra.translate.CGRATemplateRTL_test import *
 
@@ -21,24 +20,31 @@ PORT_WEST      = 2
 PORT_EAST      = 3
 PORT_NORTHWEST = 4
 PORT_NORTHEAST = 5
-5555
 PORT_SOUTHEAST = 6
 PORT_SOUTHWEST = 7
 PORT_DIRECTION_COUNTS = 8
-
-LINK_NO_MEM   = 0
-LINK_FROM_MEM = 1
-LINK_TO_MEM   = 2
-
-TILE_HEIGHT = 60
-TILE_WIDTH = 60
-LINK_LENGTH = 40
+#TILE_HEIGHT = 60
+#TILE_WIDTH = 60
+#LINK_LENGTH = 40
+TILE_HEIGHT = 120
+TILE_WIDTH = 120
+LINK_LENGTH = 80
 INTERVAL = 10
 BORDER = 4
-
 master = tkinter.Tk()
 master.title("CGRA-Flow: An Integrated End-to-End Framework for CGRA Exploration, Compilation, and Development")
-
+master.grid_rowconfigure(0, weight=1)
+master.grid_rowconfigure(1, weight=1)
+master.grid_rowconfigure(2, weight=1)
+master.grid_rowconfigure(3, weight=2)
+master.grid_rowconfigure(4, weight=2)
+master.grid_rowconfigure(5, weight=2)
+master.grid_columnconfigure(0, weight=2)
+master.grid_columnconfigure(1, weight=2)
+master.grid_columnconfigure(2, weight=1)
+master.grid_columnconfigure(3, weight=1)
+master.grid_columnconfigure(4, weight=2)
+master.grid_columnconfigure(5, weight=2)
 ROWS = 4
 COLS = 4
 GRID_WIDTH = (TILE_WIDTH+LINK_LENGTH) * COLS - LINK_LENGTH
@@ -85,16 +91,13 @@ widgets = {}
 images = {}
 entireTileCheckVar = tkinter.IntVar()
 mappingAlgoCheckVar = tkinter.IntVar()
+kernelOptions = tkinter.StringVar()
+kernelOptions.set("Not selected yet")
 fuCheckVars = {}
 fuCheckbuttons = {}
 xbarCheckVars = {}
 xbarCheckbuttons = {}
-
-kernelOptions = tkinter.StringVar()
-kernelOptions.set("Not selected yet")
-
 synthesisRunning = False
-##这个类给出了Tile的一些参数信息##
 class ParamTile:
     def __init__(s, ID, dimX, dimY, posX, posY, tileWidth, tileHeight):
         s.ID = ID
@@ -111,7 +114,7 @@ class ParamTile:
         s.fuDict = {}
         s.xbarDict = {}
         s.mapping = {}
-    #初始化实例
+
         for i in range( PORT_DIRECTION_COUNTS ):
             s.neverUsedOutPorts.add(i)
         
@@ -120,19 +123,19 @@ class ParamTile:
 
         for fuType in fuTypeList:
             s.fuDict[fuType] = 1
-    #是否存在来自内存的输入链路
+
     def hasFromMem(s):
         for link in s.inLinks.values():
             if not link.disabled and link.isFromMem():
                 return True
         return False
-    #是否存在指向内存的输出链路
+
     def hasToMem(s):
         for link in s.outLinks.values():
             if not link.disabled and link.isToMem():
                 return True
         return False
-    #获取无效的输入端口
+
     def getInvalidInPorts(s):
         invalidInPorts = set()
         for port in range(PORT_DIRECTION_COUNTS):
@@ -144,13 +147,13 @@ class ParamTile:
                 invalidInPorts.add(port)
                 continue
         return invalidInPorts
-    #检查是否所有的功能单元（Function Units）是默认的
+
     def isDefaultFus(s):
         for fuType in fuTypeList:
             if s.fuDict[fuType] != 1:
                 return False
         return True
-    #获取所有有效的功能单元的类型
+
     def getAllValidFuTypes(s):
         fuTypes = set()
         for fuType in fuTypeList:
@@ -160,7 +163,7 @@ class ParamTile:
                 else:
                     fuTypes.add(fuType)
         return list(fuTypes)
-    #获取无效的输出端口
+
     def getInvalidOutPorts(s):
         invalidOutPorts = set()
         for port in range(PORT_DIRECTION_COUNTS):
@@ -172,7 +175,7 @@ class ParamTile:
                 invalidOutPorts.add(port)
                 continue
         return invalidOutPorts
-    #重置Tile的状态
+
     def reset(s):
         s.disabled = False
         s.mapping = {}
@@ -185,27 +188,27 @@ class ParamTile:
 
         for fuType in fuTypeList:
             s.fuDict[fuType] = 1
-    #重置出链路（指定端口类型的）
+
     def resetOutLink(s, portType, link):
         s.outLinks[portType] = link
         s.xbarDict[xbarPort2Type[portType]] = 1
         if portType in s.neverUsedOutPorts:
             s.neverUsedOutPorts.remove(portType)
-    #重置入链路（指定端口类型的）
+
     def resetInLink(s, portType, link):
         s.inLinks[portType] = link
-    #设置出链路（指定端口类型的）    
+    
     def setOutLink(s, portType, link):
         s.outLinks[portType] = link
-    #设置入链路（指定端口类型的）
+
     def setInLink(s, portType, link):
         s.resetInLink(portType, link)
 
-    #获取绘制Tile的位置XY坐标
+    # position X/Y for drawing the tile
     def getPosXY(s, baseX=0, baseY=0):
         return (baseX+s.posX, baseY+s.posY)
    
-    #获取连接端口位置的XY坐标（要指定端口类型）
+    # position X/Y for connecting routing ports
     def getPosXYOnPort(s, portType, baseX=0, baseY=0):
         if portType == PORT_NORTH:
             return s.getNorth(baseX, baseY)
@@ -223,7 +226,7 @@ class ParamTile:
             return s.getSouthEast(baseX, baseY)
         else:
             return s.getSouthWest(baseX, baseY)
-    #以下八个函数分别获取指定Tile八个角的位置XY坐标
+
     def getNorthWest(s, baseX=0, baseY=0):
         return (baseX+s.posX, baseY+s.posY)
     
@@ -247,10 +250,10 @@ class ParamTile:
     
     def getSouth(s, baseX=0, baseY=0):
         return (baseX+s.posX+s.width//2, baseY+s.posY+s.height)
-    #返回Tile的维度
+
     def getDimXY(s):
         return s.dimX, s.dimY
-    #得到Tile的索引，从左到右从下到上依次增加。
+ 
     def getIndex(s, tileList):
         if s.disabled:
             return -1
@@ -262,7 +265,7 @@ class ParamTile:
                 index += 1
         return index
 
-##这个类描述了数据存储和处理模块##
+
 class ParamSPM:
     def __init__(s, posX, numOfReadPorts, numOfWritePorts):
         s.posX = posX
@@ -272,7 +275,7 @@ class ParamSPM:
         s.disabled = False
         s.inLinks = {}
         s.outLinks = {}
-    #返回有效读取端口的数量
+
     def getNumOfValidReadPorts(s):
         ports = 0
         for physicalPort in range(s.numOfReadPorts):
@@ -282,7 +285,7 @@ class ParamSPM:
                 continue
             ports += 1
         return ports
-    #返回有效写入端口的数量
+
     def getNumOfValidWritePorts(s):
         ports = 0
         for physicalPort in range(s.numOfWritePorts):
@@ -292,7 +295,7 @@ class ParamSPM:
                 continue
             ports += 1
         return ports
-    #返回有效读取端口（指定逻辑端口的）
+
     def getValidReadPort(s, logicalPort):
         port = 0
         for physicalPort in range(logicalPort+1):
@@ -304,7 +307,7 @@ class ParamSPM:
                 return port
             port += 1
         return -1
-    #返回有效写入端口（指定逻辑端口的）
+
     def getValidWritePort(s, logicalPort):
         port = 0
         for physicalPort in range(logicalPort+1):
@@ -316,22 +319,22 @@ class ParamSPM:
                 return port
             port += 1
         return -1
-    #返回位置坐标X
+
     def getPosX(s, baseX):
         return s.posX + baseX
-    #设置输入链接
+
     def setInLink(s, portType, link):
         s.inLinks[portType] = link
-    #重置输入链接
+
     def resetInLink(s, portType, link):
         s.setInLink(portType, link)
-    #设置输出链接
+ 
     def setOutLink(s, portType, link):
         s.outLinks[portType] = link
-    #重置输出链接
+
     def resetOutLink(s, portType, link):
         s.setOutLink(portType, link)
-##这是一个表示两个组件之间连接的类##
+
 class ParamLink:
     def __init__(s, srcTile, dstTile, srcPort, dstPort):
         s.srcTile = srcTile
@@ -342,42 +345,48 @@ class ParamLink:
         s.srcTile.resetOutLink(s.srcPort, s)
         s.dstTile.resetInLink(s.dstPort, s)
         s.mapping = set()
-    #返回内存读取端口（与连接实例相关联的）
+
     def getMemReadPort(s):
         if s.isFromMem():
             spm = s.srcTile
             return spm.getValidReadPort(s.srcPort)
         return -1
-    #返回内存写入端口（与连接实例相关联的）
+
     def getMemWritePort(s):
         if s.isToMem():
             spm = s.dstTile
             return spm.getValidWritePort(s.dstPort)
         return -1
-    #判断连接实例是否指向内存（是SPM类型则为True）
+
     def isToMem(s):
         return type(s.dstTile) == ParamSPM
-    #判断连接实例是否来自内存（是SPM类型则为True）
+
     def isFromMem(s):
         return type(s.srcTile) == ParamSPM
-    #返回连接源端口的XY坐标（需判断是否为SPM类型）
+
     def getSrcXY(s, baseX=0, baseY=0):
         if type(s.srcTile) != ParamSPM:
-            return s.srcTile.getPosXYOnPort(s.srcPort, baseX, baseY)
+            posX, posY = s.srcTile.getPosXYOnPort(s.srcPort, baseX, baseY)
+            #posY += 330
+            #posX += 30
+            return posX, posY
         else:
             dstPosX, dstPosY = s.dstTile.getPosXYOnPort(s.dstPort, baseX, baseY)
             spmPosX = s.srcTile.getPosX(baseX)
             return spmPosX, dstPosY
-    #返回连接目标端口的XY坐标（需判断是否为SPM类型）
+
     def getDstXY(s, baseX=0, baseY=0):
         if type(s.dstTile) != ParamSPM:
-            return s.dstTile.getPosXYOnPort(s.dstPort, baseX, baseY)
+            posX, posY = s.dstTile.getPosXYOnPort(s.dstPort, baseX, baseY)
+            #posY += 330
+            #posX += 30
+            return posX, posY
         else:
             srcPosX, srcPosY = s.srcTile.getPosXYOnPort(s.srcPort, baseX, baseY)
             spmPosX = s.dstTile.getPosX(baseX)
             return spmPosX, srcPosY
 
-##这个类表示参数化的CGRA，是个较庞大的大类##
+
 class ParamCGRA:
     def __init__(s, rows, columns, configMemSize=CONFIG_MEM_SIZE, dataMemSize=DATA_MEM_SIZE):
         s.rows = rows
@@ -430,21 +439,21 @@ class ParamCGRA:
             return "At least one tile including a Load/Store functional unit needs to directly connect to the data SPM."
 
         return ""
-    #得到有效的Tiles
+
     def getValidTiles(s):
         validTiles = []
         for tile in s.tiles:
             if not tile.disabled:
                 validTiles.append(tile)
         return validTiles
-    #得到有效的连接
+
     def getValidLinks(s):
         validLinks = []
         for link in s.updatedLinks:
             if not link.disabled and not link.srcTile.disabled and not link.dstTile.disabled:
                 validLinks.append(link)
         return validLinks
-    #更新功能单元与交叉栏的面板
+
     def updateFuXbarPannel(s):
         targetTile = s.getTileOfID(s.targetTileID)
         for fuType in fuTypeList:
@@ -454,28 +463,28 @@ class ParamCGRA:
         for xbarType in xbarTypeList:
             if xbarType in xbarCheckVars:
                 xbarCheckVars[xbarType].set(targetTile.xbarDict[xbarType])
-    #初始化数据SPM
+
     def initDataSPM(s, dataSPM):
         s.dataSPM = dataSPM
-    #更新配置内存和数据内存的大小
+
     def updateMemSize(s, configMemSize, dataMemSize):
         s.configMemSize = configMemSize
         s.dataMemSize = dataMemSize
-    #初始化Tiles列表
+
     def initTiles(s, tiles):
         for r in range(s.rows):
             for c in range(s.columns):
                 s.tiles.append(tiles[r][c])
-    #添加Tile
+
     def addTile(s, tile):
         s.tiles.append(tile)
-    #初始化模板连接列表
+
     def initTemplateLinks(s, links):
         numOfLinks = s.rows*s.columns*2 + (s.rows-1)*s.columns*2 + (s.rows-1)*(s.columns-1)*2*2
 
         for link in links:
             s.templateLinks.append(link)
-    #重置Tiles的状态
+
     def resetTiles(s):
 
         for tile in s.tiles:
@@ -489,11 +498,11 @@ class ParamCGRA:
                 xbarCheckVars[xbarType].set(tile.xbarDict[xbarType])
                 xbarCheckbuttons[xbarType].configure(state="normal")
 
-    #启用所有的模板连接
+
     def enableAllTemplateLinks(s):
         for link in s.templateLinks:
             link.disabled = False
-    #重置连接的状态
+
     def resetLinks(s):
         for link in s.templateLinks:
             link.disabled = False
@@ -506,35 +515,35 @@ class ParamCGRA:
         for portType in range( PORT_DIRECTION_COUNTS ):
             if portType in s.getTileOfID(s.targetTileID).neverUsedOutPorts:
                 xbarCheckbuttons[xbarPort2Type[portType]].configure(state="disabled")
-    #添加模板连接（针对s的templateLinks列表）
+
     def addTemplateLink(s, link):
         s.templateLinks.append(link)
-    #添加更新后的连接（针对s的updatedLinks列表）
+
     def addUpdatedLink(s, link):
         s.updatedLinks.append(link)
-    #移除更新后的连接
+
     def removeUpdatedLink(s, link):
         s.updatedLinks.remove(link)
         # src = link.srcTile
         # src.xbarDict[link.srcPort] = 0
-    #更新功能单元的复选框
+
     def updateFuCheckbutton(s, fuType, value):
         tile = s.getTileOfID(s.targetTileID)
         tile.fuDict[fuType] = value
-    #更新交叉单元的复选框
+
     def updateXbarCheckbutton(s, xbarType, value):
         tile = s.getTileOfID(s.targetTileID)
         tile.xbarDict[xbarType] = value
         port = xbarType2Port[xbarType]
         if port in tile.outLinks:
             tile.outLinks[port].disabled = True if value == 0 else False
-    #根据ID找Tile
+
     def getTileOfID(s, ID):
         for tile in s.tiles:
             if tile.ID == ID:
                 return tile
         return None
-    #根据dimX/Y找Tile
+
     def getTileOfDim(s, dimX, dimY):
         for tile in s.tiles:
             if tile.dimX == dimX and tile.dimY == dimY:
@@ -543,7 +552,6 @@ class ParamCGRA:
 
 
     # tiles could be disabled due to the disabled links
-    #更新Tiles状态
     def updateTiles(s):
         unreachableTiles = set()
         for tile in s.tiles:
@@ -558,7 +566,7 @@ class ParamCGRA:
 
         for tile in unreachableTiles:
             tile.disabled = True
-    #找到对应连接
+
     def getUpdatedLink(s, srcTile, dstTile):
         for link in s.updatedLinks:
             if link.srcTile == srcTile and link.dstTile == dstTile:
@@ -566,7 +574,6 @@ class ParamCGRA:
         return None
 
     # TODO: also need to consider adding back after removing...
-    #根据一些条件对连接进行处理，并移除一些无效链接，不过也需要考虑移除后该怎么加回来。
     def updateLinks(s):
 
         needRemoveLinks = set()
@@ -621,7 +628,8 @@ class ParamCGRA:
                 link.disabled = True
                 if type(link.srcTile) == ParamTile:
                     link.srcTile.xbarDict[xbarPort2Type[link.srcPort]] = 0
-    ##这个类用来在GUI小部件上显示工具提示##
+
+
 class ToolTip(object):
 
     def __init__(self, widget):
@@ -629,7 +637,7 @@ class ToolTip(object):
         self.tipwindow = None
         self.id = None
         self.x = self.y = 0
-#用来在工具窗口中显示文本
+
     def showtip(self, text):
         "Display text in tooltip window"
         self.text = text
@@ -645,13 +653,13 @@ class ToolTip(object):
                               background="#ffffe0", relief=tkinter.SOLID, borderwidth=1,
                               font=("tahoma", "8", "normal"))
         label.pack(ipadx=1)
-#用来隐藏工具窗口
+
     def hidetip(self):
         tw = self.tipwindow
         self.tipwindow = None
         if tw:
             tw.destroy()
-#用来创建工具栏显示工具提示
+
 def CreateToolTip(widget, text):
     toolTip = ToolTip(widget)
     def enter(event):
@@ -664,11 +672,11 @@ def CreateToolTip(widget, text):
 
 paramCGRA = ParamCGRA(ROWS, COLS, CONFIG_MEM_SIZE, DATA_MEM_SIZE)
 
-#在GUI中点击特定Tile后的发生
+
 def clickTile(ID):
     widgets["fuConfigPannel"].config(text='Tile '+str(ID)+' functional units')
     widgets["xbarConfigPannel"].config(text='Tile '+str(ID)+' crossbar outgoing links')
-    widgets["xbarConfigPannel"].grid(columnspan=5, row=5, column=0, padx=BORDER, pady=BORDER)
+    widgets["xbarConfigPannel"].grid(columnspan=4, row=7, column=0,rowspan=2)
     widgets["entireTileCheckbutton"].config(text='Disable entire Tile '+str(ID), state="normal")
     widgets["spmConfigPannel"].grid_forget()
     paramCGRA.targetTileID = ID
@@ -684,7 +692,7 @@ def clickTile(ID):
 
     entireTileCheckVar.set(1 if paramCGRA.getTileOfID(ID).disabled else 0)
  
-#在GUI中点击SPM后的发生
+
 def clickSPM():
     widgets["fuConfigPannel"].config(text='Tile '+str(paramCGRA.targetTileID)+' functional units')
 
@@ -696,14 +704,14 @@ def clickSPM():
 
     spmConfigPannel = widgets["spmConfigPannel"]
     spmConfigPannel.config(text='DataSPM outgoing links')
-    spmConfigPannel.grid(columnspan=5, row=5, column=0, padx=BORDER, pady=BORDER)
+    spmConfigPannel.grid(row=7,column=0,rowspan=2,columnspan=4)
 
     spmEnabledListbox = widgets["spmEnabledListbox"]
     spmDisabledListbox = widgets["spmDisabledListbox"]
 
     widgets["entireTileCheckbutton"].config(text='Disable entire Tile '+str(paramCGRA.targetTileID), state="disabled")
 
-#点击禁用SPM端口
+
 def clickSPMPortDisable():
     spmEnabledListbox = widgets["spmEnabledListbox"]
     portIndex = spmEnabledListbox.curselection()
@@ -715,7 +723,6 @@ def clickSPMPortDisable():
         link = paramCGRA.dataSPM.outLinks[port]
         link.disabled = True
 
-#点击启用SPM端口
 def clickSPMPortEnable():
     spmDisabledListbox = widgets["spmDisabledListbox"]
     portIndex = spmDisabledListbox.curselection()
@@ -728,7 +735,7 @@ def clickSPMPortEnable():
         link = paramCGRA.dataSPM.outLinks[port]
         link.disabled = False
 
-#点击GUI中整个Tile的复选框
+
 def clickEntireTileCheckbutton():
 
     if entireTileCheckVar.get() == 1:
@@ -751,7 +758,7 @@ def clickEntireTileCheckbutton():
 
         # paramCGRA.getTileOfID(paramCGRA.targetTileID).disabled = False
 
-#处理点击FU的复选框
+
 def clickFuCheckbutton(fuType):
     if fuType == "Ld":
         fuCheckVars["St"].set(fuCheckVars["Ld"].get())
@@ -760,11 +767,11 @@ def clickFuCheckbutton(fuType):
         fuCheckVars["Ld"].set(fuCheckVars["St"].get())
         paramCGRA.updateFuCheckbutton("Ld", fuCheckVars["Ld"].get())
     paramCGRA.updateFuCheckbutton(fuType, fuCheckVars[fuType].get())
-#处理点击交叉开关的复选框
+
 def clickXbarCheckbutton(xbarType):
     paramCGRA.updateXbarCheckbutton(xbarType, xbarCheckVars[xbarType].get())
     
-#点击更新后的操作
+
 def clickUpdate(root):
     rows = int(widgets["rowsEntry"].get())
     columns = int(widgets["columnsEntry"].get())
@@ -799,7 +806,7 @@ def clickUpdate(root):
     else:
         widgets["resMIIEntry"].insert(0, 0)
 
-#点击重置后的操作
+
 def clickReset(root):
     rows = int(widgets["rowsEntry"].get())
     columns = int(widgets["columnsEntry"].get())
@@ -845,7 +852,7 @@ def clickReset(root):
     else:
         widgets["resMIIEntry"].insert(0, 0)
 
-#点击测试后的操作
+
 def clickTest():
     # need to provide the paths for lib.so and kernel.bc
     os.system("mkdir test")
@@ -878,7 +885,7 @@ def clickTest():
 
     os.chdir("..")
 
-#点击生成部分的操作
+
 def clickGenerateVerilog():
 
     message = paramCGRA.getErrorMessage()
@@ -913,10 +920,10 @@ def clickGenerateVerilog():
 
     os.chdir("..")
 
-#设置进度报告，管理进度条
+
 def setReportProgress(value):
     widgets["reportProgress"].configure(value=value)
-#计数合成次数
+
 def countSynthesisTime():
     global synthesisRunning
     timeCost = 0.0
@@ -925,7 +932,7 @@ def countSynthesisTime():
         widgets["synthesisTimeEntry"].delete(0, tkinter.END)
         widgets["synthesisTimeEntry"].insert(0, round(timeCost, 1))
         timeCost += 0.1
-#运行Yosys
+
 def runYosys():
     global synthesisRunning
     os.system("make 3")
@@ -953,7 +960,7 @@ def runYosys():
 
     synthesisRunning = False
 
-#点击合成按钮后
+
 def clickSynthesize():
 
     global paramCGRA
@@ -1047,7 +1054,7 @@ def clickSynthesize():
     yosysRun = threading.Thread(target=runYosys)
     yosysRun.start()
 
-#点击选择App后
+
 def clickSelectApp(event):
     global paramCGRA
     paramCGRA.compilationDone = False 
@@ -1060,8 +1067,7 @@ def clickSelectApp(event):
     # widgets["appPathEntry"].configure(state="disabled")
 
     widgets["compileAppShow"].config(text="IDLE", fg='grey')
-#点击编译App后
-##关键步骤##
+
 def clickCompileApp():
     global paramCGRA
     fileName = paramCGRA.targetAppName
@@ -1116,14 +1122,14 @@ def clickCompileApp():
     widgets["generateDFGShow"].config(text="IDLE", fg='grey')
 
     os.chdir("..")
-#点击Kernel菜单目录后
+
 def clickKernelMenu(*args):
     global paramCGRA
     name = kernelOptions.get()
     if name == None or name == " " or name == "Not selected yet":
         return
     paramCGRA.targetKernelName = name
-#将ParamCGRA对象的信息转化为JSON格式的文件并存储
+
 def dumpParamCGRA2JSON(fileName):
     global paramCGRA
     paramCGRAJson = {}
@@ -1166,7 +1172,7 @@ def dumpParamCGRA2JSON(fileName):
         outfile.write(paramCGRAJsonObject)
 
 
-#点击呈现DFG图的按钮
+
 def clickShowDFG():
     os.system("mkdir kernel")
     os.chdir("kernel")
@@ -1247,7 +1253,7 @@ def clickShowDFG():
     os.chdir("..")
 
 mappingProc = None
-#计数映射次数
+
 def countMapTime():
     global mappingProc
     timeCost = 0.0
@@ -1256,7 +1262,7 @@ def countMapTime():
         widgets["mapTimeEntry"].delete(0, tkinter.END)
         widgets["mapTimeEntry"].insert(0, round(timeCost, 1))
         timeCost += 0.1
-#描绘调度情况
+
 def drawSchedule():
     global mappingProc
     mappingCommand = "opt-12 -load ../../CGRA-Mapper/build/src/libmapperPass.so -mapperPass ./kernel.bc"
@@ -1351,7 +1357,6 @@ def drawSchedule():
         baseX += GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + 20
         canvas.create_line(baseX-5, INTERVAL, baseX-5, GRID_HEIGHT, width=2, dash=(10,2))
 
-#点击得到最终映射方案的按钮
 def clickTerminateMapping():
     global mappingProc
     if mappingProc == None:
@@ -1364,7 +1369,7 @@ def clickTerminateMapping():
     if path.split("\\")[-1] == "kernel":
         os.chdir("..")
 
-#点击映射DFG图的按钮
+
 def clickMapDFG():
     global mappingProc
     mappingProc = None
@@ -1423,18 +1428,25 @@ def clickMapDFG():
     timer = threading.Thread(target=countMapTime)
     timer.start()
 
-##——————以下可能与作图等相关——————##
-#建立一个面板，与CGRA相关的含有图块和连接线
-def create_cgra_pannel(root, rows, columns):
+
+
+def create_cgra_pannel(master, rows, columns):
 
     ROWS = rows
     COLS = columns
     TILE_WIDTH = (GRID_WIDTH + LINK_LENGTH) / COLS - LINK_LENGTH
     TILE_HEIGHT = (GRID_HEIGHT + LINK_LENGTH) / ROWS - LINK_LENGTH
-
     totalWidth = GRID_WIDTH+MEM_WIDTH+LINK_LENGTH
-    canvas = tkinter.Canvas(root, bd=5, height=GRID_HEIGHT, width=totalWidth)
-    canvas.place(x=INTERVAL, y=INTERVAL)
+    canvas = tkinter.Canvas(master)
+    canvas.grid(row=0,column=0,rowspan=3,columnspan=2,sticky="nsew")
+    #vertical_scrollbar = tkinter.Scrollbar(master,orient="vertical",command=canvas.yview)
+    #vertical_scrollbar.grid(row=0, column=1, sticky="ns")
+    #canvas.configure(yscrollcommand=vertical_scrollbar.set)
+
+    #horizontal_scrollbar = tkinter.Scrollbar(master, orient="horizontal", command=canvas.xview)
+    #horizontal_scrollbar.grid(row=1, column=0, sticky="ew")
+    #canvas.configure(xscrollcommand=horizontal_scrollbar.set)
+    #canvas.config(scrollregion=canvas.bbox("all"))
 
     # pad contains tile and links
     # padSize = TILE_SIZE + LINK_LENGTH
@@ -1465,8 +1477,6 @@ def create_cgra_pannel(root, rows, columns):
 
     # draw tiles
     for tile in paramCGRA.tiles:
-        # if tile.disabled:
-            # button = tkinter.Button(canvas, text = "Tile "+str(tile.ID), fg='gray', relief='flat', bd=BORDER, command=partial(clickTile, tile.ID))
         if not tile.disabled:
             button = tkinter.Button(canvas, text = "Tile "+str(tile.ID), fg='black', bg='gray', relief='raised', bd=BORDER, command=partial(clickTile, tile.ID))
 
@@ -1534,8 +1544,8 @@ def create_cgra_pannel(root, rows, columns):
             srcX, srcY = link.getSrcXY()
             dstX, dstY = link.getDstXY()
             canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
- 
-#放置FU显示框
+
+
 def place_fu_options(master):
     fuCount = len(fuTypeList)
     for i in range(len(fuTypeList)):
@@ -1545,8 +1555,8 @@ def place_fu_options(master):
         fuCheckbuttons[fuTypeList[i]] = fuCheckbutton
         fuCheckbutton.select()
         paramCGRA.updateFuCheckbutton(fuTypeList[i], fuVar.get())
-        fuCheckbutton.grid(row=i//4, column=i%4, padx=3, pady=3, sticky="W")
-#放置xbar显示框
+        fuCheckbutton.grid(row=i//4, column=i%4, padx=30, pady=30, sticky="nsew")
+        
 def place_xbar_options(master):
     for i in range(PORT_DIRECTION_COUNTS):
         portType = i
@@ -1564,85 +1574,76 @@ def place_xbar_options(master):
         if portType in paramCGRA.getTileOfID(0).neverUsedOutPorts:
             xbarCheckbutton.configure(state="disabled")
 
-        xbarCheckbutton.grid(row=i//4, column=i%4, padx=BORDER, pady=BORDER, sticky="W")
+        xbarCheckbutton.grid(row=i//4, column=i%4, padx=30, pady=30, sticky="nsew")
 
-#这个函数创建了参数面板，也是GUI的主体内容
-#需要着重修改的部分                
-def create_param_pannel(master, x, width, height):
+
+
+def create_param_pannel(master):
     paramPannel = tkinter.LabelFrame(master, text='Configuration', bd=BORDER, relief='groove')
-    paramPannel.place(height=height, width=width, x=x, y=INTERVAL)
-    
-    paramPannel.columnconfigure(0, weight=3)
-    paramPannel.columnconfigure(1, weight=1)
-    paramPannel.columnconfigure(2, weight=100)
-    paramPannel.columnconfigure(3, weight=1)
-    paramPannel.columnconfigure(4, weight=100)
-
-    rowsLabel = tkinter.Label(paramPannel, text='Rows & Columns:' )
-    rowsLabel.grid(columnspan=2, row=0, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER)
+    paramPannel.grid(row=0,column=2,rowspan=3,columnspan=1,sticky="nsew")
+    for i in range(10):
+        if i < 8:
+            paramPannel.rowconfigure(i, weight=1)
+    else:
+            paramPannel.rowconfigure(i, weight=2)
+    for i in range(4):
+        paramPannel.columnconfigure(i,weight=1)
+    rowsLabel = tkinter.Label(paramPannel, text='Rows  Columns:' )
+    rowsLabel.grid(columnspan=2, row=0, column=0, sticky=tkinter.W)
     rowsEntry = tkinter.Entry(paramPannel, justify=tkinter.CENTER)
-    rowsEntry.grid(row=0, column=2, sticky=tkinter.W, padx=BORDER, pady=BORDER)
+    rowsEntry.grid(row=0, column=2, sticky=tkinter.W)
     rowsEntry.insert(0, str(paramCGRA.rows))
     widgets["rowsEntry"] = rowsEntry
-    
-    xLabel = tkinter.Label(paramPannel, text='&')
-    xLabel.grid(row=0, column=3, sticky=tkinter.W, padx=BORDER, pady=BORDER)
- 
-    # columnsLabel = tkinter.Label(paramPannel, text='Columns:')
-    # columnsLabel.grid(row=0, column=2, sticky=tkinter.E, padx=BORDER, pady=BORDER)
     columnsEntry = tkinter.Entry(paramPannel, justify=tkinter.CENTER)
-    columnsEntry.grid(row=0, column=4, sticky=tkinter.W, padx=BORDER, pady=BORDER)
+    columnsEntry.grid(row=0, column=3, sticky=tkinter.W)
     columnsEntry.insert(0, str(paramCGRA.columns))
     widgets["columnsEntry"] = columnsEntry
     
     configMemLabel = ttk.Label(paramPannel, text='Config Memory (entries/tile):')
-    configMemLabel.grid(columnspan=4, row=1, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER)
+    configMemLabel.grid(columnspan=3, row=1, column=0, sticky=tkinter.W)
     configMemEntry = ttk.Entry(paramPannel, justify=tkinter.CENTER)
-    configMemEntry.grid(row=1, column=4, sticky=tkinter.W, padx=BORDER, pady=BORDER)
+    configMemEntry.grid(row=1, column=3, sticky=tkinter.W)
     configMemEntry.insert(0, paramCGRA.configMemSize)
     widgets["configMemEntry"] = configMemEntry
     
     dataMemLabel = ttk.Label(paramPannel, text='Data SPM (KBs):')
-    dataMemLabel.grid(columnspan=2, row=2, column=0, padx=BORDER, pady=BORDER, sticky=tkinter.W)
+    dataMemLabel.grid(columnspan=2, row=2, column=0,sticky=tkinter.W)
     dataMemEntry = ttk.Entry(paramPannel, justify=tkinter.CENTER)
-    dataMemEntry.grid(row=2, column=2, sticky=tkinter.W, padx=BORDER, pady=BORDER)
+    dataMemEntry.grid(row=2, column=2, sticky=tkinter.W)
     dataMemEntry.insert(0, str(paramCGRA.dataMemSize))
-    widgets["dataMemEntry"] = dataMemEntry
-       
+    widgets["dataMemEntry"] = dataMemEntry   
     updateButton = tkinter.Button(paramPannel, text = " Reset ", relief='raised', command = partial(clickReset, master))
-    updateButton.grid(columnspan=2, row=2, column=3, sticky=tkinter.W, padx=BORDER)
+    updateButton.grid(row=2, column=3, sticky=tkinter.W)
 
-    # entireTileCheckVar = tkinter.IntVar()
     entireTileCheckVar.set(0)
     entireTileCheckbutton = tkinter.Checkbutton(paramPannel, variable=entireTileCheckVar, text="Disable entire Tile 0", command=clickEntireTileCheckbutton)
-    # entireTileCheckbutton.select()
-    # paramCGRA.updateEntireTileCheckbutton(fuTypeList[i], fuVar.get())
-    entireTileCheckbutton.grid(columnspan=3, row=3, column=0, padx=BORDER, pady=BORDER, sticky="W")
+    entireTileCheckbutton.grid(columnspan=3, row=3, column=0,sticky="W")
     widgets["entireTileCheckbutton"] = entireTileCheckbutton
-
     resetButton = tkinter.Button(paramPannel, text = "Update", relief='raised', command = partial(clickUpdate, master))
-    resetButton.grid(columnspan=2, row=3, column=3, sticky=tkinter.W, padx=BORDER)
+    resetButton.grid(row=3, column=3,sticky=tkinter.W)
 
     fuConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 functional units', bd = BORDER, relief='groove')
-    # fuConfigPannel.config(text='xxx')
-    fuConfigPannel.grid(columnspan=5, row=4, column=0, padx=BORDER, pady=BORDER)
-    widgets["fuConfigPannel"] = fuConfigPannel
-    
+    fuConfigPannel.grid(columnspan=4, row=4, column=0,rowspan=3,sticky="nsew")
+    widgets["fuConfigPannel"] = fuConfigPannel    
     place_fu_options(fuConfigPannel)
-    
+
     xbarConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 crossbar outgoing links', bd=BORDER, relief='groove')
-    # xbarConfigPannel.config(text='y')
-    xbarConfigPannel.grid(columnspan=5, row=5, column=0, padx=BORDER, pady=BORDER)
-    # xbarConfigPannel.config(width=width-30, height=80)
+    xbarConfigPannel.grid(columnspan=4, row=7, column=0,rowspan=2)
     widgets["xbarConfigPannel"] = xbarConfigPannel
-    
     place_xbar_options(xbarConfigPannel)   
 
     spmConfigPannel = tkinter.LabelFrame(paramPannel, text='Data SPM outgoing links', bd=BORDER, relief='groove')
-    spmConfigPannel.config(width=225, height=85)
-    # xbarConfigPannel.config(text='y')
+    spmConfigPannel.grid(row=7,column=0,rowspan=2,columnspan=4)
     widgets["spmConfigPannel"] = spmConfigPannel
-
+    for i in range(3):
+        spmConfigPannel.rowconfigure(i,weight=1)
+    
+    spmConfigPannel.columnconfigure(0,weight=2)
+    spmConfigPannel.columnconfigure(1,weight=1)
+    spmConfigPannel.columnconfigure(2,weight=2)
+    spmConfigPannel.columnconfigure(3,weight=1)
+    spmConfigPannel.columnconfigure(4,weight=2)
+    
     spmEnabledOutVar = tkinter.IntVar()
     spmDisabledOutVar = tkinter.IntVar()
 
@@ -1660,52 +1661,32 @@ def create_param_pannel(master, x, width, height):
 
     spmDisableButton = tkinter.Button(spmConfigPannel, text="Disable", relief='raised', command=clickSPMPortDisable)
     spmEnableButton = tkinter.Button(spmConfigPannel, text="Enable", relief='raised', command=clickSPMPortEnable)
-
     spmEnabledScrollbar.config(command=spmEnabledListbox.yview)
     spmEnabledListbox.config(yscrollcommand=spmEnabledScrollbar.set)
     spmDisabledScrollbar.config(command=spmDisabledListbox.yview)
     spmDisabledListbox.config(yscrollcommand=spmDisabledScrollbar.set)
-
-    # spmEnabledLabel.config(width=50, height=80)
-    spmEnabledListbox.config(width=50, height=50)
-    # spmEnabledListbox.place(x=BORDER, y=BORDER, width=0, height=20)
-    # spmEnabledLabel.grid(rowspan=2, row=0, column=0)
-    spmEnabledLabel.place(x=0, y=0, width=50, height=60)
+    spmEnabledLabel.grid(row=0,column=0,rowspan=3,sticky="new")
 
     spmEnabledScrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
     spmEnabledListbox.pack()
 
-    # spmDisableButton.grid(row=0, column=1)
-    # spmEnableButton.grid(row=1, column=1)
     spmDisableArrow0 = tkinter.Label(spmConfigPannel, text="=>")
     spmDisableArrow1 = tkinter.Label(spmConfigPannel, text="=>")
     spmEnableArrow0 = tkinter.Label(spmConfigPannel, text="<=")
     spmEnableArrow1 = tkinter.Label(spmConfigPannel, text="<=")
 
-    spmDisableArrow0.place(x=55, y=BORDER, width=20, height=25)
-    spmDisableButton.place(x=80, y=BORDER, width=60, height=25)
-    spmDisableArrow1.place(x=145, y=BORDER, width=20, height=25)
+    spmDisableArrow0.grid(row=0,column=1,sticky="nsew")
+    spmDisableButton.grid(row=0,column=2,sticky="nsew")
+    spmDisableArrow1.grid(row=0,column=3,sticky="nsew")
 
-    spmEnableArrow0.place(x=55, y=BORDER+30, width=20, height=25)
-    spmEnableButton.place(x=80, y=BORDER+30, width=60, height=25)
-    spmEnableArrow1.place(x=145, y=BORDER+30, width=20, height=25)
+    spmEnableArrow0.grid(row=2,column=1,sticky="nsew")
+    spmEnableButton.grid(row=2,column=2,sticky="nsew")
+    spmEnableArrow1.grid(row=2,column=3,sticky="nsew")
 
-    # spmEnableButton.pack()
-
-    # spmDisableButton.place(x=30, y=30, width=20, height=20)
-    # spmEnableButton.place(x=30, y=60, width=20, height=20)
-
-    # spmDisabledListbox.place(x=50, y=BORDER, width=0, height=20)
-    # spmDisabledLabel.config(width=50, height=80)
-    spmDisabledListbox.config(width=50, height=50)
-    spmDisabledLabel.place(x=165, y=0, width=50, height=60)
-    # spmDisabledLabel.grid(rowspan=2, row=0, column=2)
+    spmDisabledLabel.grid(row=0,column=4,rowspan=3,sticky="new")
 
     spmDisabledScrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
     spmDisabledListbox.pack()
-
-    # enabledPorts = [ i for i in range(paramCGRA.dataSPM.ports)]
-    # enabledPorts.reverse()
 
     spmEnabledListbox.delete(0)
     spmDisabledListbox.delete(0)
@@ -1715,281 +1696,220 @@ def create_param_pannel(master, x, width, height):
         else:
             spmDisabledListbox.insert(0, port)
 
-#与测试部分界面有关，需要修改里面的宽高等参数
-def create_test_pannel(master, x, width, height):
-    testPannel = tkinter.LabelFrame(master, text='Verification', bd = BORDER, relief='groove')
-    testPannel.place(height=height, width=width, x=x, y=INTERVAL)
+
+
+def create_test_pannel(master):
+    testPannel = tkinter.LabelFrame(master, text='Verification', bd=BORDER, relief='groove')
+    testPannel.grid(row=0, column=3, rowspan=1, columnspan=1, sticky="nsew")
     testButton = tkinter.Button(testPannel, text = "Run tests", relief='raised', command = clickTest)
-    testButton.grid(row=0, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
-    testProgress = ttk.Progressbar(testPannel, orient='horizontal', mode='determinate', length=width/2.5)
+    testButton.pack(side=tkinter.LEFT, padx=4, pady=4)
+    testProgress = ttk.Progressbar(testPannel, orient='horizontal', mode='determinate')
     testProgress['value'] = 0
     widgets["testProgress"] = testProgress
-    testProgress.grid(row=0, column=1, padx=BORDER, pady=BORDER//2)
+    testProgress.pack(side=tkinter.LEFT, fill="x", padx=4, expand=True)
     testShow = tkinter.Label(testPannel, text = "  IDLE ", fg='gray')
     widgets["testShow"] = testShow
-    testShow.grid(row=0, column=2, padx=BORDER, pady=BORDER//2)
-#与verilog语言部分有关，修改里面的宽高等参数
-def create_verilog_pannel(master, x, y, width, height):
+    testShow.pack(side=tkinter.RIGHT, padx=4,pady=4)
+
+def create_verilog_pannel(master):
     verilogPannel = tkinter.LabelFrame(master, text="SVerilog", bd=BORDER, relief="groove")
-    verilogPannel.place(height=height, width=width, x=x, y=y)
+    verilogPannel.grid(row=1, column=3, rowspan=1, columnspan=1, sticky="nesw")
     CreateToolTip(verilogPannel, text = "The code might be too big to be copied,\nthe generated verilog can be found in\nthe 'verilog' folder.")
-
-    verilogFrame = tkinter.Frame(verilogPannel, bd=BORDER, relief="groove")
-    verilogFrame.place(height=height-8*BORDER-40, width=width-4*BORDER, x=BORDER, y=BORDER)
-
-    verilogScroll=tkinter.Scrollbar(verilogFrame, orient="vertical")
+    generateVerilogButton = tkinter.Button(verilogPannel, text="Generate", relief='raised', command=clickGenerateVerilog)
+    generateVerilogButton.pack(side=tkinter.BOTTOM, anchor="se", padx=BORDER, pady=BORDER)
+    verilogScroll = tkinter.Scrollbar(verilogPannel, orient="vertical")
     verilogScroll.pack(side=tkinter.RIGHT, fill="y")
-
-    # verilogText = tkinter.Text(verilogPannel, bd = BORDER, relief='groove', yscrollcommand=v.set)
-    verilogText = tkinter.Text(verilogFrame, yscrollcommand=verilogScroll.set)
+    verilogText = tkinter.Text(verilogPannel, yscrollcommand=verilogScroll.set,width=30,height=5)
+    verilogText.pack(side=tkinter.LEFT, fill="both", expand=True)
+    verilogText.config(yscrollcommand=verilogScroll.set)
     verilogScroll.config(command=verilogText.yview)
     widgets["verilogText"] = verilogText
-    verilogText.pack()
-
-    generateVerilogButton = tkinter.Button(verilogPannel, text="Generate", relief='raised', command=clickGenerateVerilog)
-    generateVerilogButton.place(x=width-4*BORDER-90, y=height-8*BORDER-30)
-
-#报告部分需要修改宽参数
-def create_report_pannel(master, x, y, width):
+    
+def create_report_pannel(master):
     reportPannel = tkinter.LabelFrame(master, text='Report area/power', bd = BORDER, relief='groove')
-    reportPannel.place(width=width, height=110, x=x, y=y)
-
+    reportPannel.grid(row=2,column=3,rowspan=1,columnspan=1,sticky='nw')
+    reportPannel.grid_configure(rows=3, columns=4)
     reportButton = tkinter.Button(reportPannel, text="Synthesize", relief="raised", command=clickSynthesize)
-    # reportButton.grid(row=0, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
-    reportButton.place(x=BORDER, y=BORDER, width=90, height=28)
-    # reportProgress = ttk.Progressbar(reportPannel, orient='horizontal', mode='determinate', length=width/1.7)
+
     reportProgress = ttk.Progressbar(reportPannel, orient="horizontal", mode="determinate")
     reportProgress['value'] = 0
     widgets["reportProgress"] = reportProgress
-    # reportProgress.grid(columnspan=2, row=0, column=1, padx=BORDER, pady=BORDER//2)
-    reportProgress.place(x=BORDER+100, y=BORDER*2, width=120, height=20)
 
     synthesisTimeEntry = tkinter.Entry(reportPannel, fg="black", justify=tkinter.CENTER)
     widgets["synthesisTimeEntry"] = synthesisTimeEntry
-    synthesisTimeEntry.place(x=BORDER+230, y=BORDER*2, width=50, height=20)
-    # synthesisTimeEntry.insert(0, "0")
-    # synthesisTimeEntry.configure(width=4)
-    # synthesisTimeEntry.grid(row=0, column=3, padx=BORDER, pady=BORDER//2)
-    
+   
     reportTileAreaLabel = tkinter.Label(reportPannel, text = " Tiles area:")
     CreateToolTip(reportTileAreaLabel, text = "Area is in mm^2.")
-    reportTileAreaLabel.place(x=BORDER, y=BORDER+30, width=70, height=25)
 
     reportTileAreaData = tkinter.Entry(reportPannel, justify=tkinter.CENTER)
     widgets["reportTileAreaData"] = reportTileAreaData
-    reportTileAreaData.place(x=BORDER+80, y=BORDER+32, width=50, height=20)
 
     reportTilePowerLabel = tkinter.Label(reportPannel, text = "Tiles power:")
     CreateToolTip(reportTilePowerLabel, text = "Yosys is not able to provide\npower estimation.")
-    reportTilePowerLabel.grid(row=1, column=2, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
-    reportTilePowerLabel.place(x=BORDER+140, y=BORDER+30, width=80, height=25)
 
     reportTilePowerData = tkinter.Entry(reportPannel, justify=tkinter.CENTER)
     widgets["reportTilePowerData"] = reportTilePowerData
-    reportTilePowerData.place(x=BORDER+230, y=BORDER+32, width=50, height=20)
     
     reportSPMAreaLabel = tkinter.Label(reportPannel, text = " SPM area:")
     CreateToolTip(reportSPMAreaLabel, text = "Area is in mm^2.")
-    reportSPMAreaLabel.place(x=BORDER, y=BORDER+56, width=70, height=25)
 
     reportSPMAreaData = tkinter.Entry(reportPannel, justify=tkinter.CENTER)
-    reportSPMAreaData.place(x=BORDER+80, y=BORDER+58, width=50, height=20)
     widgets["reportSPMAreaData"] = reportSPMAreaData
 
     reportSPMPowerLabel = tkinter.Label(reportPannel, text = "SPM power:")
     CreateToolTip(reportSPMPowerLabel, text = "Power is in mW.")
-    reportSPMPowerLabel.place(x=BORDER+140, y=BORDER+56, width=80, height=25)
 
     reportSPMPowerData = tkinter.Entry(reportPannel, justify=tkinter.CENTER)
-    reportSPMPowerData.place(x=BORDER+230, y=BORDER+58, width=50, height=20)
     widgets["reportSPMPowerData"] = reportSPMPowerData
-    
-#布局部分需要修改宽高参数    
-def create_layout_pannel(master, x, width, height):
-    layoutPannel = tkinter.LabelFrame(master, text='Layout', bd = BORDER, relief='groove')
-    layoutPannel.place(height=height, width=width, x=x, y=INTERVAL)
+
+    reportButton.grid(row=0, column=0)
+    reportProgress.grid(row=0,column=1,columnspan=2)
+    synthesisTimeEntry.grid(row=0, column=3)
+
+    reportTileAreaLabel.grid(row=1, column=0)
+    reportTileAreaData.grid(row=1, column=1)
+    reportTilePowerLabel.grid(row=1, column=2)
+    reportTilePowerData.grid(row=1, column=3)
+
+    reportSPMAreaLabel.grid(row=2, column=0)
+    reportSPMAreaData.grid(row=2, column=1)
+    reportSPMPowerLabel.grid(row=2, column=2)
+    reportSPMPowerData.grid(row=2, column=3)
+
+def create_layout_pannel(master):
+    layoutPannel = tkinter.LabelFrame(master, text='Layout', bd=BORDER, relief='groove')
+    layoutPannel.grid(row=0, column=4,rowspan=3,columnspan=2, sticky="nsew")
+    canvas = tkinter.Canvas(layoutPannel, bd=0)
+    scrollbar = tkinter.Scrollbar(layoutPannel, orient="horizontal", command=canvas.xview)
+    scrollbar.pack(side="bottom", fill="x")
+    canvas.config(xscrollcommand=scrollbar.set)
+    canvas.pack(side="top", fill="both", expand=True)
+    layout_frame = tkinter.Frame(canvas)
+    canvas.create_window((0, 0), window=layout_frame, anchor="nw")
     showButton = tkinter.Button(layoutPannel, text = "Display layout", relief='raised')
     CreateToolTip(showButton, text = "The layout demonstration is\nunder development.")
-    showButton.pack()
-    X = tkinter.Label(layoutPannel, fg="black")
+    showButton.place(relx=0.5, rely=0.05, anchor="center")
+    X = tkinter.Label(layout_frame, fg="black")
     X.pack()
 
-#kernel部分需要修改宽高参数
-def create_kernel_pannel(master, x, y, width, height):
+def create_mapping_pannel(master):
+    mappingPannel = tkinter.LabelFrame(master, text='Mapping', bd=BORDER, relief='groove')
+    mappingPannel.grid(row=3, column=3, rowspan=3,columnspan=4, sticky="nsew")
+    canvas = tkinter.Canvas(mappingPannel, bd=0)
+    scrollbar = tkinter.Scrollbar(mappingPannel, orient="horizontal", command=canvas.xview)
+    scrollbar.pack(side="bottom", fill="x")
+    canvas.config(xscrollcommand=scrollbar.set)
+    canvas.pack(side="top", fill="both", expand=True)
+
+def create_kernel_pannel(master):
     kernelPannel = tkinter.LabelFrame(master, text="Kernel", bd=BORDER, relief='groove')
-    kernelPannel.place(height=height+3, width=width, x=x, y=y)
+    kernelPannel.grid(row=3,column=0,rowspan=3,columnspan=3,sticky="nsew")
+    for row in range(12):
+        kernelPannel.grid_rowconfigure(row, weight=1)
+    kernelPannel.grid_columnconfigure(0, weight=3)
+    kernelPannel.grid_columnconfigure(1, weight=2)
+    kernelPannel.grid_columnconfigure(2, weight=2)
+    kernelPannel.grid_columnconfigure(3, weight=1)
 
     selectAppLabel = tkinter.Label(kernelPannel, text=" Application:", fg='black')
-    selectAppLabel.grid(row=0, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    selectAppLabel.grid(row=0, column=0, sticky="nsew")
 
     appPathEntry = tkinter.Entry(kernelPannel, fg="black")
     widgets["appPathEntry"] = appPathEntry
-    appPathEntry.configure(width=16)
-    appPathEntry.insert(0, paramCGRA.targetAppName)
-    # appPathEntry.configure(state="disabled")
-    appPathEntry.grid(columnspan=2, row=0, column=1, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    appPathEntry.grid(row=0, column=1, sticky="nsew")
     appPathEntry.bind("<Button-1>", clickSelectApp)
 
     compileAppButton = tkinter.Button(kernelPannel, text=" Compile app  ", fg="black", command=clickCompileApp)
-    compileAppButton.configure(width=10)
-    compileAppButton.grid(row=0, column=3, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    compileAppButton.grid(row=0, column=2,sticky=tkinter.E)
 
-    # compileAppShow = tkinter.Label(kernelPannel, text=u'  \u2713\u2713\u2713', fg='green')
     compileAppShow = tkinter.Label(kernelPannel, text=" IDLE", fg='gray')
-    compileAppShow.grid(row=0, column=4, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    compileAppShow.grid(row=0, column=3, sticky="ew")
     widgets["compileAppShow"] = compileAppShow
 
     kernelNameLabel = tkinter.Label(kernelPannel, text=" Kernel name:", fg='black')
-    kernelNameLabel.grid(row=1, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    kernelNameLabel.grid(row=1, column=0, sticky="nsew")
 
     tempOptions = [ "Not selected yet" ]
     kernelNameMenu = tkinter.OptionMenu(kernelPannel, kernelOptions, *tempOptions)
-    kernelOptions.trace("w", clickKernelMenu)
     widgets["kernelNameMenu"] = kernelNameMenu
-    kernelNameMenu.configure(width=12)
-    kernelNameMenu.grid(columnspan=2, row=1, column=1, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
-
-    # kernelNameEntry= tkinter.Entry(kernelPannel, fg="black")
-    # widgets["kernelNameEntry"] = kernelNameEntry
-    # kernelNameEntry.grid(columnspan=2, row=1, column=1, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    kernelNameMenu.grid(row=1, column=1, sticky="nsew")
 
     generateDFGButton = tkinter.Button(kernelPannel, text = "Generate DFG", fg="black", command=clickShowDFG)
-    generateDFGButton.configure(width=10)
-    generateDFGButton.grid(columnspan=2, row=1, column=3, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    generateDFGButton.grid(row=1, column=2, sticky=tkinter.E)
 
     generateDFGShow = tkinter.Label(kernelPannel, text=" IDLE", fg='gray')
-    generateDFGShow.grid(row=1, column=4, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
+    generateDFGShow.grid(row=1, column=3, sticky="ew")
     widgets["generateDFGShow"] = generateDFGShow
 
     dfgPannel = tkinter.LabelFrame(kernelPannel, text='Data-Flow Graph', fg="black", bd=BORDER, relief='groove')
-    dfgHeight = height-80-4*BORDER
-    dfgWidth = width-4*BORDER-120
-    dfgPannel.place(height=dfgHeight, width=dfgWidth, x=BORDER, y=70+BORDER)
-    # dfgPannel.grid(columnspan=4, row=2, column=0, sticky=tkinter.W, padx=BORDER, pady=BORDER//2)
-    # PIL_image = Image.open("../CGRA-Mapper/test/kernel.png")
-    # PIL_image_small = PIL_image.resize((dfgWidth-10,dfgHeight-25), Image.Resampling.LANCZOS)
-    # dfgImage = ImageTk.PhotoImage(PIL_image_small)
-    # dfgImage = ImageTk.PhotoImage(PIL_image)
-    # images["dfgImage"] = dfgImage # This is important due to the garbage collection would remove local variable of image
-    dfgLabel = tkinter.Label(dfgPannel)#  image=dfgImage)
+    dfgPannel.grid(row=2,column=0,rowspan=10,columnspan=2,sticky="nsew")
+    dfgLabel = tkinter.Label(dfgPannel)
     widgets["dfgLabel"] = dfgLabel
     dfgLabel.pack()
 
     recMIILabel = tkinter.Label(kernelPannel, text=" RecMII: ", fg='black')
-    recMIILabel.place(x=4*BORDER+dfgWidth, y=90+BORDER)
-
+    recMIILabel.grid(row=2,column=2,sticky="nsew")
     recMIIEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER)
     widgets["recMIIEntry"] = recMIIEntry
     recMIIEntry.insert(0, "0")
-    recMIIEntry.configure(width=4)
-    recMIIEntry.place(x=4*BORDER+dfgWidth+60, y=90+BORDER)
-
+    recMIIEntry.grid(row=2,column=3,sticky="ew")
     resMIILabel = tkinter.Label(kernelPannel, text=" ResMII: ", fg='black')
-    resMIILabel.place(x=4*BORDER+dfgWidth, y=120+BORDER)
-
+    resMIILabel.grid(row=3,column=2,sticky="nsew")
     resMIIEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER)
     widgets["resMIIEntry"] = resMIIEntry
     resMIIEntry.insert(0, "0")
-    resMIIEntry.configure(width=4)
-    resMIIEntry.place(x=4*BORDER+dfgWidth+60, y=120+BORDER)
+    resMIIEntry.grid(row=3,column=3,sticky="ew")
 
     mappingOptionLabel = tkinter.Label(kernelPannel, text="Mapping algo:", fg='black')
-    mappingOptionLabel.place(x=4*BORDER+dfgWidth, y=155+BORDER)
-
+    mappingOptionLabel.grid(row=4,column=2,columnspan=2,sticky="nsew")
     heuristicRatiobutton = tkinter.Radiobutton(kernelPannel, text="Heuristic", variable=mappingAlgoCheckVar, value=1)
     widgets["heuristicRatiobutton"] = heuristicRatiobutton
-    heuristicRatiobutton.place(x=2*BORDER+dfgWidth, y=180+BORDER)
-
+    heuristicRatiobutton.grid(row=5,column=2,columnspan=2,sticky="nsew")
     exhaustiveRatiobutton = tkinter.Radiobutton(kernelPannel, text="Exhaustive", variable=mappingAlgoCheckVar, value=0)
     widgets["exhaustiveRatiobutton"] = exhaustiveRatiobutton
-    exhaustiveRatiobutton.place(x=2*BORDER+dfgWidth, y=200+BORDER)
+    exhaustiveRatiobutton.grid(row=6,column=2,columnspan=2,sticky="nsew")
 
     mapDFGButton = tkinter.Button(kernelPannel, text="Map DFG", fg="black", command=clickMapDFG)
-    mapDFGButton.configure(width=9)
-    mapDFGButton.place(x=4*BORDER+dfgWidth, y=230+BORDER)
-
+    mapDFGButton.grid(row=7,column=2,columnspan=2,sticky="new")
     terminateMapButton = tkinter.Button(kernelPannel, text="Terminate", fg="black", command=clickTerminateMapping)
-    terminateMapButton.configure(width=9)
-    terminateMapButton.place(x=4*BORDER+dfgWidth, y=265+BORDER)
+    terminateMapButton.grid(row=8,column=2,columnspan=2,sticky="new")
 
     mapSecLabel = tkinter.Label(kernelPannel, text="Time (s): ", fg='black')
-    mapSecLabel.place(x=4*BORDER+dfgWidth, y=305+BORDER)
-
+    mapSecLabel.grid(row=9,column=2,sticky="nsew")
     mapTimeEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER)
     widgets["mapTimeEntry"] = mapTimeEntry
     mapTimeEntry.insert(0, "0")
-    mapTimeEntry.configure(width=4)
-    mapTimeEntry.place(x=4*BORDER+dfgWidth+60, y=305+BORDER)
-
+    mapTimeEntry.grid(row=9,column=3,sticky="ew")
     mapIILabel = tkinter.Label(kernelPannel, text=" Map II: ", fg='black')
-    mapIILabel.place(x=4*BORDER+dfgWidth, y=332+BORDER)
-
+    mapIILabel.grid(row=10,column=2,sticky="nsew")
     mapIIEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER)
     widgets["mapIIEntry"] = mapIIEntry
     mapIIEntry.insert(0, "0")
-    mapIIEntry.configure(width=4)
-    mapIIEntry.place(x=4*BORDER+dfgWidth+60, y=332+BORDER)
+    mapIIEntry.grid(row=10,column=3,sticky="ew")
 
     speedupLabel = tkinter.Label(kernelPannel, text="Speedup: ", fg='black')
-    speedupLabel.place(x=3*BORDER+dfgWidth, y=360+BORDER)
+    speedupLabel.grid(row=11,column=2,sticky="nsew")
     CreateToolTip(speedupLabel, text = "The speedup is the improvement of\nthe execution cycles with respect to\na single-issue in-order CPU.")
-
     mapSpeedupEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER)
     widgets["mapSpeedupEntry"] = mapSpeedupEntry
     mapSpeedupEntry.insert(0, "0")
-    mapSpeedupEntry.configure(width=4)
-    mapSpeedupEntry.place(x=4*BORDER+dfgWidth+60, y=360+BORDER)
-
-
-#映射部分需要修改宽度参数
-def create_mapping_pannel(root, x, y, width):
-
-    # GRID_WIDTH = (TILE_SIZE+LINK_LENGTH) * COLS - linkLength
-    TILE_WIDTH = (GRID_WIDTH + LINK_LENGTH) / COLS - LINK_LENGTH
-    TILE_HEIGHT = (GRID_HEIGHT + LINK_LENGTH) / ROWS - LINK_LENGTH
-
-    frame = tkinter.LabelFrame(root, text="Mapping", bd=BORDER, relief='groove', width=width, height=GRID_HEIGHT+20)
-    frame.place(x=x, y=y)
-    # frame.pack(expand=True, fill=tkinter.BOTH) #.grid(row=0,column=0)
-
-    cgraWidth = GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + 20
-    mappingCanvas = tkinter.Canvas(frame, height=GRID_HEIGHT+20, width=width, scrollregion=(0,0,cgraWidth, GRID_HEIGHT))
-    widgets["mappingCanvas"] = mappingCanvas
-
-    hbar=tkinter.Scrollbar(frame, orient=tkinter.HORIZONTAL, bd=BORDER/4, relief='groove')
-    hbar.pack(side=tkinter.BOTTOM, fill=tkinter.X, expand=0)
-    hbar.config(command=mappingCanvas.xview)
-    mappingCanvas.config(width=width, height=GRID_HEIGHT+20)
-    mappingCanvas.config(xscrollcommand=hbar.set)
-    mappingCanvas.pack(side=tkinter.LEFT, expand=True, fill=tkinter.BOTH)
-
-#涉及到GUI界面参数与自适应
-#需要进一步修改
-create_cgra_pannel(master, ROWS, COLS)
-
+    mapSpeedupEntry.grid(row=11,column=3,sticky="ew")
 paramPadPosX = GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + INTERVAL * 3
 paramPadWidth = 270
-create_param_pannel(master, paramPadPosX, paramPadWidth, GRID_HEIGHT)
-
 scriptPadPosX = paramPadPosX + paramPadWidth + INTERVAL
 scriptPadWidth = 300
-
-create_test_pannel(master, scriptPadPosX, scriptPadWidth, GRID_HEIGHT//4-30)
-
-create_verilog_pannel(master, scriptPadPosX, GRID_HEIGHT//4-10, scriptPadWidth, GRID_HEIGHT//2-10)
-
-create_report_pannel(master, scriptPadPosX, GRID_HEIGHT*3//4-10, scriptPadWidth)
-
 layoutPadPosX = scriptPadPosX + scriptPadWidth + INTERVAL
 layoutPadWidth = 300
-create_layout_pannel(master, layoutPadPosX, layoutPadWidth, GRID_HEIGHT)
-
-totalWidth = layoutPadPosX + layoutPadWidth
-
-create_kernel_pannel(master, INTERVAL, GRID_HEIGHT+INTERVAL*2, paramPadPosX-20, GRID_HEIGHT+55)
-
-create_mapping_pannel(master, paramPadPosX, GRID_HEIGHT+INTERVAL*2, totalWidth-paramPadPosX-5)
-
-master.geometry(str(layoutPadPosX+layoutPadWidth+INTERVAL)+"x"+str(GRID_HEIGHT*2+INTERVAL*3+50))
-
+layoutPadHeight = GRID_HEIGHT
+master.geometry(str(2764)+"x"+str(1340)) 
+create_kernel_pannel(master)
+create_mapping_pannel(master)
+create_layout_pannel(master)
+create_report_pannel(master)
+create_test_pannel(master)
+create_verilog_pannel(master)
+create_cgra_pannel(master, ROWS, COLS)
+create_param_pannel(master) 
+#print(master.winfo_width())
+#print(master.winfo_height())
 master.mainloop()

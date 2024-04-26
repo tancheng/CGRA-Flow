@@ -26,9 +26,9 @@ PORT_DIRECTION_COUNTS = 8
 #TILE_HEIGHT = 60
 #TILE_WIDTH = 60
 #LINK_LENGTH = 40
-TILE_HEIGHT = 120
-TILE_WIDTH = 120
-LINK_LENGTH = 80
+TILE_HEIGHT = 95
+TILE_WIDTH = 95
+LINK_LENGTH = 65
 INTERVAL = 10
 BORDER = 4
 master = tkinter.Tk()
@@ -91,12 +91,12 @@ widgets = {}
 images = {}
 entireTileCheckVar = tkinter.IntVar()
 mappingAlgoCheckVar = tkinter.IntVar()
-kernelOptions = tkinter.StringVar()
-kernelOptions.set("Not selected yet")
 fuCheckVars = {}
 fuCheckbuttons = {}
 xbarCheckVars = {}
 xbarCheckbuttons = {}
+kernelOptions = tkinter.StringVar()
+kernelOptions.set("Not selected yet")
 synthesisRunning = False
 class ParamTile:
     def __init__(s, ID, dimX, dimY, posX, posY, tileWidth, tileHeight):
@@ -335,6 +335,7 @@ class ParamSPM:
     def resetOutLink(s, portType, link):
         s.setOutLink(portType, link)
 
+
 class ParamLink:
     def __init__(s, srcTile, dstTile, srcPort, dstPort):
         s.srcTile = srcTile
@@ -366,10 +367,7 @@ class ParamLink:
 
     def getSrcXY(s, baseX=0, baseY=0):
         if type(s.srcTile) != ParamSPM:
-            posX, posY = s.srcTile.getPosXYOnPort(s.srcPort, baseX, baseY)
-            #posY += 330
-            #posX += 30
-            return posX, posY
+            return s.srcTile.getPosXYOnPort(s.srcPort, baseX, baseY)
         else:
             dstPosX, dstPosY = s.dstTile.getPosXYOnPort(s.dstPort, baseX, baseY)
             spmPosX = s.srcTile.getPosX(baseX)
@@ -377,15 +375,11 @@ class ParamLink:
 
     def getDstXY(s, baseX=0, baseY=0):
         if type(s.dstTile) != ParamSPM:
-            posX, posY = s.dstTile.getPosXYOnPort(s.dstPort, baseX, baseY)
-            #posY += 330
-            #posX += 30
-            return posX, posY
+            return s.dstTile.getPosXYOnPort(s.dstPort, baseX, baseY)
         else:
             srcPosX, srcPosY = s.srcTile.getPosXYOnPort(s.srcPort, baseX, baseY)
             spmPosX = s.dstTile.getPosX(baseX)
             return spmPosX, srcPosY
-
 
 class ParamCGRA:
     def __init__(s, rows, columns, configMemSize=CONFIG_MEM_SIZE, dataMemSize=DATA_MEM_SIZE):
@@ -630,6 +624,7 @@ class ParamCGRA:
                     link.srcTile.xbarDict[xbarPort2Type[link.srcPort]] = 0
 
 
+
 class ToolTip(object):
 
     def __init__(self, widget):
@@ -673,10 +668,11 @@ def CreateToolTip(widget, text):
 paramCGRA = ParamCGRA(ROWS, COLS, CONFIG_MEM_SIZE, DATA_MEM_SIZE)
 
 
+
 def clickTile(ID):
     widgets["fuConfigPannel"].config(text='Tile '+str(ID)+' functional units')
     widgets["xbarConfigPannel"].config(text='Tile '+str(ID)+' crossbar outgoing links')
-    widgets["xbarConfigPannel"].grid(columnspan=4, row=7, column=0,rowspan=2)
+    widgets["xbarConfigPannel"].grid(columnspan=5, row=5, column=0, padx=BORDER, pady=BORDER)
     widgets["entireTileCheckbutton"].config(text='Disable entire Tile '+str(ID), state="normal")
     widgets["spmConfigPannel"].grid_forget()
     paramCGRA.targetTileID = ID
@@ -691,7 +687,6 @@ def clickTile(ID):
         xbarCheckbuttons[xbarType].configure(state="disabled" if disabled or xbarType2Port[xbarType] in paramCGRA.tiles[ID].neverUsedOutPorts else "normal")
 
     entireTileCheckVar.set(1 if paramCGRA.getTileOfID(ID).disabled else 0)
- 
 
 def clickSPM():
     widgets["fuConfigPannel"].config(text='Tile '+str(paramCGRA.targetTileID)+' functional units')
@@ -704,7 +699,7 @@ def clickSPM():
 
     spmConfigPannel = widgets["spmConfigPannel"]
     spmConfigPannel.config(text='DataSPM outgoing links')
-    spmConfigPannel.grid(row=7,column=0,rowspan=2,columnspan=4)
+    spmConfigPannel.grid(columnspan=5, row=5, column=0, padx=BORDER, pady=BORDER)
 
     spmEnabledListbox = widgets["spmEnabledListbox"]
     spmDisabledListbox = widgets["spmDisabledListbox"]
@@ -1178,7 +1173,7 @@ def clickShowDFG():
     os.chdir("kernel")
     fileExist = os.path.exists("kernel.bc")
     global paramCGRA
-
+    
     if not fileExist or not paramCGRA.compilationDone or paramCGRA.targetKernelName == None:
         os.chdir("..")
         tkinter.messagebox.showerror(title="DFG Generation", message="The compilation and kernel selection need to be done first.")
@@ -1243,7 +1238,7 @@ def clickShowDFG():
 
     PIL_image = Image.open("kernel.png")
     ImageFile.LOAD_TRUNCATED_IMAGES = True
-    PIL_image_small = PIL_image.resize((310, 295), Image.Resampling.LANCZOS)
+    PIL_image_small = PIL_image.resize((700, 600), Image.Resampling.LANCZOS)
     dfgImage = ImageTk.PhotoImage(PIL_image_small)
     images["dfgImage"] = dfgImage # This is important due to the garbage collection would remove local variable of image
     widgets["dfgLabel"].config(image=dfgImage)
@@ -1427,6 +1422,7 @@ def clickMapDFG():
     drawer.start()
     timer = threading.Thread(target=countMapTime)
     timer.start()
+
 
 
 
@@ -1795,11 +1791,12 @@ def create_layout_pannel(master):
 def create_mapping_pannel(master):
     mappingPannel = tkinter.LabelFrame(master, text='Mapping', bd=BORDER, relief='groove')
     mappingPannel.grid(row=3, column=3, rowspan=3,columnspan=4, sticky="nsew")
-    canvas = tkinter.Canvas(mappingPannel, bd=0)
-    scrollbar = tkinter.Scrollbar(mappingPannel, orient="horizontal", command=canvas.xview)
-    scrollbar.pack(side="bottom", fill="x")
-    canvas.config(xscrollcommand=scrollbar.set)
-    canvas.pack(side="top", fill="both", expand=True)
+    mappingCanvas = tkinter.Canvas(mappingPannel, bd=0)
+    widgets["mappingCanvas"] = mappingCanvas
+    hbar = tkinter.Scrollbar(mappingPannel, orient="horizontal", command=mappingCanvas.xview)
+    hbar.pack(side="bottom", fill="x")
+    mappingCanvas.config(xscrollcommand=hbar.set)
+    mappingCanvas.pack(side="top", fill="both", expand=True)
 
 def create_kernel_pannel(master):
     kernelPannel = tkinter.LabelFrame(master, text="Kernel", bd=BORDER, relief='groove')
@@ -1831,6 +1828,7 @@ def create_kernel_pannel(master):
 
     tempOptions = [ "Not selected yet" ]
     kernelNameMenu = tkinter.OptionMenu(kernelPannel, kernelOptions, *tempOptions)
+    kernelOptions.trace("w", clickKernelMenu)
     widgets["kernelNameMenu"] = kernelNameMenu
     kernelNameMenu.grid(row=1, column=1, sticky="nsew")
 
@@ -1894,6 +1892,7 @@ def create_kernel_pannel(master):
     widgets["mapSpeedupEntry"] = mapSpeedupEntry
     mapSpeedupEntry.insert(0, "0")
     mapSpeedupEntry.grid(row=11,column=3,sticky="ew")
+
 paramPadPosX = GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + INTERVAL * 3
 paramPadWidth = 270
 scriptPadPosX = paramPadPosX + paramPadWidth + INTERVAL

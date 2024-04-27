@@ -15,6 +15,7 @@ socat TCP-LISTEN:${PORT_NUM},reuseaddr,fork UNIX-CLIENT:/tmp/.X11-unix/X0  > /de
 
 XSOCK=/tmp/.X11-unix
 
+
 sudo docker run \
     -it \
     --name=CGRA-Flow-v2 \

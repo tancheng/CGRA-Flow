@@ -41,7 +41,7 @@ master.grid_rowconfigure(4, weight=2)
 master.grid_rowconfigure(5, weight=2)
 master.grid_columnconfigure(0, weight=2)
 master.grid_columnconfigure(1, weight=2)
-master.grid_columnconfigure(2, weight=1)
+master.grid_columnconfigure(2, weight=2)
 master.grid_columnconfigure(3, weight=1)
 master.grid_columnconfigure(4, weight=2)
 master.grid_columnconfigure(5, weight=2)
@@ -672,7 +672,7 @@ paramCGRA = ParamCGRA(ROWS, COLS, CONFIG_MEM_SIZE, DATA_MEM_SIZE)
 def clickTile(ID):
     widgets["fuConfigPannel"].config(text='Tile '+str(ID)+' functional units')
     widgets["xbarConfigPannel"].config(text='Tile '+str(ID)+' crossbar outgoing links')
-    widgets["xbarConfigPannel"].grid(columnspan=5, row=5, column=0, padx=BORDER, pady=BORDER)
+    widgets["xbarConfigPannel"].grid(columnspan=4, row=7, column=0,rowspan=2)
     widgets["entireTileCheckbutton"].config(text='Disable entire Tile '+str(ID), state="normal")
     widgets["spmConfigPannel"].grid_forget()
     paramCGRA.targetTileID = ID
@@ -699,7 +699,7 @@ def clickSPM():
 
     spmConfigPannel = widgets["spmConfigPannel"]
     spmConfigPannel.config(text='DataSPM outgoing links')
-    spmConfigPannel.grid(columnspan=5, row=5, column=0, padx=BORDER, pady=BORDER)
+    spmConfigPannel.grid(row=7,column=0,rowspan=2,columnspan=4)
 
     spmEnabledListbox = widgets["spmEnabledListbox"]
     spmDisabledListbox = widgets["spmDisabledListbox"]
@@ -1238,7 +1238,7 @@ def clickShowDFG():
 
     PIL_image = Image.open("kernel.png")
     ImageFile.LOAD_TRUNCATED_IMAGES = True
-    PIL_image_small = PIL_image.resize((700, 600), Image.Resampling.LANCZOS)
+    PIL_image_small = PIL_image.resize((400, 400), Image.Resampling.LANCZOS)
     dfgImage = ImageTk.PhotoImage(PIL_image_small)
     images["dfgImage"] = dfgImage # This is important due to the garbage collection would remove local variable of image
     widgets["dfgLabel"].config(image=dfgImage)
@@ -1433,16 +1433,18 @@ def create_cgra_pannel(master, rows, columns):
     TILE_WIDTH = (GRID_WIDTH + LINK_LENGTH) / COLS - LINK_LENGTH
     TILE_HEIGHT = (GRID_HEIGHT + LINK_LENGTH) / ROWS - LINK_LENGTH
     totalWidth = GRID_WIDTH+MEM_WIDTH+LINK_LENGTH
-    canvas = tkinter.Canvas(master)
-    canvas.grid(row=0,column=0,rowspan=3,columnspan=2,sticky="nsew")
-    #vertical_scrollbar = tkinter.Scrollbar(master,orient="vertical",command=canvas.yview)
-    #vertical_scrollbar.grid(row=0, column=1, sticky="ns")
-    #canvas.configure(yscrollcommand=vertical_scrollbar.set)
-
-    #horizontal_scrollbar = tkinter.Scrollbar(master, orient="horizontal", command=canvas.xview)
-    #horizontal_scrollbar.grid(row=1, column=0, sticky="ew")
-    #canvas.configure(xscrollcommand=horizontal_scrollbar.set)
-    #canvas.config(scrollregion=canvas.bbox("all"))
+    cgraPannel = tkinter.LabelFrame(master, text='CGRA', bd=BORDER, relief='groove')
+    cgraPannel.grid(row=0, column=0, rowspan=3,columnspan=2, sticky="nsew")
+    canvas = tkinter.Canvas(cgraPannel)
+    #canvas = tkinter.Canvas(master)
+    #canvas.grid(row=0,column=0,rowspan=3,columnspan=2,sticky="nsew")
+    hbar = tkinter.Scrollbar(cgraPannel, orient="horizontal", command=canvas.xview)
+    hbar.pack(side="bottom", fill="x")
+    canvas.config(xscrollcommand=hbar.set)
+    vbar = tkinter.Scrollbar(cgraPannel,orient="vertical",command=canvas.yview)
+    vbar.pack(side=tkinter.RIGHT,fill="y")
+    canvas.config(yscrollcommand=vbar.set)
+    canvas.pack(side="top", fill="both", expand=True)
 
     # pad contains tile and links
     # padSize = TILE_SIZE + LINK_LENGTH
@@ -1724,7 +1726,7 @@ def create_verilog_pannel(master):
 def create_report_pannel(master):
     reportPannel = tkinter.LabelFrame(master, text='Report area/power', bd = BORDER, relief='groove')
     reportPannel.grid(row=2,column=3,rowspan=1,columnspan=1,sticky='nw')
-    reportPannel.grid_configure(rows=3, columns=4)
+    reportPannel.grid_configure(rows=6, columns=2)
     reportButton = tkinter.Button(reportPannel, text="Synthesize", relief="raised", command=clickSynthesize)
 
     reportProgress = ttk.Progressbar(reportPannel, orient="horizontal", mode="determinate")
@@ -1759,18 +1761,18 @@ def create_report_pannel(master):
     widgets["reportSPMPowerData"] = reportSPMPowerData
 
     reportButton.grid(row=0, column=0)
-    reportProgress.grid(row=0,column=1,columnspan=2)
-    synthesisTimeEntry.grid(row=0, column=3)
+    reportProgress.grid(row=1,column=1)
+    synthesisTimeEntry.grid(row=0, column=1)
 
-    reportTileAreaLabel.grid(row=1, column=0)
-    reportTileAreaData.grid(row=1, column=1)
-    reportTilePowerLabel.grid(row=1, column=2)
-    reportTilePowerData.grid(row=1, column=3)
+    reportTileAreaLabel.grid(row=2, column=0)
+    reportTileAreaData.grid(row=2, column=1)
+    reportTilePowerLabel.grid(row=3, column=0)
+    reportTilePowerData.grid(row=3, column=1)
 
-    reportSPMAreaLabel.grid(row=2, column=0)
-    reportSPMAreaData.grid(row=2, column=1)
-    reportSPMPowerLabel.grid(row=2, column=2)
-    reportSPMPowerData.grid(row=2, column=3)
+    reportSPMAreaLabel.grid(row=4, column=0)
+    reportSPMAreaData.grid(row=4, column=1)
+    reportSPMPowerLabel.grid(row=5, column=0)
+    reportSPMPowerData.grid(row=5, column=1)
 
 def create_layout_pannel(master):
     layoutPannel = tkinter.LabelFrame(master, text='Layout', bd=BORDER, relief='groove')
@@ -1817,7 +1819,7 @@ def create_kernel_pannel(master):
     appPathEntry.bind("<Button-1>", clickSelectApp)
 
     compileAppButton = tkinter.Button(kernelPannel, text=" Compile app  ", fg="black", command=clickCompileApp)
-    compileAppButton.grid(row=0, column=2,sticky=tkinter.E)
+    compileAppButton.grid(row=0, column=2,sticky="nsew")
 
     compileAppShow = tkinter.Label(kernelPannel, text=" IDLE", fg='gray')
     compileAppShow.grid(row=0, column=3, sticky="ew")
@@ -1833,7 +1835,7 @@ def create_kernel_pannel(master):
     kernelNameMenu.grid(row=1, column=1, sticky="nsew")
 
     generateDFGButton = tkinter.Button(kernelPannel, text = "Generate DFG", fg="black", command=clickShowDFG)
-    generateDFGButton.grid(row=1, column=2, sticky=tkinter.E)
+    generateDFGButton.grid(row=1, column=2, sticky="nsew")
 
     generateDFGShow = tkinter.Label(kernelPannel, text=" IDLE", fg='gray')
     generateDFGShow.grid(row=1, column=3, sticky="ew")

@@ -1725,8 +1725,8 @@ def create_verilog_pannel(master):
     
 def create_report_pannel(master):
     reportPannel = tkinter.LabelFrame(master, text='Report area/power', bd = BORDER, relief='groove')
-    reportPannel.grid(row=2,column=3,rowspan=1,columnspan=1,sticky='nw')
-    reportPannel.grid_configure(rows=6, columns=2)
+    reportPannel.grid(row=2,column=3,rowspan=1,columnspan=1,sticky='nesw')
+    #reportPannel.grid_configure(rows=6, columns=2)
     reportButton = tkinter.Button(reportPannel, text="Synthesize", relief="raised", command=clickSynthesize)
 
     reportProgress = ttk.Progressbar(reportPannel, orient="horizontal", mode="determinate")
@@ -1760,19 +1760,19 @@ def create_report_pannel(master):
     reportSPMPowerData = tkinter.Entry(reportPannel, justify=tkinter.CENTER)
     widgets["reportSPMPowerData"] = reportSPMPowerData
 
-    reportButton.grid(row=0, column=0)
-    reportProgress.grid(row=1,column=1)
-    synthesisTimeEntry.grid(row=0, column=1)
+    reportButton.grid(row=0, column=0,pady=10,padx=10)
+    reportProgress.grid(row=1,column=1,pady=10)
+    synthesisTimeEntry.grid(row=0, column=1,pady=10)
 
-    reportTileAreaLabel.grid(row=2, column=0)
-    reportTileAreaData.grid(row=2, column=1)
-    reportTilePowerLabel.grid(row=3, column=0)
-    reportTilePowerData.grid(row=3, column=1)
+    reportTileAreaLabel.grid(row=2, column=0,pady=5)
+    reportTileAreaData.grid(row=2, column=1,pady=5)
+    reportTilePowerLabel.grid(row=3, column=0,pady=5)
+    reportTilePowerData.grid(row=3, column=1,pady=5)
 
-    reportSPMAreaLabel.grid(row=4, column=0)
-    reportSPMAreaData.grid(row=4, column=1)
-    reportSPMPowerLabel.grid(row=5, column=0)
-    reportSPMPowerData.grid(row=5, column=1)
+    reportSPMAreaLabel.grid(row=4, column=0,pady=5)
+    reportSPMAreaData.grid(row=4, column=1,pady=5)
+    reportSPMPowerLabel.grid(row=5, column=0,pady=5)
+    reportSPMPowerData.grid(row=5, column=1,pady=5)
 
 def create_layout_pannel(master):
     layoutPannel = tkinter.LabelFrame(master, text='Layout', bd=BORDER, relief='groove')
@@ -1906,9 +1906,9 @@ master.geometry(str(2764)+"x"+str(1340))
 create_kernel_pannel(master)
 create_mapping_pannel(master)
 create_layout_pannel(master)
-create_report_pannel(master)
 create_test_pannel(master)
 create_verilog_pannel(master)
+create_report_pannel(master)
 create_cgra_pannel(master, ROWS, COLS)
 create_param_pannel(master) 
 #print(master.winfo_width())

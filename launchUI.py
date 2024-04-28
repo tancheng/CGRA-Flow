@@ -45,6 +45,7 @@ master.grid_columnconfigure(2, weight=2)
 master.grid_columnconfigure(3, weight=1)
 master.grid_columnconfigure(4, weight=2)
 master.grid_columnconfigure(5, weight=2)
+
 ROWS = 4
 COLS = 4
 GRID_WIDTH = (TILE_WIDTH+LINK_LENGTH) * COLS - LINK_LENGTH
@@ -1433,11 +1434,10 @@ def create_cgra_pannel(master, rows, columns):
     TILE_WIDTH = (GRID_WIDTH + LINK_LENGTH) / COLS - LINK_LENGTH
     TILE_HEIGHT = (GRID_HEIGHT + LINK_LENGTH) / ROWS - LINK_LENGTH
     totalWidth = GRID_WIDTH+MEM_WIDTH+LINK_LENGTH
-    cgraPannel = tkinter.LabelFrame(master, text='CGRA', bd=BORDER, relief='groove')
+    cgraPannel = tkinter.Frame(master, bd=BORDER, relief='groove')
     cgraPannel.grid(row=0, column=0, rowspan=3,columnspan=2, sticky="nsew")
     canvas = tkinter.Canvas(cgraPannel)
-    #canvas = tkinter.Canvas(master)
-    #canvas.grid(row=0,column=0,rowspan=3,columnspan=2,sticky="nsew")
+    canvas.config(scrollregion=(0, 0, 700, 580))
     hbar = tkinter.Scrollbar(cgraPannel, orient="horizontal", command=canvas.xview)
     hbar.pack(side="bottom", fill="x")
     canvas.config(xscrollcommand=hbar.set)
@@ -1445,7 +1445,6 @@ def create_cgra_pannel(master, rows, columns):
     vbar.pack(side=tkinter.RIGHT,fill="y")
     canvas.config(yscrollcommand=vbar.set)
     canvas.pack(side="top", fill="both", expand=True)
-
     # pad contains tile and links
     # padSize = TILE_SIZE + LINK_LENGTH
     padHeight = TILE_HEIGHT + LINK_LENGTH
@@ -1475,12 +1474,16 @@ def create_cgra_pannel(master, rows, columns):
 
     # draw tiles
     for tile in paramCGRA.tiles:
-        if not tile.disabled:
-            button = tkinter.Button(canvas, text = "Tile "+str(tile.ID), fg='black', bg='gray', relief='raised', bd=BORDER, command=partial(clickTile, tile.ID))
-
+        if  not tile.disabled:
             posX, posY = tile.getPosXY()
-            button.place(height=TILE_HEIGHT, width=TILE_WIDTH, x = posX, y = posY)
-
+            button_width = TILE_WIDTH
+            button_height = TILE_HEIGHT
+            button = canvas.create_rectangle(posX, posY, posX + button_width, posY + button_height, fill='gray')
+            tile_id_text = "Tile " + str(tile.ID)
+            text_x = posX + button_width // 2
+            text_y = posY + button_height // 2
+            canvas.create_text(text_x, text_y, text=tile_id_text)  # Add text inside the rectangle
+            canvas.tag_bind(button, '<Button-1>', partial(clickTile, tile.ID))
 
     # construct links
     if len(paramCGRA.templateLinks) == 0:
@@ -1541,7 +1544,12 @@ def create_cgra_pannel(master, rows, columns):
         else:
             srcX, srcY = link.getSrcXY()
             dstX, dstY = link.getDstXY()
+            srcX = canvas.canvasx(srcX)
+            srcY = canvas.canvasy(srcY)
+            dstX = canvas.canvasx(dstX)
+            dstY = canvas.canvasy(dstY)
             canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
+
 
 
 def place_fu_options(master):
@@ -1798,6 +1806,9 @@ def create_mapping_pannel(master):
     hbar = tkinter.Scrollbar(mappingPannel, orient="horizontal", command=mappingCanvas.xview)
     hbar.pack(side="bottom", fill="x")
     mappingCanvas.config(xscrollcommand=hbar.set)
+    vbar = tkinter.Scrollbar(mappingPannel,orient="vertical",command=mappingCanvas.yview)
+    vbar.pack(side=tkinter.RIGHT,fill="y")
+    mappingCanvas.config(yscrollcommand=vbar.set)
     mappingCanvas.pack(side="top", fill="both", expand=True)
 
 def create_kernel_pannel(master):

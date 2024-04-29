@@ -26,9 +26,9 @@ PORT_DIRECTION_COUNTS = 8
 #TILE_HEIGHT = 60
 #TILE_WIDTH = 60
 #LINK_LENGTH = 40
-TILE_HEIGHT = 95
-TILE_WIDTH = 95
-LINK_LENGTH = 65
+TILE_HEIGHT = 75
+TILE_WIDTH = 75
+LINK_LENGTH = 50
 INTERVAL = 10
 BORDER = 4
 master = tkinter.Tk()
@@ -36,16 +36,15 @@ master.title("CGRA-Flow: An Integrated End-to-End Framework for CGRA Exploration
 master.grid_rowconfigure(0, weight=1)
 master.grid_rowconfigure(1, weight=1)
 master.grid_rowconfigure(2, weight=1)
-master.grid_rowconfigure(3, weight=2)
-master.grid_rowconfigure(4, weight=2)
-master.grid_rowconfigure(5, weight=2)
+master.grid_rowconfigure(3, weight=1)
+master.grid_rowconfigure(4, weight=1)
+master.grid_rowconfigure(5, weight=1)
 master.grid_columnconfigure(0, weight=2)
 master.grid_columnconfigure(1, weight=2)
-master.grid_columnconfigure(2, weight=2)
-master.grid_columnconfigure(3, weight=1)
+#master.grid_columnconfigure(2, weight=1)
+#master.grid_columnconfigure(3, weight=1)
 master.grid_columnconfigure(4, weight=2)
 master.grid_columnconfigure(5, weight=2)
-
 ROWS = 4
 COLS = 4
 GRID_WIDTH = (TILE_WIDTH+LINK_LENGTH) * COLS - LINK_LENGTH
@@ -1239,7 +1238,7 @@ def clickShowDFG():
 
     PIL_image = Image.open("kernel.png")
     ImageFile.LOAD_TRUNCATED_IMAGES = True
-    PIL_image_small = PIL_image.resize((400, 400), Image.Resampling.LANCZOS)
+    PIL_image_small = PIL_image.resize((390, 390), Image.Resampling.LANCZOS)
     dfgImage = ImageTk.PhotoImage(PIL_image_small)
     images["dfgImage"] = dfgImage # This is important due to the garbage collection would remove local variable of image
     widgets["dfgLabel"].config(image=dfgImage)
@@ -1434,10 +1433,11 @@ def create_cgra_pannel(master, rows, columns):
     TILE_WIDTH = (GRID_WIDTH + LINK_LENGTH) / COLS - LINK_LENGTH
     TILE_HEIGHT = (GRID_HEIGHT + LINK_LENGTH) / ROWS - LINK_LENGTH
     totalWidth = GRID_WIDTH+MEM_WIDTH+LINK_LENGTH
-    cgraPannel = tkinter.Frame(master, bd=BORDER, relief='groove')
+    cgraPannel = tkinter.LabelFrame(master, text='CGRA', bd=BORDER, relief='groove')
     cgraPannel.grid(row=0, column=0, rowspan=3,columnspan=2, sticky="nsew")
     canvas = tkinter.Canvas(cgraPannel)
-    canvas.config(scrollregion=(0, 0, 700, 580))
+    #canvas = tkinter.Canvas(master)
+    #canvas.grid(row=0,column=0,rowspan=3,columnspan=2,sticky="nsew")
     hbar = tkinter.Scrollbar(cgraPannel, orient="horizontal", command=canvas.xview)
     hbar.pack(side="bottom", fill="x")
     canvas.config(xscrollcommand=hbar.set)
@@ -1445,6 +1445,7 @@ def create_cgra_pannel(master, rows, columns):
     vbar.pack(side=tkinter.RIGHT,fill="y")
     canvas.config(yscrollcommand=vbar.set)
     canvas.pack(side="top", fill="both", expand=True)
+
     # pad contains tile and links
     # padSize = TILE_SIZE + LINK_LENGTH
     padHeight = TILE_HEIGHT + LINK_LENGTH
@@ -1474,16 +1475,12 @@ def create_cgra_pannel(master, rows, columns):
 
     # draw tiles
     for tile in paramCGRA.tiles:
-        if  not tile.disabled:
+        if not tile.disabled:
+            button = tkinter.Button(canvas, text = "Tile "+str(tile.ID), fg='black', bg='gray', relief='raised', bd=BORDER, command=partial(clickTile, tile.ID))
+
             posX, posY = tile.getPosXY()
-            button_width = TILE_WIDTH
-            button_height = TILE_HEIGHT
-            button = canvas.create_rectangle(posX, posY, posX + button_width, posY + button_height, fill='gray')
-            tile_id_text = "Tile " + str(tile.ID)
-            text_x = posX + button_width // 2
-            text_y = posY + button_height // 2
-            canvas.create_text(text_x, text_y, text=tile_id_text)  # Add text inside the rectangle
-            canvas.tag_bind(button, '<Button-1>', partial(clickTile, tile.ID))
+            button.place(height=TILE_HEIGHT, width=TILE_WIDTH, x = posX, y = posY)
+
 
     # construct links
     if len(paramCGRA.templateLinks) == 0:
@@ -1544,12 +1541,7 @@ def create_cgra_pannel(master, rows, columns):
         else:
             srcX, srcY = link.getSrcXY()
             dstX, dstY = link.getDstXY()
-            srcX = canvas.canvasx(srcX)
-            srcY = canvas.canvasy(srcY)
-            dstX = canvas.canvasx(dstX)
-            dstY = canvas.canvasy(dstY)
             canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
-
 
 
 def place_fu_options(master):
@@ -1913,7 +1905,7 @@ scriptPadWidth = 300
 layoutPadPosX = scriptPadPosX + scriptPadWidth + INTERVAL
 layoutPadWidth = 300
 layoutPadHeight = GRID_HEIGHT
-master.geometry(str(2764)+"x"+str(1340)) 
+master.geometry(str(1950)+"x"+str(1100)) 
 create_kernel_pannel(master)
 create_mapping_pannel(master)
 create_layout_pannel(master)

@@ -1424,10 +1424,7 @@ def clickMapDFG():
     timer.start()
 
 
-
-
 def create_cgra_pannel(master, rows, columns):
-
     ROWS = rows
     COLS = columns
     TILE_WIDTH = (GRID_WIDTH + LINK_LENGTH) / COLS - LINK_LENGTH
@@ -1438,13 +1435,10 @@ def create_cgra_pannel(master, rows, columns):
     canvas = tkinter.Canvas(cgraPannel)
     #canvas = tkinter.Canvas(master)
     #canvas.grid(row=0,column=0,rowspan=3,columnspan=2,sticky="nsew")
+    canvas.pack(side="top", fill="both", expand=True)
     hbar = tkinter.Scrollbar(cgraPannel, orient="horizontal", command=canvas.xview)
     hbar.pack(side="bottom", fill="x")
     canvas.config(xscrollcommand=hbar.set)
-    vbar = tkinter.Scrollbar(cgraPannel,orient="vertical",command=canvas.yview)
-    vbar.pack(side=tkinter.RIGHT,fill="y")
-    canvas.config(yscrollcommand=vbar.set)
-    canvas.pack(side="top", fill="both", expand=True)
 
     # pad contains tile and links
     # padSize = TILE_SIZE + LINK_LENGTH
@@ -1477,7 +1471,6 @@ def create_cgra_pannel(master, rows, columns):
     for tile in paramCGRA.tiles:
         if not tile.disabled:
             button = tkinter.Button(canvas, text = "Tile "+str(tile.ID), fg='black', bg='gray', relief='raised', bd=BORDER, command=partial(clickTile, tile.ID))
-
             posX, posY = tile.getPosXY()
             button.place(height=TILE_HEIGHT, width=TILE_WIDTH, x = posX, y = posY)
 
@@ -1898,14 +1891,14 @@ def create_kernel_pannel(master):
     mapSpeedupEntry.insert(0, "0")
     mapSpeedupEntry.grid(row=11,column=3,sticky="ew")
 
-paramPadPosX = GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + INTERVAL * 3
-paramPadWidth = 270
-scriptPadPosX = paramPadPosX + paramPadWidth + INTERVAL
-scriptPadWidth = 300
-layoutPadPosX = scriptPadPosX + scriptPadWidth + INTERVAL
-layoutPadWidth = 300
-layoutPadHeight = GRID_HEIGHT
-master.geometry(str(1950)+"x"+str(1100)) 
+#paramPadPosX = GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + INTERVAL * 3
+#paramPadWidth = 270
+#scriptPadPosX = paramPadPosX + paramPadWidth + INTERVAL
+#scriptPadWidth = 300
+#layoutPadPosX = scriptPadPosX + scriptPadWidth + INTERVAL
+#layoutPadWidth = 300
+#layoutPadHeight = GRID_HEIGHT
+master.geometry(str(1900)+"x"+str(1100)) 
 create_kernel_pannel(master)
 create_mapping_pannel(master)
 create_layout_pannel(master)

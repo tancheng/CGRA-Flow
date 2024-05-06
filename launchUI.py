@@ -26,25 +26,11 @@ PORT_DIRECTION_COUNTS = 8
 #TILE_HEIGHT = 60
 #TILE_WIDTH = 60
 #LINK_LENGTH = 40
-TILE_HEIGHT = 75
-TILE_WIDTH = 75
-LINK_LENGTH = 50
+TILE_HEIGHT = 65
+TILE_WIDTH = 60
+LINK_LENGTH = 40
 INTERVAL = 10
 BORDER = 4
-master = tkinter.Tk()
-master.title("CGRA-Flow: An Integrated End-to-End Framework for CGRA Exploration, Compilation, and Development")
-master.grid_rowconfigure(0, weight=1)
-master.grid_rowconfigure(1, weight=1)
-master.grid_rowconfigure(2, weight=1)
-master.grid_rowconfigure(3, weight=1)
-master.grid_rowconfigure(4, weight=1)
-master.grid_rowconfigure(5, weight=1)
-master.grid_columnconfigure(0, weight=2)
-master.grid_columnconfigure(1, weight=2)
-#master.grid_columnconfigure(2, weight=1)
-#master.grid_columnconfigure(3, weight=1)
-master.grid_columnconfigure(4, weight=2)
-master.grid_columnconfigure(5, weight=2)
 ROWS = 4
 COLS = 4
 GRID_WIDTH = (TILE_WIDTH+LINK_LENGTH) * COLS - LINK_LENGTH
@@ -52,7 +38,19 @@ GRID_HEIGHT = (TILE_HEIGHT+LINK_LENGTH) * ROWS - LINK_LENGTH
 MEM_WIDTH = 50
 CONFIG_MEM_SIZE = 8
 DATA_MEM_SIZE = 4
-
+def window_size(window, width, height):
+    window.geometry(f"{width}x{height}")
+master = tkinter.Tk()
+master.title("CGRA-Flow: An Integrated End-to-End Framework for CGRA Exploration, Compilation, and Development")
+default_width = 1700
+default_height = 920
+window_size(master, default_width, default_height) 
+master.grid_rowconfigure(0, weight=2)
+master.grid_rowconfigure(1, weight=3)
+master.grid_columnconfigure(0, weight=1)
+master.grid_columnconfigure(1, weight=1)
+master.grid_columnconfigure(2, weight=1)
+master.grid_columnconfigure(3, weight=1)
 fuTypeList = ["Phi", "Add", "Shift", "Ld", "Sel", "Cmp", "MAC", "St", "Ret", "Mul", "Logic", "Br"]
 
 xbarTypeList = ["W", "E", "N", "S", "NE", "NW", "SE", "SW"]
@@ -98,6 +96,7 @@ xbarCheckbuttons = {}
 kernelOptions = tkinter.StringVar()
 kernelOptions.set("Not selected yet")
 synthesisRunning = False
+
 class ParamTile:
     def __init__(s, ID, dimX, dimY, posX, posY, tileWidth, tileHeight):
         s.ID = ID
@@ -264,8 +263,6 @@ class ParamTile:
             elif tile.dimY == s.dimY and tile.dimX < s.dimX and not tile.disabled:
                 index += 1
         return index
-
-
 class ParamSPM:
     def __init__(s, posX, numOfReadPorts, numOfWritePorts):
         s.posX = posX
@@ -1238,7 +1235,7 @@ def clickShowDFG():
 
     PIL_image = Image.open("kernel.png")
     ImageFile.LOAD_TRUNCATED_IMAGES = True
-    PIL_image_small = PIL_image.resize((390, 390), Image.Resampling.LANCZOS)
+    PIL_image_small = PIL_image.resize((205, 310), Image.Resampling.LANCZOS)
     dfgImage = ImageTk.PhotoImage(PIL_image_small)
     images["dfgImage"] = dfgImage # This is important due to the garbage collection would remove local variable of image
     widgets["dfgLabel"].config(image=dfgImage)
@@ -1431,7 +1428,7 @@ def create_cgra_pannel(master, rows, columns):
     TILE_HEIGHT = (GRID_HEIGHT + LINK_LENGTH) / ROWS - LINK_LENGTH
     totalWidth = GRID_WIDTH+MEM_WIDTH+LINK_LENGTH
     cgraPannel = tkinter.LabelFrame(master, text='CGRA', bd=BORDER, relief='groove')
-    cgraPannel.grid(row=0, column=0, rowspan=3,columnspan=2, sticky="nsew")
+    cgraPannel.grid(row=0, column=0, rowspan=1,columnspan=1, sticky="nsew")
     canvas = tkinter.Canvas(cgraPannel)
     #canvas = tkinter.Canvas(master)
     #canvas.grid(row=0,column=0,rowspan=3,columnspan=2,sticky="nsew")
@@ -1453,7 +1450,7 @@ def create_cgra_pannel(master, rows, columns):
     # draw data memory
     memHeight = GRID_HEIGHT
     button = tkinter.Button(canvas, text = "Data\nSPM", fg = 'black', bg = 'gray', relief = 'raised', bd = BORDER, command = clickSPM)
-    button.place(height=memHeight, width=MEM_WIDTH, x = 0, y = 0)
+    button.place(height=memHeight, width=MEM_WIDTH, x = 0, y = 25)
 
             
     # construct tiles
@@ -1472,7 +1469,7 @@ def create_cgra_pannel(master, rows, columns):
         if not tile.disabled:
             button = tkinter.Button(canvas, text = "Tile "+str(tile.ID), fg='black', bg='gray', relief='raised', bd=BORDER, command=partial(clickTile, tile.ID))
             posX, posY = tile.getPosXY()
-            button.place(height=TILE_HEIGHT, width=TILE_WIDTH, x = posX, y = posY)
+            button.place(height=TILE_HEIGHT, width=TILE_WIDTH, x = posX, y = posY + 25)
 
 
     # construct links
@@ -1534,7 +1531,7 @@ def create_cgra_pannel(master, rows, columns):
         else:
             srcX, srcY = link.getSrcXY()
             dstX, dstY = link.getDstXY()
-            canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
+            canvas.create_line(srcX, srcY + 25, dstX, dstY + 25, arrow=tkinter.LAST)
 
 
 def place_fu_options(master):
@@ -1546,7 +1543,7 @@ def place_fu_options(master):
         fuCheckbuttons[fuTypeList[i]] = fuCheckbutton
         fuCheckbutton.select()
         paramCGRA.updateFuCheckbutton(fuTypeList[i], fuVar.get())
-        fuCheckbutton.grid(row=i//4, column=i%4, padx=30, pady=30, sticky="nsew")
+        fuCheckbutton.grid(row=i//4, column=i%4, padx=15, pady=15, sticky="nsew")
         
 def place_xbar_options(master):
     for i in range(PORT_DIRECTION_COUNTS):
@@ -1565,13 +1562,13 @@ def place_xbar_options(master):
         if portType in paramCGRA.getTileOfID(0).neverUsedOutPorts:
             xbarCheckbutton.configure(state="disabled")
 
-        xbarCheckbutton.grid(row=i//4, column=i%4, padx=30, pady=30, sticky="nsew")
+        xbarCheckbutton.grid(row=i//4, column=i%4, padx=15, pady=15, sticky="nsew")
 
 
 
 def create_param_pannel(master):
     paramPannel = tkinter.LabelFrame(master, text='Configuration', bd=BORDER, relief='groove')
-    paramPannel.grid(row=0,column=2,rowspan=3,columnspan=1,sticky="nsew")
+    paramPannel.grid(row=0,column=1,rowspan=1,columnspan=1,sticky="nsew")
     for i in range(10):
         if i < 8:
             paramPannel.rowconfigure(i, weight=1)
@@ -1687,39 +1684,43 @@ def create_param_pannel(master):
         else:
             spmDisabledListbox.insert(0, port)
 
-
+ 
 
 def create_test_pannel(master):
-    testPannel = tkinter.LabelFrame(master, text='Verification', bd=BORDER, relief='groove')
-    testPannel.grid(row=0, column=3, rowspan=1, columnspan=1, sticky="nsew")
+    dataPannel =tkinter.LabelFrame(master)
+    dataPannel.grid(row=0, column=2, rowspan=1, columnspan=1, sticky="nsew")
+    dataPannel.grid_rowconfigure(0,weight=1)
+    dataPannel.grid_rowconfigure(1,weight=2)
+    dataPannel.grid_rowconfigure(2,weight=1)
+    dataPannel.grid_columnconfigure(0,weight=1)
+    dataPannel.grid_columnconfigure(1,weight=1)
+    dataPannel.grid_columnconfigure(2,weight=1)
+    testPannel = tkinter.LabelFrame(dataPannel, text='Verification', bd=BORDER, relief='groove')
+    testPannel.grid(row=0,column=0,rowspan=1,columnspan=3,sticky="nsew")
     testButton = tkinter.Button(testPannel, text = "Run tests", relief='raised', command = clickTest)
-    testButton.pack(side=tkinter.LEFT, padx=4, pady=4)
+    testButton.grid(row=0,column=0,rowspan=1,columnspan=1,sticky=tkinter.W)
     testProgress = ttk.Progressbar(testPannel, orient='horizontal', mode='determinate')
     testProgress['value'] = 0
     widgets["testProgress"] = testProgress
-    testProgress.pack(side=tkinter.LEFT, fill="x", padx=4, expand=True)
+    testProgress.grid(row=0,column=1,rowspan=1,columnspan=1,sticky="nsew")
     testShow = tkinter.Label(testPannel, text = "  IDLE ", fg='gray')
     widgets["testShow"] = testShow
-    testShow.pack(side=tkinter.RIGHT, padx=4,pady=4)
+    testShow.grid(row=0,column=2,sticky=tkinter.E)
 
-def create_verilog_pannel(master):
-    verilogPannel = tkinter.LabelFrame(master, text="SVerilog", bd=BORDER, relief="groove")
-    verilogPannel.grid(row=1, column=3, rowspan=1, columnspan=1, sticky="nesw")
+    verilogPannel = tkinter.LabelFrame(dataPannel,text="SVerilog",bd=BORDER,relief="groove")
+    verilogPannel.grid(row=1,column=0,rowspan=1,columnspan=3,sticky="nsew")
     CreateToolTip(verilogPannel, text = "The code might be too big to be copied,\nthe generated verilog can be found in\nthe 'verilog' folder.")
     generateVerilogButton = tkinter.Button(verilogPannel, text="Generate", relief='raised', command=clickGenerateVerilog)
-    generateVerilogButton.pack(side=tkinter.BOTTOM, anchor="se", padx=BORDER, pady=BORDER)
+    generateVerilogButton.pack(side=tkinter.BOTTOM, anchor="sw", padx=BORDER, pady=BORDER)
     verilogScroll = tkinter.Scrollbar(verilogPannel, orient="vertical")
     verilogScroll.pack(side=tkinter.RIGHT, fill="y")
-    verilogText = tkinter.Text(verilogPannel, yscrollcommand=verilogScroll.set,width=30,height=5)
+    verilogText = tkinter.Text(verilogPannel, yscrollcommand=verilogScroll.set,width=10,height=5)
     verilogText.pack(side=tkinter.LEFT, fill="both", expand=True)
-    verilogText.config(yscrollcommand=verilogScroll.set)
     verilogScroll.config(command=verilogText.yview)
     widgets["verilogText"] = verilogText
     
-def create_report_pannel(master):
-    reportPannel = tkinter.LabelFrame(master, text='Report area/power', bd = BORDER, relief='groove')
-    reportPannel.grid(row=2,column=3,rowspan=1,columnspan=1,sticky='nesw')
-    #reportPannel.grid_configure(rows=6, columns=2)
+    reportPannel = tkinter.LabelFrame(dataPannel,text='Report area/power', bd = BORDER, relief='groove')
+    reportPannel.grid(row=2,column=0,rowspan=1,columnspan=3,sticky='nesw')
     reportButton = tkinter.Button(reportPannel, text="Synthesize", relief="raised", command=clickSynthesize)
 
     reportProgress = ttk.Progressbar(reportPannel, orient="horizontal", mode="determinate")
@@ -1728,48 +1729,50 @@ def create_report_pannel(master):
 
     synthesisTimeEntry = tkinter.Entry(reportPannel, fg="black", justify=tkinter.CENTER)
     widgets["synthesisTimeEntry"] = synthesisTimeEntry
-   
-    reportTileAreaLabel = tkinter.Label(reportPannel, text = " Tiles area:")
+
+    reportTileAreaLabel = tkinter.Label(reportPannel, text = " Tiles area")
     CreateToolTip(reportTileAreaLabel, text = "Area is in mm^2.")
 
     reportTileAreaData = tkinter.Entry(reportPannel, justify=tkinter.CENTER)
     widgets["reportTileAreaData"] = reportTileAreaData
 
-    reportTilePowerLabel = tkinter.Label(reportPannel, text = "Tiles power:")
+    reportTilePowerLabel = tkinter.Label(reportPannel, text = "Tiles power")
     CreateToolTip(reportTilePowerLabel, text = "Yosys is not able to provide\npower estimation.")
 
     reportTilePowerData = tkinter.Entry(reportPannel, justify=tkinter.CENTER)
     widgets["reportTilePowerData"] = reportTilePowerData
-    
-    reportSPMAreaLabel = tkinter.Label(reportPannel, text = " SPM area:")
+
+    reportSPMAreaLabel = tkinter.Label(reportPannel, text = " SPM area")
     CreateToolTip(reportSPMAreaLabel, text = "Area is in mm^2.")
 
     reportSPMAreaData = tkinter.Entry(reportPannel, justify=tkinter.CENTER)
     widgets["reportSPMAreaData"] = reportSPMAreaData
 
-    reportSPMPowerLabel = tkinter.Label(reportPannel, text = "SPM power:")
+    reportSPMPowerLabel = tkinter.Label(reportPannel, text = "SPM power")
     CreateToolTip(reportSPMPowerLabel, text = "Power is in mW.")
 
     reportSPMPowerData = tkinter.Entry(reportPannel, justify=tkinter.CENTER)
     widgets["reportSPMPowerData"] = reportSPMPowerData
 
-    reportButton.grid(row=0, column=0,pady=10,padx=10)
-    reportProgress.grid(row=1,column=1,pady=10)
-    synthesisTimeEntry.grid(row=0, column=1,pady=10)
+    reportButton.grid(row=0, column=0)
+    reportProgress.grid(row=0,column=1)
+    synthesisTimeEntry.grid(row=1, column=0,pady=10)
 
-    reportTileAreaLabel.grid(row=2, column=0,pady=5)
-    reportTileAreaData.grid(row=2, column=1,pady=5)
-    reportTilePowerLabel.grid(row=3, column=0,pady=5)
-    reportTilePowerData.grid(row=3, column=1,pady=5)
+    reportTileAreaLabel.grid(row=2, column=1,pady=10)
+    reportTileAreaData.grid(row=2, column=0,pady=10)
+    reportTilePowerLabel.grid(row=3, column=1,pady=10)
+    reportTilePowerData.grid(row=3, column=0,pady=10)
 
-    reportSPMAreaLabel.grid(row=4, column=0,pady=5)
-    reportSPMAreaData.grid(row=4, column=1,pady=5)
-    reportSPMPowerLabel.grid(row=5, column=0,pady=5)
-    reportSPMPowerData.grid(row=5, column=1,pady=5)
+    reportSPMAreaLabel.grid(row=4, column=1,pady=10)
+    reportSPMAreaData.grid(row=4, column=0,pady=10)
+    reportSPMPowerLabel.grid(row=5, column=1,pady=10)
+    reportSPMPowerData.grid(row=5, column=0,pady=10)
+
+
 
 def create_layout_pannel(master):
     layoutPannel = tkinter.LabelFrame(master, text='Layout', bd=BORDER, relief='groove')
-    layoutPannel.grid(row=0, column=4,rowspan=3,columnspan=2, sticky="nsew")
+    layoutPannel.grid(row=0, column=3,rowspan=1,columnspan=1, sticky="nsew")
     canvas = tkinter.Canvas(layoutPannel, bd=0)
     scrollbar = tkinter.Scrollbar(layoutPannel, orient="horizontal", command=canvas.xview)
     scrollbar.pack(side="bottom", fill="x")
@@ -1785,7 +1788,7 @@ def create_layout_pannel(master):
 
 def create_mapping_pannel(master):
     mappingPannel = tkinter.LabelFrame(master, text='Mapping', bd=BORDER, relief='groove')
-    mappingPannel.grid(row=3, column=3, rowspan=3,columnspan=4, sticky="nsew")
+    mappingPannel.grid(row=1, column=1, rowspan=1,columnspan=3, sticky="nsew")
     mappingCanvas = tkinter.Canvas(mappingPannel, bd=0)
     widgets["mappingCanvas"] = mappingCanvas
     hbar = tkinter.Scrollbar(mappingPannel, orient="horizontal", command=mappingCanvas.xview)
@@ -1798,7 +1801,7 @@ def create_mapping_pannel(master):
 
 def create_kernel_pannel(master):
     kernelPannel = tkinter.LabelFrame(master, text="Kernel", bd=BORDER, relief='groove')
-    kernelPannel.grid(row=3,column=0,rowspan=3,columnspan=3,sticky="nsew")
+    kernelPannel.grid(row=1,column=0,rowspan=1,columnspan=1,sticky="nsew")
     for row in range(12):
         kernelPannel.grid_rowconfigure(row, weight=1)
     kernelPannel.grid_columnconfigure(0, weight=3)
@@ -1898,15 +1901,13 @@ def create_kernel_pannel(master):
 #layoutPadPosX = scriptPadPosX + scriptPadWidth + INTERVAL
 #layoutPadWidth = 300
 #layoutPadHeight = GRID_HEIGHT
-master.geometry(str(1900)+"x"+str(1100)) 
+#master.geometry(str(1900)+"x"+str(1100))
+create_cgra_pannel(master, ROWS, COLS)
+create_param_pannel(master)
+create_test_pannel(master)
+create_layout_pannel(master)  
 create_kernel_pannel(master)
 create_mapping_pannel(master)
-create_layout_pannel(master)
-create_test_pannel(master)
-create_verilog_pannel(master)
-create_report_pannel(master)
-create_cgra_pannel(master, ROWS, COLS)
-create_param_pannel(master) 
 #print(master.winfo_width())
 #print(master.winfo_height())
 master.mainloop()

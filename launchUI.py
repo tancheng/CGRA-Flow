@@ -26,8 +26,8 @@ PORT_DIRECTION_COUNTS = 8
 #TILE_HEIGHT = 60
 #TILE_WIDTH = 60
 #LINK_LENGTH = 40
-TILE_HEIGHT = 65
-TILE_WIDTH = 60
+TILE_HEIGHT = 70
+TILE_WIDTH = 70
 LINK_LENGTH = 40
 INTERVAL = 10
 BORDER = 4
@@ -42,8 +42,8 @@ def window_size(window, width, height):
     window.geometry(f"{width}x{height}")
 master = tkinter.Tk()
 master.title("CGRA-Flow: An Integrated End-to-End Framework for CGRA Exploration, Compilation, and Development")
-default_width = 1700
-default_height = 920
+default_width = 1725
+default_height = 970
 window_size(master, default_width, default_height) 
 master.grid_rowconfigure(0, weight=2)
 master.grid_rowconfigure(1, weight=3)
@@ -1235,7 +1235,7 @@ def clickShowDFG():
 
     PIL_image = Image.open("kernel.png")
     ImageFile.LOAD_TRUNCATED_IMAGES = True
-    PIL_image_small = PIL_image.resize((205, 310), Image.Resampling.LANCZOS)
+    PIL_image_small = PIL_image.resize((220, 330), Image.Resampling.LANCZOS)
     dfgImage = ImageTk.PhotoImage(PIL_image_small)
     images["dfgImage"] = dfgImage # This is important due to the garbage collection would remove local variable of image
     widgets["dfgLabel"].config(image=dfgImage)
@@ -1450,7 +1450,7 @@ def create_cgra_pannel(master, rows, columns):
     # draw data memory
     memHeight = GRID_HEIGHT
     button = tkinter.Button(canvas, text = "Data\nSPM", fg = 'black', bg = 'gray', relief = 'raised', bd = BORDER, command = clickSPM)
-    button.place(height=memHeight, width=MEM_WIDTH, x = 0, y = 25)
+    button.place(height=memHeight, width=MEM_WIDTH, x = 25, y = 35)
 
             
     # construct tiles
@@ -1469,7 +1469,7 @@ def create_cgra_pannel(master, rows, columns):
         if not tile.disabled:
             button = tkinter.Button(canvas, text = "Tile "+str(tile.ID), fg='black', bg='gray', relief='raised', bd=BORDER, command=partial(clickTile, tile.ID))
             posX, posY = tile.getPosXY()
-            button.place(height=TILE_HEIGHT, width=TILE_WIDTH, x = posX, y = posY + 25)
+            button.place(height=TILE_HEIGHT, width=TILE_WIDTH, x = posX + 25, y = posY + 35)
 
 
     # construct links
@@ -1531,7 +1531,7 @@ def create_cgra_pannel(master, rows, columns):
         else:
             srcX, srcY = link.getSrcXY()
             dstX, dstY = link.getDstXY()
-            canvas.create_line(srcX, srcY + 25, dstX, dstY + 25, arrow=tkinter.LAST)
+            canvas.create_line(srcX + 25, srcY + 35, dstX + 25, dstY + 35, arrow=tkinter.LAST)
 
 
 def place_fu_options(master):
@@ -1562,7 +1562,7 @@ def place_xbar_options(master):
         if portType in paramCGRA.getTileOfID(0).neverUsedOutPorts:
             xbarCheckbutton.configure(state="disabled")
 
-        xbarCheckbutton.grid(row=i//4, column=i%4, padx=15, pady=15, sticky="nsew")
+        xbarCheckbutton.grid(row=i//4, column=i%4, padx=33, pady=30, sticky="nsew")
 
 
 
@@ -1601,14 +1601,14 @@ def create_param_pannel(master):
     dataMemEntry.insert(0, str(paramCGRA.dataMemSize))
     widgets["dataMemEntry"] = dataMemEntry   
     updateButton = tkinter.Button(paramPannel, text = " Reset ", relief='raised', command = partial(clickReset, master))
-    updateButton.grid(row=2, column=3, sticky=tkinter.W)
+    updateButton.grid(row=2, column=3)
 
     entireTileCheckVar.set(0)
     entireTileCheckbutton = tkinter.Checkbutton(paramPannel, variable=entireTileCheckVar, text="Disable entire Tile 0", command=clickEntireTileCheckbutton)
     entireTileCheckbutton.grid(columnspan=3, row=3, column=0,sticky="W")
     widgets["entireTileCheckbutton"] = entireTileCheckbutton
     resetButton = tkinter.Button(paramPannel, text = "Update", relief='raised', command = partial(clickUpdate, master))
-    resetButton.grid(row=3, column=3,sticky=tkinter.W)
+    resetButton.grid(row=3, column=3)
 
     fuConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 functional units', bd = BORDER, relief='groove')
     fuConfigPannel.grid(columnspan=4, row=4, column=0,rowspan=3,sticky="nsew")
@@ -1730,6 +1730,9 @@ def create_test_pannel(master):
     synthesisTimeEntry = tkinter.Entry(reportPannel, fg="black", justify=tkinter.CENTER)
     widgets["synthesisTimeEntry"] = synthesisTimeEntry
 
+    reportTimecostLabel = tkinter.Label(reportPannel, text = " Time cost")
+    CreateToolTip(reportTimecostLabel, text = "Time is in s.")
+    
     reportTileAreaLabel = tkinter.Label(reportPannel, text = " Tiles area")
     CreateToolTip(reportTileAreaLabel, text = "Area is in mm^2.")
 
@@ -1754,9 +1757,11 @@ def create_test_pannel(master):
     reportSPMPowerData = tkinter.Entry(reportPannel, justify=tkinter.CENTER)
     widgets["reportSPMPowerData"] = reportSPMPowerData
 
-    reportButton.grid(row=0, column=0)
-    reportProgress.grid(row=0,column=1)
+    reportButton.grid(row=0, column=1)
+    reportProgress.grid(row=0,column=0)
+
     synthesisTimeEntry.grid(row=1, column=0,pady=10)
+    reportTimecostLabel.grid(row=1,column=1,pady=10)
 
     reportTileAreaLabel.grid(row=2, column=1,pady=10)
     reportTileAreaData.grid(row=2, column=0,pady=10)
@@ -1901,7 +1906,6 @@ def create_kernel_pannel(master):
 #layoutPadPosX = scriptPadPosX + scriptPadWidth + INTERVAL
 #layoutPadWidth = 300
 #layoutPadHeight = GRID_HEIGHT
-#master.geometry(str(1900)+"x"+str(1100))
 create_cgra_pannel(master, ROWS, COLS)
 create_param_pannel(master)
 create_test_pannel(master)

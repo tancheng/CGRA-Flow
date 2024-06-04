@@ -42,8 +42,8 @@ def window_size(window, width, height):
     window.geometry(f"{width}x{height}")
 master = tkinter.Tk()
 master.title("CGRA-Flow: An Integrated End-to-End Framework for CGRA Exploration, Compilation, and Development")
-default_width = 1725
-default_height = 970
+default_width = 1723
+default_height = 900
 window_size(master, default_width, default_height) 
 master.grid_rowconfigure(0, weight=2)
 master.grid_rowconfigure(1, weight=3)
@@ -669,7 +669,7 @@ paramCGRA = ParamCGRA(ROWS, COLS, CONFIG_MEM_SIZE, DATA_MEM_SIZE)
 def clickTile(ID):
     widgets["fuConfigPannel"].config(text='Tile '+str(ID)+' functional units')
     widgets["xbarConfigPannel"].config(text='Tile '+str(ID)+' crossbar outgoing links')
-    widgets["xbarConfigPannel"].grid(columnspan=4, row=7, column=0,rowspan=2)
+    widgets["xbarConfigPannel"].grid(columnspan=4, row=7, column=0,rowspan=2,sticky="nsew")
     widgets["entireTileCheckbutton"].config(text='Disable entire Tile '+str(ID), state="normal")
     widgets["spmConfigPannel"].grid_forget()
     paramCGRA.targetTileID = ID
@@ -696,7 +696,7 @@ def clickSPM():
 
     spmConfigPannel = widgets["spmConfigPannel"]
     spmConfigPannel.config(text='DataSPM outgoing links')
-    spmConfigPannel.grid(row=7,column=0,rowspan=2,columnspan=4)
+    spmConfigPannel.grid(row=7,column=0,rowspan=2,columnspan=4,sticky="nsew")
 
     spmEnabledListbox = widgets["spmEnabledListbox"]
     spmDisabledListbox = widgets["spmDisabledListbox"]
@@ -1430,12 +1430,10 @@ def create_cgra_pannel(master, rows, columns):
     cgraPannel = tkinter.LabelFrame(master, text='CGRA', bd=BORDER, relief='groove')
     cgraPannel.grid(row=0, column=0, rowspan=1,columnspan=1, sticky="nsew")
     canvas = tkinter.Canvas(cgraPannel)
+    widgets["canvas"] = canvas
     #canvas = tkinter.Canvas(master)
     #canvas.grid(row=0,column=0,rowspan=3,columnspan=2,sticky="nsew")
-    canvas.pack(side="top", fill="both", expand=True)
-    hbar = tkinter.Scrollbar(cgraPannel, orient="horizontal", command=canvas.xview)
-    hbar.pack(side="bottom", fill="x")
-    canvas.config(xscrollcommand=hbar.set)
+    baseX = 0
 
     # pad contains tile and links
     # padSize = TILE_SIZE + LINK_LENGTH
@@ -1449,9 +1447,9 @@ def create_cgra_pannel(master, rows, columns):
 
     # draw data memory
     memHeight = GRID_HEIGHT
-    button = tkinter.Button(canvas, text = "Data\nSPM", fg = 'black', bg = 'gray', relief = 'raised', bd = BORDER, command = clickSPM)
-    button.place(height=memHeight, width=MEM_WIDTH, x = 25, y = 35)
-
+    spmLabel = tkinter.Button(canvas, text = "Data\nSPM", fg = 'black', bg = 'gray', relief = 'raised', bd = BORDER, command = clickSPM)
+    #button.place(height=memHeight, width=MEM_WIDTH, x = 25, y = 35)
+    canvas.create_window(baseX+BORDER, BORDER, window=spmLabel, height=GRID_HEIGHT, width=MEM_WIDTH, anchor="nw")
             
     # construct tiles
     if len(paramCGRA.tiles) == 0:
@@ -1469,7 +1467,7 @@ def create_cgra_pannel(master, rows, columns):
         if not tile.disabled:
             button = tkinter.Button(canvas, text = "Tile "+str(tile.ID), fg='black', bg='gray', relief='raised', bd=BORDER, command=partial(clickTile, tile.ID))
             posX, posY = tile.getPosXY()
-            button.place(height=TILE_HEIGHT, width=TILE_WIDTH, x = posX + 25, y = posY + 35)
+            canvas.create_window(posX, posY, window=button, height=TILE_HEIGHT, width=TILE_WIDTH, anchor="nw")
 
 
     # construct links
@@ -1531,8 +1529,13 @@ def create_cgra_pannel(master, rows, columns):
         else:
             srcX, srcY = link.getSrcXY()
             dstX, dstY = link.getDstXY()
-            canvas.create_line(srcX + 25, srcY + 35, dstX + 25, dstY + 35, arrow=tkinter.LAST)
-
+            canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
+    
+    canvas.pack(side="top", fill="both", expand=True)
+    hbar = tkinter.Scrollbar(cgraPannel, orient="horizontal", command=canvas.xview)
+    hbar.pack(side="bottom", fill="x")
+    canvas.config(xscrollcommand=hbar.set)
+    canvas.config(scrollregion=canvas.bbox("all"))
 
 def place_fu_options(master):
     fuCount = len(fuTypeList)
@@ -1543,7 +1546,7 @@ def place_fu_options(master):
         fuCheckbuttons[fuTypeList[i]] = fuCheckbutton
         fuCheckbutton.select()
         paramCGRA.updateFuCheckbutton(fuTypeList[i], fuVar.get())
-        fuCheckbutton.grid(row=i//4, column=i%4, padx=15, pady=15, sticky="nsew")
+        fuCheckbutton.grid(row=i//4, column=i%4, padx=33, pady=30, sticky="nsew")
         
 def place_xbar_options(master):
     for i in range(PORT_DIRECTION_COUNTS):
@@ -1616,19 +1619,19 @@ def create_param_pannel(master):
     place_fu_options(fuConfigPannel)
 
     xbarConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 crossbar outgoing links', bd=BORDER, relief='groove')
-    xbarConfigPannel.grid(columnspan=4, row=7, column=0,rowspan=2)
+    xbarConfigPannel.grid(columnspan=4, row=7, column=0,rowspan=2,sticky="nsew")
     widgets["xbarConfigPannel"] = xbarConfigPannel
-    place_xbar_options(xbarConfigPannel)   
+    place_xbar_options(xbarConfigPannel)
 
     spmConfigPannel = tkinter.LabelFrame(paramPannel, text='Data SPM outgoing links', bd=BORDER, relief='groove')
-    spmConfigPannel.grid(row=7,column=0,rowspan=2,columnspan=4)
+    spmConfigPannel.grid(row=7,column=0,rowspan=2,columnspan=4,sticky="nsew")
     widgets["spmConfigPannel"] = spmConfigPannel
     for i in range(3):
         spmConfigPannel.rowconfigure(i,weight=1)
     
-    spmConfigPannel.columnconfigure(0,weight=2)
+    spmConfigPannel.columnconfigure(0,weight=1)
     spmConfigPannel.columnconfigure(1,weight=1)
-    spmConfigPannel.columnconfigure(2,weight=2)
+    spmConfigPannel.columnconfigure(2,weight=1)
     spmConfigPannel.columnconfigure(3,weight=1)
     spmConfigPannel.columnconfigure(4,weight=2)
     
@@ -1653,7 +1656,7 @@ def create_param_pannel(master):
     spmEnabledListbox.config(yscrollcommand=spmEnabledScrollbar.set)
     spmDisabledScrollbar.config(command=spmDisabledListbox.yview)
     spmDisabledListbox.config(yscrollcommand=spmDisabledScrollbar.set)
-    spmEnabledLabel.grid(row=0,column=0,rowspan=3,sticky="new")
+    spmEnabledLabel.grid(row=0,column=0,rowspan=3,sticky="nsew")
 
     spmEnabledScrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
     spmEnabledListbox.pack()
@@ -1683,6 +1686,8 @@ def create_param_pannel(master):
             spmEnabledListbox.insert(0, port)
         else:
             spmDisabledListbox.insert(0, port)
+
+
 
  
 

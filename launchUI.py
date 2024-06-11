@@ -23,8 +23,8 @@ PORT_NORTHEAST = 5
 PORT_SOUTHEAST = 6
 PORT_SOUTHWEST = 7
 PORT_DIRECTION_COUNTS = 8
-TILE_HEIGHT = 70
-TILE_WIDTH = 70
+TILE_HEIGHT = 75
+TILE_WIDTH = 75
 LINK_LENGTH = 40
 INTERVAL = 10
 BORDER = 4
@@ -39,10 +39,12 @@ def window_size(window, width, height):
     window.geometry(f"{width}x{height}")
 master = tkinter.Tk()
 master.title("CGRA-Flow: An Integrated End-to-End Framework for CGRA Exploration, Compilation, and Development")
-default_width = 1723
+
+# The width and height of the entire window
+default_width = 1600
 default_height = 900
 window_size(master, default_width, default_height) 
-master.grid_rowconfigure(0, weight=2)
+#master.grid_rowconfigure(0, weight=2)
 master.grid_rowconfigure(1, weight=3)
 master.grid_columnconfigure(0, weight=1)
 master.grid_columnconfigure(1, weight=1)
@@ -1321,6 +1323,8 @@ def drawSchedule():
         spmLabel = tkinter.Label(canvas, text="Data\nSPM", fg='black', bg='gray', relief='raised', bd=BORDER)
         canvas.create_window(baseX+BORDER, BORDER, window=spmLabel, height=GRID_HEIGHT, width=MEM_WIDTH, anchor="nw")
 
+
+
         # draw tiles
         for tile in paramCGRA.tiles:
             if not tile.disabled:
@@ -1330,7 +1334,7 @@ def drawSchedule():
                 else:
                     button = tkinter.Label(canvas, text = "Tile "+str(tile.ID), fg="black", bg="grey", relief="raised", bd=BORDER)
                 posX, posY = tile.getPosXY(baseX+BORDER, BORDER)
-                canvas.create_window(posX, posY, window=button, height=tileHeight, width=tileWidth, anchor="nw")
+                canvas.create_window(posX, posY-60, window=button, height=tileHeight, width=tileWidth, anchor="nw")
 
         # draw links
         for link in paramCGRA.updatedLinks:
@@ -1338,9 +1342,9 @@ def drawSchedule():
                 srcX, srcY = link.getSrcXY(baseX+BORDER, BORDER)
                 dstX, dstY = link.getDstXY(baseX+BORDER, BORDER)
                 if ii in link.mapping:
-                    canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST, fill="red")
+                    canvas.create_line(srcX, srcY-60, dstX, dstY-60, arrow=tkinter.LAST, fill="red")
                 else:
-                    canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST, fill="black")
+                    canvas.create_line(srcX, srcY-60, dstX, dstY-60, arrow=tkinter.LAST, fill="black")
  
         cycleLabel = tkinter.Label(canvas, text="Cycle "+str(ii))
         canvas.create_window(baseX+280, GRID_HEIGHT+10+BORDER, window=cycleLabel, height=20, width=80)
@@ -1446,8 +1450,8 @@ def create_cgra_pannel(master, rows, columns):
     # draw data memory
     memHeight = GRID_HEIGHT
     spmLabel = tkinter.Button(canvas, text = "Data\nSPM", fg = 'black', bg = 'gray', relief = 'raised', bd = BORDER, command = clickSPM)
-    #button.place(height=memHeight, width=MEM_WIDTH, x = 25, y = 35)
-    canvas.create_window(baseX+BORDER, BORDER, window=spmLabel, height=GRID_HEIGHT, width=MEM_WIDTH, anchor="nw") # Data memory will be placed in the upper left corner
+    # Data memory will be placed in the upper left corner
+    canvas.create_window(baseX+BORDER, BORDER, window=spmLabel, height=GRID_HEIGHT+100, width=MEM_WIDTH, anchor="nw")
             
     # construct tiles
     if len(paramCGRA.tiles) == 0:
@@ -1455,7 +1459,7 @@ def create_cgra_pannel(master, rows, columns):
             for j in range(COLS):
                 ID = i*COLS+j
                 posX = padWidth * j + MEM_WIDTH + LINK_LENGTH
-                posY = GRID_HEIGHT - padHeight * i - TILE_HEIGHT
+                posY = GRID_HEIGHT - padHeight * i - TILE_HEIGHT + 60
 
                 tile = ParamTile(ID, j, i, posX, posY, TILE_WIDTH, TILE_HEIGHT)
                 paramCGRA.addTile(tile)
@@ -1465,7 +1469,8 @@ def create_cgra_pannel(master, rows, columns):
         if not tile.disabled:
             button = tkinter.Button(canvas, text = "Tile "+str(tile.ID), fg='black', bg='gray', relief='raised', bd=BORDER, command=partial(clickTile, tile.ID))
             posX, posY = tile.getPosXY()
-            canvas.create_window(posX, posY, window=button, height=TILE_HEIGHT, width=TILE_WIDTH, anchor="nw") # Tiles will be placed near the Data memory 
+            # Tiles will be placed near the Data memory
+            canvas.create_window(posX, posY, window=button, height=TILE_HEIGHT, width=TILE_WIDTH, anchor="nw") 
 
 
     # construct links
@@ -1611,25 +1616,30 @@ def create_param_pannel(master):
     fuConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 functional units', bd = BORDER, relief='groove')
     fuConfigPannel.grid(columnspan=4, row=4, column=0, rowspan=3, sticky="nsew")
     widgets["fuConfigPannel"] = fuConfigPannel
+
+    # Use columnconfigure to partition the columns, so that each column fills the corresponding space
     for i in range(4):
-        fuConfigPannel.columnconfigure(i, weight=1) # Use columnconfigure to partition the columns, so that each column fills the corresponding space  
+        fuConfigPannel.columnconfigure(i, weight=1)  
     place_fu_options(fuConfigPannel)
 
     xbarConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 crossbar outgoing links', bd=BORDER, relief='groove')
     xbarConfigPannel.grid(columnspan=4, row=7, column=0, rowspan=2, sticky="nsew")
     widgets["xbarConfigPannel"] = xbarConfigPannel
+
+    # Use columnconfigure to partition the columns, so that each column fills the corresponding space
     for i in range(4):
-        xbarConfigPannel.columnconfigure(i, weight=1) # Use columnconfigure to partition the columns, so that each column fills the corresponding space  
+        xbarConfigPannel.columnconfigure(i, weight=1)  
     place_xbar_options(xbarConfigPannel)
 
     spmConfigPannel = tkinter.LabelFrame(paramPannel, text='Data SPM outgoing links', bd=BORDER, relief='groove')
     spmConfigPannel.grid(row=7, column=0, rowspan=2, columnspan=4, sticky="nsew")
     widgets["spmConfigPannel"] = spmConfigPannel
+
+    # Use columnconfigure and rowconfigure to partition the columns, so that each column and row fills the corresponding space
     for i in range(3):
         spmConfigPannel.rowconfigure(i, weight=1)
-    
     for i in range(5):
-        spmConfigPannel.columnconfigure(i, weight=1) # Use columnconfigure and rowconfigure to partition the columns, so that each column and row fills the corresponding space
+        spmConfigPannel.columnconfigure(i, weight=1)
     
     spmEnabledOutVar = tkinter.IntVar()
     spmDisabledOutVar = tkinter.IntVar()

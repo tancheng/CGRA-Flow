@@ -666,7 +666,8 @@ paramCGRA = ParamCGRA(ROWS, COLS, CONFIG_MEM_SIZE, DATA_MEM_SIZE)
 def clickTile(ID):
     widgets["fuConfigPannel"].config(text='Tile '+str(ID)+' functional units')
     widgets["xbarConfigPannel"].config(text='Tile '+str(ID)+' crossbar outgoing links')
-    widgets["xbarConfigPannel"].grid(columnspan=4, row=7, column=0, rowspan=2, sticky="nsew")# After clicking the tile, the pannel will fill all directions
+    # After clicking the tile, the pannel will fill all directions
+    widgets["xbarConfigPannel"].grid(columnspan=4, row=7, column=0, rowspan=2, sticky="nsew")
     widgets["entireTileCheckbutton"].config(text='Disable entire Tile '+str(ID), state="normal")
     widgets["spmConfigPannel"].grid_forget()
     paramCGRA.targetTileID = ID
@@ -693,7 +694,8 @@ def clickSPM():
 
     spmConfigPannel = widgets["spmConfigPannel"]
     spmConfigPannel.config(text='DataSPM outgoing links')
-    spmConfigPannel.grid(row=7, column=0, rowspan=2, columnspan=4, sticky="nsew") # After clicking the SPM, the pannel will fill all directions
+    # After clicking the SPM, the pannel will fill all directions
+    spmConfigPannel.grid(row=7, column=0, rowspan=2, columnspan=4, sticky="nsew")
 
     spmEnabledListbox = widgets["spmEnabledListbox"]
     spmDisabledListbox = widgets["spmDisabledListbox"]
@@ -1463,7 +1465,7 @@ def create_cgra_pannel(master, rows, columns):
         if not tile.disabled:
             button = tkinter.Button(canvas, text = "Tile "+str(tile.ID), fg='black', bg='gray', relief='raised', bd=BORDER, command=partial(clickTile, tile.ID))
             posX, posY = tile.getPosXY()
-            canvas.create_window(posX, posY, window=button, height=TILE_HEIGHT, width=TILE_WIDTH, anchor="nw") # Tiles will  be placed near the Data memory 
+            canvas.create_window(posX, posY, window=button, height=TILE_HEIGHT, width=TILE_WIDTH, anchor="nw") # Tiles will be placed near the Data memory 
 
 
     # construct links
@@ -1569,12 +1571,9 @@ def create_param_pannel(master):
     paramPannel = tkinter.LabelFrame(master, text='Configuration', bd=BORDER, relief='groove')
     paramPannel.grid(row=0, column=1, rowspan=1, columnspan=1, sticky="nsew")
     for i in range(10):
-        if i < 8:
-            paramPannel.rowconfigure(i, weight=1)
-    else:
-            paramPannel.rowconfigure(i, weight=2)
+        paramPannel.rowconfigure(i, weight=1)
     for i in range(3):
-        paramPannel.columnconfigure(i, weight=1) # Use columnconfigure and rowconfigure to partition the columns, so that each sub-module fills the corresponding space
+        paramPannel.columnconfigure(i, weight=1) # Use columnconfigure and rowconfigure to partition the columns, so that each column and row will fill the corresponding space
     rowsLabel = tkinter.Label(paramPannel, text='Rows  Columns:' )
     rowsLabel.grid(row=0, column=0, sticky=tkinter.W)
     rowsEntry = tkinter.Entry(paramPannel, justify=tkinter.CENTER)
@@ -1612,19 +1611,15 @@ def create_param_pannel(master):
     fuConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 functional units', bd = BORDER, relief='groove')
     fuConfigPannel.grid(columnspan=4, row=4, column=0, rowspan=3, sticky="nsew")
     widgets["fuConfigPannel"] = fuConfigPannel
-    fuConfigPannel.columnconfigure(0, weight=1)
-    fuConfigPannel.columnconfigure(1, weight=1)
-    fuConfigPannel.columnconfigure(2, weight=1)
-    fuConfigPannel.columnconfigure(3, weight=1) # Use columnconfigure and rowconfigure to partition the columns, so that each sub-module fills the corresponding space  
+    for i in range(4):
+        fuConfigPannel.columnconfigure(i, weight=1) # Use columnconfigure to partition the columns, so that each column fills the corresponding space  
     place_fu_options(fuConfigPannel)
 
     xbarConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 crossbar outgoing links', bd=BORDER, relief='groove')
     xbarConfigPannel.grid(columnspan=4, row=7, column=0, rowspan=2, sticky="nsew")
     widgets["xbarConfigPannel"] = xbarConfigPannel
-    xbarConfigPannel.columnconfigure(0, weight=1)
-    xbarConfigPannel.columnconfigure(1, weight=1)
-    xbarConfigPannel.columnconfigure(2, weight=1)
-    xbarConfigPannel.columnconfigure(3, weight=1) # Use columnconfigure and rowconfigure to partition the columns, so that each sub-module fills the corresponding space  
+    for i in range(4):
+        xbarConfigPannel.columnconfigure(i, weight=1) # Use columnconfigure to partition the columns, so that each column fills the corresponding space  
     place_xbar_options(xbarConfigPannel)
 
     spmConfigPannel = tkinter.LabelFrame(paramPannel, text='Data SPM outgoing links', bd=BORDER, relief='groove')
@@ -1633,11 +1628,8 @@ def create_param_pannel(master):
     for i in range(3):
         spmConfigPannel.rowconfigure(i, weight=1)
     
-    spmConfigPannel.columnconfigure(0, weight=1)
-    spmConfigPannel.columnconfigure(1, weight=1)
-    spmConfigPannel.columnconfigure(2, weight=1)
-    spmConfigPannel.columnconfigure(3, weight=1)
-    spmConfigPannel.columnconfigure(4, weight=1) # Use columnconfigure and rowconfigure to partition the columns, so that each sub-module fills the corresponding space
+    for i in range(5):
+        spmConfigPannel.columnconfigure(i, weight=1) # Use columnconfigure and rowconfigure to partition the columns, so that each column and row fills the corresponding space
     
     spmEnabledOutVar = tkinter.IntVar()
     spmDisabledOutVar = tkinter.IntVar()

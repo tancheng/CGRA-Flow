@@ -23,8 +23,8 @@ PORT_NORTHEAST = 5
 PORT_SOUTHEAST = 6
 PORT_SOUTHWEST = 7
 PORT_DIRECTION_COUNTS = 8
-TILE_HEIGHT = 75
-TILE_WIDTH = 75
+TILE_HEIGHT = 70
+TILE_WIDTH = 70
 LINK_LENGTH = 40
 INTERVAL = 10
 BORDER = 4
@@ -40,16 +40,7 @@ def window_size(window, width, height):
 master = tkinter.Tk()
 master.title("CGRA-Flow: An Integrated End-to-End Framework for CGRA Exploration, Compilation, and Development")
 
-# The width and height of the entire window
-default_width = 1600
-default_height = 900
-window_size(master, default_width, default_height) 
-#master.grid_rowconfigure(0, weight=2)
-master.grid_rowconfigure(1, weight=3)
-master.grid_columnconfigure(0, weight=1)
-master.grid_columnconfigure(1, weight=1)
-master.grid_columnconfigure(2, weight=1)
-master.grid_columnconfigure(3, weight=1)
+
 fuTypeList = ["Phi", "Add", "Shift", "Ld", "Sel", "Cmp", "MAC", "St", "Ret", "Mul", "Logic", "Br"]
 
 xbarTypeList = ["W", "E", "N", "S", "NE", "NW", "SE", "SW"]
@@ -1334,7 +1325,7 @@ def drawSchedule():
                 else:
                     button = tkinter.Label(canvas, text = "Tile "+str(tile.ID), fg="black", bg="grey", relief="raised", bd=BORDER)
                 posX, posY = tile.getPosXY(baseX+BORDER, BORDER)
-                canvas.create_window(posX, posY-60, window=button, height=tileHeight, width=tileWidth, anchor="nw")
+                canvas.create_window(posX, posY, window=button, height=tileHeight, width=tileWidth, anchor="nw")
 
         # draw links
         for link in paramCGRA.updatedLinks:
@@ -1342,9 +1333,9 @@ def drawSchedule():
                 srcX, srcY = link.getSrcXY(baseX+BORDER, BORDER)
                 dstX, dstY = link.getDstXY(baseX+BORDER, BORDER)
                 if ii in link.mapping:
-                    canvas.create_line(srcX, srcY-60, dstX, dstY-60, arrow=tkinter.LAST, fill="red")
+                    canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST, fill="red")
                 else:
-                    canvas.create_line(srcX, srcY-60, dstX, dstY-60, arrow=tkinter.LAST, fill="black")
+                    canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST, fill="black")
  
         cycleLabel = tkinter.Label(canvas, text="Cycle "+str(ii))
         canvas.create_window(baseX+280, GRID_HEIGHT+10+BORDER, window=cycleLabel, height=20, width=80)
@@ -1451,7 +1442,7 @@ def create_cgra_pannel(master, rows, columns):
     memHeight = GRID_HEIGHT
     spmLabel = tkinter.Button(canvas, text = "Data\nSPM", fg = 'black', bg = 'gray', relief = 'raised', bd = BORDER, command = clickSPM)
     # Data memory will be placed in the upper left corner
-    canvas.create_window(baseX+BORDER, BORDER, window=spmLabel, height=GRID_HEIGHT+100, width=MEM_WIDTH, anchor="nw")
+    canvas.create_window(baseX+BORDER, BORDER, window=spmLabel, height=GRID_HEIGHT, width=MEM_WIDTH, anchor="nw")
             
     # construct tiles
     if len(paramCGRA.tiles) == 0:
@@ -1459,7 +1450,7 @@ def create_cgra_pannel(master, rows, columns):
             for j in range(COLS):
                 ID = i*COLS+j
                 posX = padWidth * j + MEM_WIDTH + LINK_LENGTH
-                posY = GRID_HEIGHT - padHeight * i - TILE_HEIGHT + 60
+                posY = GRID_HEIGHT - padHeight * i - TILE_HEIGHT
 
                 tile = ParamTile(ID, j, i, posX, posY, TILE_WIDTH, TILE_HEIGHT)
                 paramCGRA.addTile(tile)
@@ -1920,12 +1911,22 @@ def create_kernel_pannel(master):
 #layoutPadPosX = scriptPadPosX + scriptPadWidth + INTERVAL
 #layoutPadWidth = 300
 #layoutPadHeight = GRID_HEIGHT
+create_kernel_pannel(master)
+create_mapping_pannel(master)
 create_cgra_pannel(master, ROWS, COLS)
 create_param_pannel(master)
 create_test_pannel(master)
 create_layout_pannel(master)  
-create_kernel_pannel(master)
-create_mapping_pannel(master)
+# The width and height of the entire window
+default_width = 1600
+default_height = 1050
+window_size(master, default_width, default_height) 
+#master.grid_rowconfigure(0, weight=1)
+master.grid_rowconfigure(1, weight=2)
+master.grid_columnconfigure(0, weight=1)
+master.grid_columnconfigure(1, weight=1)
+master.grid_columnconfigure(2, weight=1)
+master.grid_columnconfigure(3, weight=1)
 #print(master.winfo_width())
 #print(master.winfo_height())
 master.mainloop()

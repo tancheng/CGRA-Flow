@@ -1566,10 +1566,11 @@ def place_xbar_options(master):
 def create_param_pannel(master):
     paramPannel = tkinter.LabelFrame(master, text='Configuration', bd=BORDER, relief='groove')
     paramPannel.grid(row=0, column=1, rowspan=1, columnspan=1, sticky="nsew")
+    # Use columnconfigure and rowconfigure to partition the columns, so that each column and row will fill the corresponding space
     for i in range(10):
         paramPannel.rowconfigure(i, weight=1)
     for i in range(3):
-        paramPannel.columnconfigure(i, weight=1) # Use columnconfigure and rowconfigure to partition the columns, so that each column and row will fill the corresponding space
+        paramPannel.columnconfigure(i, weight=1)
     rowsLabel = tkinter.Label(paramPannel, text='Rows  Columns:' )
     rowsLabel.grid(row=0, column=0, sticky=tkinter.W)
     rowsEntry = tkinter.Entry(paramPannel, justify=tkinter.CENTER)

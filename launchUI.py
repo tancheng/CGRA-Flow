@@ -1421,8 +1421,8 @@ def create_cgra_pannel(master, rows, columns):
     COLS = columns
     TILE_WIDTH = (GRID_WIDTH + LINK_LENGTH) / COLS - LINK_LENGTH
     TILE_HEIGHT = (GRID_HEIGHT + LINK_LENGTH) / ROWS - LINK_LENGTH
-
-    cgraPannel = tkinter.LabelFrame(master, text='CGRA', bd=BORDER, relief='groove')
+    #Use solid black board to let the pannel look better
+    cgraPannel = tkinter.LabelFrame(master, text='CGRA', bd=BORDER, relief='groove', highlightbackground="black", highlightthickness=2)
     cgraPannel.grid(row=0, column=0, rowspan=1, columnspan=1, sticky="nsew")
     canvas = tkinter.Canvas(cgraPannel)
     widgets["canvas"] = canvas
@@ -1525,11 +1525,15 @@ def create_cgra_pannel(master, rows, columns):
             dstX, dstY = link.getDstXY()
             canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
     
+    vbar = tkinter.Scrollbar(cgraPannel, orient="vertical", command=canvas.yview)
+    vbar.pack(side=tkinter.RIGHT, fill="y")
+    canvas.config(yscrollcommand=vbar.set)
+    canvas.config(scrollregion=canvas.bbox("all"))
     canvas.pack(side="top", fill="both", expand=True)
     hbar = tkinter.Scrollbar(cgraPannel, orient="horizontal", command=canvas.xview)
     hbar.pack(side="bottom", fill="x")
     canvas.config(xscrollcommand=hbar.set)
-    canvas.config(scrollregion=canvas.bbox("all"))
+
 
 def place_fu_options(master):
     fuCount = len(fuTypeList)
@@ -1564,7 +1568,7 @@ def place_xbar_options(master):
 
 
 def create_param_pannel(master):
-    paramPannel = tkinter.LabelFrame(master, text='Configuration', bd=BORDER, relief='groove')
+    paramPannel = tkinter.LabelFrame(master, text='Configuration', bd=BORDER, relief='groove', highlightbackground="black", highlightthickness=2)
     paramPannel.grid(row=0, column=1, rowspan=1, columnspan=1, sticky="nsew")
 
     # Use columnconfigure and rowconfigure to partition the columns, so that each column and row will fill the corresponding space
@@ -1585,7 +1589,7 @@ def create_param_pannel(master):
     widgets["columnsEntry"] = columnsEntry
     
     configMemLabel = ttk.Label(paramPannel, text='Config Memory (entries/tile):')
-    configMemLabel.grid(columnspan=2, row=1, column=0, sticky=tkinter.W)
+    configMemLabel.grid(columnspan=2, row=1, column=0)
     configMemEntry = ttk.Entry(paramPannel, justify=tkinter.CENTER)
     configMemEntry.grid(row=1, column=2)
     configMemEntry.insert(0, paramCGRA.configMemSize)
@@ -1598,16 +1602,16 @@ def create_param_pannel(master):
     dataMemEntry.insert(0, str(paramCGRA.dataMemSize))
     widgets["dataMemEntry"] = dataMemEntry   
     updateButton = tkinter.Button(paramPannel, text = " Reset ", relief='raised', command = partial(clickReset, master))
-    updateButton.grid(row=2, column=2)
+    updateButton.grid(row=2, column=2, columnspan=2, sticky="nsew")
 
     entireTileCheckVar.set(0)
     entireTileCheckbutton = tkinter.Checkbutton(paramPannel, variable=entireTileCheckVar, text="Disable entire Tile 0", command=clickEntireTileCheckbutton)
-    entireTileCheckbutton.grid(columnspan=2, row=3, column=0, sticky="W")
+    entireTileCheckbutton.grid(columnspan=2, row=3, column=0)
     widgets["entireTileCheckbutton"] = entireTileCheckbutton
     resetButton = tkinter.Button(paramPannel, text = "Update", relief='raised', command = partial(clickUpdate, master))
-    resetButton.grid(row=3, column=2)
+    resetButton.grid(row=3, column=2 ,columnspan=2, sticky="nsew")
 
-    fuConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 functional units', bd = BORDER, relief='groove')
+    fuConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 functional units', bd = BORDER, relief='groove', highlightbackground="black", highlightthickness=2)
     fuConfigPannel.grid(columnspan=4, row=4, column=0, rowspan=3, sticky="nsew")
     widgets["fuConfigPannel"] = fuConfigPannel
 
@@ -1616,7 +1620,7 @@ def create_param_pannel(master):
         fuConfigPannel.columnconfigure(i, weight=1)  
     place_fu_options(fuConfigPannel)
 
-    xbarConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 crossbar outgoing links', bd=BORDER, relief='groove')
+    xbarConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 crossbar outgoing links', bd=BORDER, relief='groove', highlightbackground="black", highlightthickness=2)
     xbarConfigPannel.grid(columnspan=4, row=7, column=0, rowspan=2, sticky="nsew")
     widgets["xbarConfigPannel"] = xbarConfigPannel
 
@@ -1625,7 +1629,7 @@ def create_param_pannel(master):
         xbarConfigPannel.columnconfigure(i, weight=1)  
     place_xbar_options(xbarConfigPannel)
 
-    spmConfigPannel = tkinter.LabelFrame(paramPannel, text='Data SPM outgoing links', bd=BORDER, relief='groove')
+    spmConfigPannel = tkinter.LabelFrame(paramPannel, text='Data SPM outgoing links', bd=BORDER, relief='groove', highlightbackground="black", highlightthickness=2)
     spmConfigPannel.grid(row=7, column=0, rowspan=2, columnspan=4, sticky="nsew")
     widgets["spmConfigPannel"] = spmConfigPannel
 
@@ -1692,13 +1696,13 @@ def create_param_pannel(master):
 def create_test_pannel(master):
     dataPannel =tkinter.LabelFrame(master)
     dataPannel.grid(row=0, column=2, rowspan=1, columnspan=1, sticky="nsew")
-    dataPannel.grid_rowconfigure(0, weight=1)
+    # Increase the size of the 'Sverilog' panel
     dataPannel.grid_rowconfigure(1, weight=2)
-    dataPannel.grid_rowconfigure(2, weight=1)
+
     dataPannel.grid_columnconfigure(0, weight=1)
     dataPannel.grid_columnconfigure(1, weight=1)
     dataPannel.grid_columnconfigure(2, weight=1)
-    testPannel = tkinter.LabelFrame(dataPannel, text='Verification', bd=BORDER, relief='groove')
+    testPannel = tkinter.LabelFrame(dataPannel, text='Verification', bd=BORDER, relief='groove', highlightbackground="black", highlightthickness=2)
     testPannel.grid(row=0, column=0, rowspan=1, columnspan=3, sticky="nsew")
     testPannel.columnconfigure(0, weight=1)
     testPannel.columnconfigure(1, weight=1)
@@ -1713,7 +1717,7 @@ def create_test_pannel(master):
     widgets["testShow"] = testShow
     testShow.grid(row=0, column=2, sticky=tkinter.E)
 
-    verilogPannel = tkinter.LabelFrame(dataPannel,text="SVerilog",bd=BORDER,relief="groove")
+    verilogPannel = tkinter.LabelFrame(dataPannel,text="SVerilog",bd=BORDER,relief="groove", highlightbackground="black", highlightthickness=2)
     verilogPannel.grid(row=1, column=0, rowspan=1, columnspan=3, sticky="nsew")
     CreateToolTip(verilogPannel, text = "The code might be too big to be copied,\nthe generated verilog can be found in\nthe 'verilog' folder.")
     generateVerilogButton = tkinter.Button(verilogPannel, text="Generate", relief='raised', command=clickGenerateVerilog)
@@ -1725,7 +1729,7 @@ def create_test_pannel(master):
     verilogScroll.config(command=verilogText.yview)
     widgets["verilogText"] = verilogText
     
-    reportPannel = tkinter.LabelFrame(dataPannel,text='Report area/power', bd = BORDER, relief='groove')
+    reportPannel = tkinter.LabelFrame(dataPannel,text='Report area/power', bd = BORDER, relief='groove', highlightbackground="black", highlightthickness=2)
     reportPannel.grid(row=2, column=0, rowspan=1, columnspan=3, sticky='nesw')
     reportPannel.columnconfigure(0, weight=1)
     reportPannel.columnconfigure(1, weight=1)
@@ -1738,53 +1742,53 @@ def create_test_pannel(master):
     synthesisTimeEntry = tkinter.Entry(reportPannel, fg="black", justify=tkinter.CENTER)
     widgets["synthesisTimeEntry"] = synthesisTimeEntry
 
-    reportTimecostLabel = tkinter.Label(reportPannel, text = " Time cost")
+    reportTimecostLabel = tkinter.Label(reportPannel, text = " Time cost:")
     CreateToolTip(reportTimecostLabel, text = "Time is in s.")
     
-    reportTileAreaLabel = tkinter.Label(reportPannel, text = " Tiles area")
+    reportTileAreaLabel = tkinter.Label(reportPannel, text = " Tiles area:")
     CreateToolTip(reportTileAreaLabel, text = "Area is in mm^2.")
 
     reportTileAreaData = tkinter.Entry(reportPannel, justify=tkinter.CENTER)
     widgets["reportTileAreaData"] = reportTileAreaData
 
-    reportTilePowerLabel = tkinter.Label(reportPannel, text = "Tiles power")
+    reportTilePowerLabel = tkinter.Label(reportPannel, text = "Tiles power:")
     CreateToolTip(reportTilePowerLabel, text = "Yosys is not able to provide\npower estimation.")
 
     reportTilePowerData = tkinter.Entry(reportPannel, justify=tkinter.CENTER)
     widgets["reportTilePowerData"] = reportTilePowerData
 
-    reportSPMAreaLabel = tkinter.Label(reportPannel, text = " SPM area")
+    reportSPMAreaLabel = tkinter.Label(reportPannel, text = " SPM area:")
     CreateToolTip(reportSPMAreaLabel, text = "Area is in mm^2.")
 
     reportSPMAreaData = tkinter.Entry(reportPannel, justify=tkinter.CENTER)
     widgets["reportSPMAreaData"] = reportSPMAreaData
 
-    reportSPMPowerLabel = tkinter.Label(reportPannel, text = "SPM power")
+    reportSPMPowerLabel = tkinter.Label(reportPannel, text = "SPM power:")
     CreateToolTip(reportSPMPowerLabel, text = "Power is in mW.")
 
     reportSPMPowerData = tkinter.Entry(reportPannel, justify=tkinter.CENTER)
     widgets["reportSPMPowerData"] = reportSPMPowerData
 
-    reportButton.grid(row=0, column=1)
-    reportProgress.grid(row=0, column=0)
+    reportButton.grid(row=0, column=0)
+    reportProgress.grid(row=0, column=1)
 
-    synthesisTimeEntry.grid(row=1, column=0, pady=10)
-    reportTimecostLabel.grid(row=1, column=1, pady=10)
+    synthesisTimeEntry.grid(row=1, column=1, pady=10)
+    reportTimecostLabel.grid(row=1, column=0, pady=10)
 
-    reportTileAreaLabel.grid(row=2, column=1, pady=10)
-    reportTileAreaData.grid(row=2, column=0, pady=10)
-    reportTilePowerLabel.grid(row=3, column=1, pady=10)
-    reportTilePowerData.grid(row=3, column=0, pady=10)
+    reportTileAreaLabel.grid(row=2, column=0, pady=10)
+    reportTileAreaData.grid(row=2, column=1, pady=10)
+    reportTilePowerLabel.grid(row=3, column=0, pady=10)
+    reportTilePowerData.grid(row=3, column=1, pady=10)
 
-    reportSPMAreaLabel.grid(row=4, column=1, pady=10)
-    reportSPMAreaData.grid(row=4, column=0, pady=10)
-    reportSPMPowerLabel.grid(row=5, column=1, pady=10)
-    reportSPMPowerData.grid(row=5, column=0, pady=10)
+    reportSPMAreaLabel.grid(row=4, column=0, pady=10)
+    reportSPMAreaData.grid(row=4, column=1, pady=10)
+    reportSPMPowerLabel.grid(row=5, column=0, pady=10)
+    reportSPMPowerData.grid(row=5, column=1, pady=10)
 
 
 
 def create_layout_pannel(master):
-    layoutPannel = tkinter.LabelFrame(master, text='Layout', bd=BORDER, relief='groove')
+    layoutPannel = tkinter.LabelFrame(master, text='Layout', bd=BORDER, relief='groove', highlightbackground="black", highlightthickness=2)
     layoutPannel.grid(row=0, column=3, rowspan=1, columnspan=1, sticky="nsew")
     canvas = tkinter.Canvas(layoutPannel, bd=0)
     scrollbar = tkinter.Scrollbar(layoutPannel, orient="horizontal", command=canvas.xview)
@@ -1800,7 +1804,7 @@ def create_layout_pannel(master):
     X.pack()
 
 def create_mapping_pannel(master):
-    mappingPannel = tkinter.LabelFrame(master, text='Mapping', bd=BORDER, relief='groove')
+    mappingPannel = tkinter.LabelFrame(master, text='Mapping', bd=BORDER, relief='groove', highlightbackground="black", highlightthickness=2)
     mappingPannel.grid(row=1, column=1, rowspan=1, columnspan=3, sticky="nsew")
     mappingCanvas = tkinter.Canvas(mappingPannel, bd=0)
     widgets["mappingCanvas"] = mappingCanvas
@@ -1813,7 +1817,7 @@ def create_mapping_pannel(master):
     mappingCanvas.pack(side="top", fill="both", expand=True)
 
 def create_kernel_pannel(master):
-    kernelPannel = tkinter.LabelFrame(master, text="Kernel", bd=BORDER, relief='groove')
+    kernelPannel = tkinter.LabelFrame(master, text="Kernel", bd=BORDER, relief='groove', highlightbackground="black", highlightthickness=2)
     kernelPannel.grid(row=1, column=0, rowspan=1, columnspan=1, sticky="nsew")
     for row in range(12):
         kernelPannel.grid_rowconfigure(row, weight=1)

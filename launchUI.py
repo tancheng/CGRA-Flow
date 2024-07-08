@@ -30,6 +30,7 @@ BORDER = 4
 MEM_WIDTH = 50
 CONFIG_MEM_SIZE = 8
 DATA_MEM_SIZE = 4
+thickness = 1
 def window_size(window, width, height):
     window.geometry(f"{width}x{height}")
 master = tkinter.Tk()
@@ -1220,7 +1221,7 @@ def clickShowDFG():
     convertProc = subprocess.Popen([convertCommand, "-u"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     (out, err) = convertProc.communicate()
 
-    # Get the size of the whole window
+    # Gets the size of the whole window
     master.update_idletasks()
     window_width = master.winfo_width()
     window_height = master.winfo_height()
@@ -1234,7 +1235,7 @@ def clickShowDFG():
     new_data = []
     for item in datas:
         if item[0] == 255 and item[1] == 255 and item[2] == 255:
-            # Make the image transparent where it is white
+            # Makes the image transparent where it is white
             new_data.append((255, 255, 255, 0))
         else:
             new_data.append(item)
@@ -1323,7 +1324,7 @@ def drawSchedule():
 
     for ii in range(mappingII):
         # draw data memory
-        spmLabel = tkinter.Label(canvas, text="Data\nSPM", fg='black', bg='gray', relief='raised', bd=BORDER, highlightbackground="black", highlightthickness=2)
+        spmLabel = tkinter.Label(canvas, text="Data\nSPM", fg='black', bg='gray', relief='raised', bd=BORDER, highlightbackground="black", highlightthickness = thickness)
         canvas.create_window(baseX+BORDER, BORDER, window=spmLabel, height=GRID_HEIGHT, width=MEM_WIDTH, anchor="nw")
 
 
@@ -1333,9 +1334,9 @@ def drawSchedule():
             if not tile.disabled:
                 button = None
                 if ii in tile.mapping:
-                    button = tkinter.Label(canvas, text = "Opt "+str(tile.mapping[ii]), fg="black", bg="cornflowerblue", relief="raised", bd=BORDER, highlightbackground="black", highlightthickness=2)
+                    button = tkinter.Label(canvas, text = "Opt "+str(tile.mapping[ii]), fg="black", bg="cornflowerblue", relief="raised", bd=BORDER, highlightbackground="black", highlightthickness = thickness)
                 else:
-                    button = tkinter.Label(canvas, text = "Tile "+str(tile.ID), fg="black", bg="grey", relief="raised", bd=BORDER, highlightbackground="black", highlightthickness=2)
+                    button = tkinter.Label(canvas, text = "Tile "+str(tile.ID), fg="black", bg="grey", relief="raised", bd=BORDER, highlightbackground="black", highlightthickness = thickness)
                 posX, posY = tile.getPosXY(baseX+BORDER, BORDER)
                 canvas.create_window(posX, posY, window=button, height=tileHeight, width=tileWidth, anchor="nw")
 
@@ -1432,7 +1433,7 @@ def create_cgra_pannel(master, rows, columns):
     ROWS = rows
     COLS = columns
     # Use solid black board to let the pannel look better
-    cgraPannel = tkinter.LabelFrame(master, text='CGRA', bd=BORDER, relief='groove', highlightbackground="black", highlightthickness=2)
+    cgraPannel = tkinter.LabelFrame(master, text='CGRA', bd=BORDER, relief='groove')
     cgraPannel.grid(row=0, column=0, rowspan=1, columnspan=1, sticky="nsew")
     canvas = tkinter.Canvas(cgraPannel)
     widgets["canvas"] = canvas
@@ -1451,7 +1452,7 @@ def create_cgra_pannel(master, rows, columns):
 
     # draw data memory
     memHeight = GRID_HEIGHT
-    spmLabel = tkinter.Button(canvas, text = "Data\nSPM", fg = 'black', bg = 'gray', relief = 'raised', bd = BORDER, command = clickSPM, highlightbackground="black", highlightthickness=2)
+    spmLabel = tkinter.Button(canvas, text = "Data\nSPM", fg = 'black', bg = 'gray', relief = 'raised', bd = BORDER, command = clickSPM, highlightbackground="black", highlightthickness = thickness)
     # Data memory will be placed in the upper left corner
     canvas.create_window(baseX+BORDER, BORDER, window=spmLabel, height=GRID_HEIGHT, width=MEM_WIDTH, anchor="nw")
 
@@ -1470,7 +1471,7 @@ def create_cgra_pannel(master, rows, columns):
     # draw tiles
     for tile in paramCGRA.tiles:
         if not tile.disabled:
-            button = tkinter.Button(canvas, text = "Tile "+str(tile.ID), fg='black', bg='gray', relief='raised', bd=BORDER, command=partial(clickTile, tile.ID), highlightbackground="black", highlightthickness=2)
+            button = tkinter.Button(canvas, text = "Tile "+str(tile.ID), fg='black', bg='gray', relief='raised', bd=BORDER, command=partial(clickTile, tile.ID), highlightbackground="black", highlightthickness = thickness)
             posX, posY = tile.getPosXY()
             # Tiles will be placed near the Data memory
             canvas.create_window(posX, posY, window=button, height=TILE_HEIGHT, width=TILE_WIDTH, anchor="nw") 
@@ -1580,7 +1581,7 @@ def place_xbar_options(master):
 
 
 def create_param_pannel(master):
-    paramPannel = tkinter.LabelFrame(master, text='Configuration', bd=BORDER, relief='groove', highlightbackground="black", highlightthickness=2)
+    paramPannel = tkinter.LabelFrame(master, text='Configuration', bd=BORDER, relief='groove')
     paramPannel.grid(row=0, column=1, rowspan=1, columnspan=1, sticky="nsew")
 
     # Use columnconfigure and rowconfigure to partition the columns, so that each column and row will fill the corresponding space
@@ -1591,39 +1592,39 @@ def create_param_pannel(master):
         paramPannel.columnconfigure(i, weight=1)
     rowsLabel = tkinter.Label(paramPannel, text='Rows  Columns:')
     rowsLabel.grid(row=0, column=0, sticky=tkinter.W)
-    rowsEntry = tkinter.Entry(paramPannel, justify=tkinter.CENTER, highlightbackground="black", highlightthickness=2)
+    rowsEntry = tkinter.Entry(paramPannel, justify=tkinter.CENTER, highlightbackground="black", highlightthickness = thickness)
     rowsEntry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
     rowsEntry.insert(0, str(paramCGRA.rows))
     widgets["rowsEntry"] = rowsEntry
-    columnsEntry = tkinter.Entry(paramPannel, justify=tkinter.CENTER, highlightbackground="black", highlightthickness=2)
+    columnsEntry = tkinter.Entry(paramPannel, justify=tkinter.CENTER, highlightbackground="black", highlightthickness = thickness)
     columnsEntry.grid(row=0, column=2, padx=2, pady=5, sticky="ew")
     columnsEntry.insert(0, str(paramCGRA.columns))
     widgets["columnsEntry"] = columnsEntry
     
     configMemLabel = tkinter.Label(paramPannel, text='Config Memory (entries/tile):')
     configMemLabel.grid(columnspan=2, row=1, column=0)
-    configMemEntry = tkinter.Entry(paramPannel, justify=tkinter.CENTER, highlightbackground="black", highlightthickness=2)
+    configMemEntry = tkinter.Entry(paramPannel, justify=tkinter.CENTER, highlightbackground="black", highlightthickness = thickness)
     configMemEntry.grid(row=1, column=2, padx=2, pady=5, sticky="ew")
     configMemEntry.insert(0, paramCGRA.configMemSize)
     widgets["configMemEntry"] = configMemEntry
     
     dataMemLabel = tkinter.Label(paramPannel, text='Data SPM (KBs):')
     dataMemLabel.grid(row=2, column=0, sticky=tkinter.W)
-    dataMemEntry = tkinter.Entry(paramPannel, justify=tkinter.CENTER, highlightbackground="black", highlightthickness=2)
+    dataMemEntry = tkinter.Entry(paramPannel, justify=tkinter.CENTER, highlightbackground="black", highlightthickness = thickness)
     dataMemEntry.grid(row=2, column=1, padx=5, pady=5, sticky="ew")
     dataMemEntry.insert(0, str(paramCGRA.dataMemSize))
     widgets["dataMemEntry"] = dataMemEntry   
-    updateButton = tkinter.Button(paramPannel, text = " Reset ", relief='raised', command = partial(clickReset, master), highlightbackground="black", highlightthickness=2)
+    updateButton = tkinter.Button(paramPannel, text = " Reset ", relief='raised', command = partial(clickReset, master), highlightbackground="black", highlightthickness = thickness)
     updateButton.grid(row=2, column=2, columnspan=2, sticky="ew")
 
     entireTileCheckVar.set(0)
     entireTileCheckbutton = tkinter.Checkbutton(paramPannel, variable=entireTileCheckVar, text="Disable entire Tile 0")
     entireTileCheckbutton.grid(columnspan=2, row=3, column=0)
     widgets["entireTileCheckbutton"] = entireTileCheckbutton
-    resetButton = tkinter.Button(paramPannel, text = "Update", relief='raised', command = partial(clickUpdate, master), highlightbackground="black", highlightthickness=2)
+    resetButton = tkinter.Button(paramPannel, text = "Update", relief='raised', command = partial(clickUpdate, master), highlightbackground="black", highlightthickness = thickness)
     resetButton.grid(row=3, column=2 ,columnspan=2, sticky="ew")
 
-    fuConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 functional units', bd = BORDER, relief='groove', highlightbackground="black", highlightthickness=2)
+    fuConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 functional units', bd = BORDER, relief='groove')
     fuConfigPannel.grid(columnspan=4, row=4, column=0, rowspan=3, sticky="nsew")
     widgets["fuConfigPannel"] = fuConfigPannel
 
@@ -1632,7 +1633,7 @@ def create_param_pannel(master):
         fuConfigPannel.columnconfigure(i, weight=1)  
     place_fu_options(fuConfigPannel)
 
-    xbarConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 crossbar outgoing links', bd=BORDER, relief='groove', highlightbackground="black", highlightthickness=2)
+    xbarConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 crossbar outgoing links', bd=BORDER, relief='groove')
     xbarConfigPannel.grid(columnspan=4, row=7, column=0, rowspan=2, sticky="nsew")
     widgets["xbarConfigPannel"] = xbarConfigPannel
 
@@ -1641,7 +1642,7 @@ def create_param_pannel(master):
         xbarConfigPannel.columnconfigure(i, weight=1)  
     place_xbar_options(xbarConfigPannel)
 
-    spmConfigPannel = tkinter.LabelFrame(paramPannel, text='Data SPM outgoing links', bd=BORDER, relief='groove', highlightbackground="black", highlightthickness=2)
+    spmConfigPannel = tkinter.LabelFrame(paramPannel, text='Data SPM outgoing links', bd=BORDER, relief='groove')
     spmConfigPannel.grid(row=7, column=0, rowspan=2, columnspan=4, sticky="nsew")
     widgets["spmConfigPannel"] = spmConfigPannel
 
@@ -1654,8 +1655,8 @@ def create_param_pannel(master):
     spmEnabledOutVar = tkinter.IntVar()
     spmDisabledOutVar = tkinter.IntVar()
 
-    spmEnabledLabel = tkinter.Label(spmConfigPannel, highlightbackground="black", highlightthickness=2)
-    spmDisabledLabel = tkinter.Label(spmConfigPannel, highlightbackground="black", highlightthickness=2)
+    spmEnabledLabel = tkinter.Label(spmConfigPannel)
+    spmDisabledLabel = tkinter.Label(spmConfigPannel)
 
     spmEnabledScrollbar = tkinter.Scrollbar(spmEnabledLabel)
     spmDisabledScrollbar = tkinter.Scrollbar(spmDisabledLabel)
@@ -1666,8 +1667,8 @@ def create_param_pannel(master):
     widgets["spmEnabledListbox"] = spmEnabledListbox
     widgets["spmDisabledListbox"] = spmDisabledListbox
 
-    spmDisableButton = tkinter.Button(spmConfigPannel, text="Disable", relief='raised', command=clickSPMPortDisable, highlightbackground="black", highlightthickness=2)
-    spmEnableButton = tkinter.Button(spmConfigPannel, text="Enable", relief='raised', command=clickSPMPortEnable, highlightbackground="black", highlightthickness=2)
+    spmDisableButton = tkinter.Button(spmConfigPannel, text="Disable", relief='raised', command=clickSPMPortDisable, highlightbackground="black", highlightthickness = thickness)
+    spmEnableButton = tkinter.Button(spmConfigPannel, text="Enable", relief='raised', command=clickSPMPortEnable, highlightbackground="black", highlightthickness = thickness)
     spmEnabledScrollbar.config(command=spmEnabledListbox.yview)
     spmEnabledListbox.config(yscrollcommand=spmEnabledScrollbar.set)
     spmDisabledScrollbar.config(command=spmDisabledListbox.yview)
@@ -1714,12 +1715,12 @@ def create_test_pannel(master):
     dataPannel.grid_columnconfigure(0, weight=1)
     dataPannel.grid_columnconfigure(1, weight=1)
     dataPannel.grid_columnconfigure(2, weight=1)
-    testPannel = tkinter.LabelFrame(dataPannel, text='Verification', bd=BORDER, relief='groove', highlightbackground="black", highlightthickness=2)
+    testPannel = tkinter.LabelFrame(dataPannel, text='Verification', bd=BORDER, relief='groove')
     testPannel.grid(row=0, column=0, rowspan=1, columnspan=3, sticky="nsew")
     testPannel.columnconfigure(0, weight=1)
     testPannel.columnconfigure(1, weight=1)
     testPannel.columnconfigure(2, weight=1) 
-    testButton = tkinter.Button(testPannel, text = "Run tests", relief='raised', command = clickTest, highlightbackground="black", highlightthickness=2)
+    testButton = tkinter.Button(testPannel, text = "Run tests", relief='raised', command = clickTest, highlightbackground="black", highlightthickness = thickness)
     testButton.grid(row=0, column=0, rowspan=1, columnspan=1, sticky=tkinter.W)
     testProgress = ttk.Progressbar(testPannel, orient='horizontal', mode='determinate')
     testProgress['value'] = 0
@@ -1729,10 +1730,10 @@ def create_test_pannel(master):
     widgets["testShow"] = testShow
     testShow.grid(row=0, column=2, sticky=tkinter.E)
 
-    verilogPannel = tkinter.LabelFrame(dataPannel,text="SVerilog",bd=BORDER,relief="groove", highlightbackground="black", highlightthickness=2)
+    verilogPannel = tkinter.LabelFrame(dataPannel,text="SVerilog",bd=BORDER,relief="groove")
     verilogPannel.grid(row=1, column=0, rowspan=1, columnspan=3, sticky="nsew")
     CreateToolTip(verilogPannel, text = "The code might be too big to be copied,\nthe generated verilog can be found in\nthe 'verilog' folder.")
-    generateVerilogButton = tkinter.Button(verilogPannel, text="Generate", relief='raised', command=clickGenerateVerilog, highlightbackground="black", highlightthickness=2)
+    generateVerilogButton = tkinter.Button(verilogPannel, text="Generate", relief='raised', command=clickGenerateVerilog, highlightbackground="black", highlightthickness = thickness)
     generateVerilogButton.pack(side=tkinter.BOTTOM, anchor="sw", padx=BORDER, pady=BORDER)
     verilogScroll = tkinter.Scrollbar(verilogPannel, orient="vertical")
     verilogScroll.pack(side=tkinter.RIGHT, fill="y")
@@ -1741,17 +1742,17 @@ def create_test_pannel(master):
     verilogScroll.config(command=verilogText.yview)
     widgets["verilogText"] = verilogText
     
-    reportPannel = tkinter.LabelFrame(dataPannel,text='Report area/power', bd = BORDER, relief='groove', highlightbackground="black", highlightthickness=2)
+    reportPannel = tkinter.LabelFrame(dataPannel,text='Report area/power', bd = BORDER, relief='groove')
     reportPannel.grid(row=2, column=0, rowspan=1, columnspan=3, sticky='nesw')
     reportPannel.columnconfigure(0, weight=1)
     reportPannel.columnconfigure(1, weight=1)
-    reportButton = tkinter.Button(reportPannel, text="Synthesize", relief="raised", command=clickSynthesize, highlightbackground="black", highlightthickness=2)
+    reportButton = tkinter.Button(reportPannel, text="Synthesize", relief="raised", command=clickSynthesize, highlightbackground="black", highlightthickness = thickness)
 
     reportProgress = ttk.Progressbar(reportPannel, orient="horizontal", mode="determinate")
     reportProgress['value'] = 0
     widgets["reportProgress"] = reportProgress
 
-    synthesisTimeEntry = tkinter.Entry(reportPannel, fg="black", justify=tkinter.CENTER, highlightbackground="black", highlightthickness=2)
+    synthesisTimeEntry = tkinter.Entry(reportPannel, fg="black", justify=tkinter.CENTER, highlightbackground="black", highlightthickness = thickness)
     widgets["synthesisTimeEntry"] = synthesisTimeEntry
 
     reportTimecostLabel = tkinter.Label(reportPannel, text = " Time cost:")
@@ -1760,25 +1761,25 @@ def create_test_pannel(master):
     reportTileAreaLabel = tkinter.Label(reportPannel, text = " Tiles area:")
     CreateToolTip(reportTileAreaLabel, text = "Area is in mm^2.")
 
-    reportTileAreaData = tkinter.Entry(reportPannel, justify=tkinter.CENTER, highlightbackground="black", highlightthickness=2)
+    reportTileAreaData = tkinter.Entry(reportPannel, justify=tkinter.CENTER, highlightbackground="black", highlightthickness = thickness)
     widgets["reportTileAreaData"] = reportTileAreaData
 
     reportTilePowerLabel = tkinter.Label(reportPannel, text = "Tiles power:")
     CreateToolTip(reportTilePowerLabel, text = "Yosys is not able to provide\npower estimation.")
 
-    reportTilePowerData = tkinter.Entry(reportPannel, justify=tkinter.CENTER, highlightbackground="black", highlightthickness=2)
+    reportTilePowerData = tkinter.Entry(reportPannel, justify=tkinter.CENTER, highlightbackground="black", highlightthickness = thickness)
     widgets["reportTilePowerData"] = reportTilePowerData
 
     reportSPMAreaLabel = tkinter.Label(reportPannel, text = " SPM area:")
     CreateToolTip(reportSPMAreaLabel, text = "Area is in mm^2.")
 
-    reportSPMAreaData = tkinter.Entry(reportPannel, justify=tkinter.CENTER, highlightbackground="black", highlightthickness=2)
+    reportSPMAreaData = tkinter.Entry(reportPannel, justify=tkinter.CENTER, highlightbackground="black", highlightthickness = thickness)
     widgets["reportSPMAreaData"] = reportSPMAreaData
 
     reportSPMPowerLabel = tkinter.Label(reportPannel, text = "SPM power:")
     CreateToolTip(reportSPMPowerLabel, text = "Power is in mW.")
 
-    reportSPMPowerData = tkinter.Entry(reportPannel, justify=tkinter.CENTER, highlightbackground="black", highlightthickness=2)
+    reportSPMPowerData = tkinter.Entry(reportPannel, justify=tkinter.CENTER, highlightbackground="black", highlightthickness = thickness)
     widgets["reportSPMPowerData"] = reportSPMPowerData
 
     reportButton.grid(row=0, column=0)
@@ -1800,7 +1801,7 @@ def create_test_pannel(master):
 
 
 def create_layout_pannel(master):
-    layoutPannel = tkinter.LabelFrame(master, text='Layout', bd=BORDER, relief='groove', highlightbackground="black", highlightthickness=2)
+    layoutPannel = tkinter.LabelFrame(master, text='Layout', bd=BORDER, relief='groove')
     layoutPannel.grid(row=0, column=3, rowspan=1, columnspan=1, sticky="nsew")
     canvas = tkinter.Canvas(layoutPannel, bd=0)
     scrollbar = tkinter.Scrollbar(layoutPannel, orient="horizontal", command=canvas.xview)
@@ -1809,14 +1810,14 @@ def create_layout_pannel(master):
     canvas.pack(side="top", fill="both", expand=True)
     layout_frame = tkinter.Frame(canvas)
     canvas.create_window((0, 0), window=layout_frame, anchor="nw")
-    showButton = tkinter.Button(layoutPannel, text = "Display layout", relief='raised', highlightbackground="black", highlightthickness=2)
+    showButton = tkinter.Button(layoutPannel, text = "Display layout", relief='raised', highlightbackground="black", highlightthickness = thickness)
     CreateToolTip(showButton, text = "The layout demonstration is\nunder development.")
     showButton.place(relx=0.5, rely=0.05, anchor="center")
     X = tkinter.Label(layout_frame, fg="black")
     X.pack()
 
 def create_mapping_pannel(master):
-    mappingPannel = tkinter.LabelFrame(master, text='Mapping', bd=BORDER, relief='groove', highlightbackground="black", highlightthickness=2)
+    mappingPannel = tkinter.LabelFrame(master, text='Mapping', bd=BORDER, relief='groove')
     mappingPannel.grid(row=1, column=1, rowspan=1, columnspan=3, sticky="nsew")
     mappingCanvas = tkinter.Canvas(mappingPannel, bd=0)
     widgets["mappingCanvas"] = mappingCanvas
@@ -1829,7 +1830,7 @@ def create_mapping_pannel(master):
     mappingCanvas.pack(side="top", fill="both", expand=True)
 
 def create_kernel_pannel(master):
-    kernelPannel = tkinter.LabelFrame(master, text="Kernel", bd=BORDER, relief='groove', highlightbackground="black", highlightthickness=2)
+    kernelPannel = tkinter.LabelFrame(master, text="Kernel", bd=BORDER, relief='groove')
     kernelPannel.grid(row=1, column=0, rowspan=1, columnspan=1, sticky="nsew")
     for row in range(12):
         kernelPannel.grid_rowconfigure(row, weight=1)
@@ -1846,7 +1847,7 @@ def create_kernel_pannel(master):
     appPathEntry.grid(row=0, column=1, sticky="nsew")
     appPathEntry.bind("<Button-1>", clickSelectApp)
 
-    compileAppButton = tkinter.Button(kernelPannel, text=" Compile app  ", fg="black", command=clickCompileApp, highlightbackground="black", highlightthickness=2)
+    compileAppButton = tkinter.Button(kernelPannel, text=" Compile app  ", fg="black", command=clickCompileApp, highlightbackground="black", highlightthickness = thickness)
     compileAppButton.grid(row=0, column=2, sticky="nsew")
 
     compileAppShow = tkinter.Label(kernelPannel, text=" IDLE", fg='gray')
@@ -1862,14 +1863,14 @@ def create_kernel_pannel(master):
     widgets["kernelNameMenu"] = kernelNameMenu
     kernelNameMenu.grid(row=1, column=1, sticky="nsew")
 
-    generateDFGButton = tkinter.Button(kernelPannel, text = "Generate DFG", fg="black", command=clickShowDFG, highlightbackground="black", highlightthickness=2)
+    generateDFGButton = tkinter.Button(kernelPannel, text = "Generate DFG", fg="black", command=clickShowDFG, highlightbackground="black", highlightthickness = thickness)
     generateDFGButton.grid(row=1, column=2, sticky="nsew")
 
     generateDFGShow = tkinter.Label(kernelPannel, text=" IDLE", fg='gray')
     generateDFGShow.grid(row=1, column=3, sticky="ew")
     widgets["generateDFGShow"] = generateDFGShow
 
-    dfgPannel = tkinter.LabelFrame(kernelPannel, text='Data-Flow Graph', fg="black", bd=BORDER, relief='groove', highlightbackground="black", highlightthickness=2)
+    dfgPannel = tkinter.LabelFrame(kernelPannel, text='Data-Flow Graph', fg="black", bd=BORDER, relief='groove', highlightbackground="black", highlightthickness = thickness)
     dfgPannel.grid(row=2, column=0, rowspan=10, columnspan=2, sticky="nsew")
     dfgLabel = tkinter.Label(dfgPannel)
     widgets["dfgLabel"] = dfgLabel
@@ -1877,13 +1878,13 @@ def create_kernel_pannel(master):
 
     recMIILabel = tkinter.Label(kernelPannel, text=" RecMII: ", fg='black')
     recMIILabel.grid(row=2, column=2, sticky="nsew")
-    recMIIEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER)
+    recMIIEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER, highlightbackground="black", highlightthickness = thickness)
     widgets["recMIIEntry"] = recMIIEntry
     recMIIEntry.insert(0, "0")
     recMIIEntry.grid(row=2, column=3, sticky="ew")
     resMIILabel = tkinter.Label(kernelPannel, text=" ResMII: ", fg='black')
     resMIILabel.grid(row=3, column=2, sticky="nsew")
-    resMIIEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER)
+    resMIIEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER, highlightbackground="black", highlightthickness = thickness)
     widgets["resMIIEntry"] = resMIIEntry
     resMIIEntry.insert(0, "0")
     resMIIEntry.grid(row=3, column=3, sticky="ew")
@@ -1897,20 +1898,20 @@ def create_kernel_pannel(master):
     widgets["exhaustiveRatiobutton"] = exhaustiveRatiobutton
     exhaustiveRatiobutton.grid(row=6, column=2, columnspan=2, sticky="nsew")
 
-    mapDFGButton = tkinter.Button(kernelPannel, text="Map DFG", fg="black", command=clickMapDFG, highlightbackground="black", highlightthickness=2)
+    mapDFGButton = tkinter.Button(kernelPannel, text="Map DFG", fg="black", command=clickMapDFG, highlightbackground="black", highlightthickness = thickness)
     mapDFGButton.grid(row=7, column=2, columnspan=2, sticky="new")
-    terminateMapButton = tkinter.Button(kernelPannel, text="Terminate", fg="black", command=clickTerminateMapping, highlightbackground="black", highlightthickness=2)
+    terminateMapButton = tkinter.Button(kernelPannel, text="Terminate", fg="black", command=clickTerminateMapping, highlightbackground="black", highlightthickness = thickness)
     terminateMapButton.grid(row=8, column=2, columnspan=2, sticky="new")
 
     mapSecLabel = tkinter.Label(kernelPannel, text="Time (s): ", fg='black')
     mapSecLabel.grid(row=9, column=2, sticky="nsew")
-    mapTimeEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER)
+    mapTimeEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER, highlightbackground="black", highlightthickness = thickness)
     widgets["mapTimeEntry"] = mapTimeEntry
     mapTimeEntry.insert(0, "0")
     mapTimeEntry.grid(row=9, column=3, sticky="ew")
     mapIILabel = tkinter.Label(kernelPannel, text=" Map II: ", fg='black')
     mapIILabel.grid(row=10, column=2, sticky="nsew")
-    mapIIEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER)
+    mapIIEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER, highlightbackground="black", highlightthickness = thickness)
     widgets["mapIIEntry"] = mapIIEntry
     mapIIEntry.insert(0, "0")
     mapIIEntry.grid(row=10, column=3, sticky="ew")
@@ -1918,7 +1919,7 @@ def create_kernel_pannel(master):
     speedupLabel = tkinter.Label(kernelPannel, text="Speedup: ", fg='black')
     speedupLabel.grid(row=11, column=2, sticky="nsew")
     CreateToolTip(speedupLabel, text = "The speedup is the improvement of\nthe execution cycles with respect to\na single-issue in-order CPU.")
-    mapSpeedupEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER)
+    mapSpeedupEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER, highlightbackground="black", highlightthickness = thickness)
     widgets["mapSpeedupEntry"] = mapSpeedupEntry
     mapSpeedupEntry.insert(0, "0")
     mapSpeedupEntry.grid(row=11, column=3, sticky="ew")

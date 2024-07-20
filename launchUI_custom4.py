@@ -711,7 +711,7 @@ def clickSPM():
     spmEnabledListbox = widgets["spmEnabledListbox"]
     spmDisabledListbox = widgets["spmDisabledListbox"]
 
-    widgets["entireTileCheckbutton"].config(text='Disable entire Tile ' + str(paramCGRA.targetTileID), state="disabled")
+    widgets["entireTileCheckbutton"].configure(text='Disable entire Tile ' + str(paramCGRA.targetTileID), state="disabled")
 
 
 def clickSPMPortDisable():

@@ -1,22 +1,30 @@
-import sys
-import os
-import time
-import threading
-import subprocess
 import json
 import math
+import os
+import platform
+import subprocess
+import threading
+import time
 import tkinter
 import tkinter.messagebox
-from tkinter import ttk
-from tkinter import filedialog as fd
-from PIL import Image, ImageTk, ImageFile
 from functools import partial
+from tkinter import filedialog as fd
+from tkinter import ttk
 
 import customtkinter
+from PIL import Image, ImageTk, ImageFile
+
 customtkinter.set_appearance_mode("dark")  # Modes: system (default), light, dark
 customtkinter.set_default_color_theme("blue")  # Themes: blue (default), dark-blue, green
 
 # from VectorCGRA.cgra.translate.CGRATemplateRTL_test import *
+
+# importing module
+import logging
+
+# Create and configure logger
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 
 PORT_NORTH = 0
 PORT_SOUTH = 1
@@ -1455,6 +1463,16 @@ def clickMapDFG():
     timer.start()
 
 
+def _on_mousewheel(canvas, event):
+    platformSystem = platform.system()
+    logging.info("Current platform.system: %s", platformSystem)
+    if platformSystem == "Windows":
+        canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+    elif platformSystem == "Linux":
+        canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+    else:
+        canvas.yview_scroll(int(-1*event.delta), "units")
+
 def create_cgra_pannel(master, rows, columns):
     ROWS = rows
     COLS = columns
@@ -1469,6 +1487,12 @@ def create_cgra_pannel(master, rows, columns):
     cgraLabel.pack(anchor="w", ipadx=5)
 
     canvas = customtkinter.CTkCanvas(cgraPannel, bg='#2B2B2B', bd=0, highlightthickness=0)
+    # with Windows OS
+    canvas.bind_all("<MouseWheel>", partial(_on_mousewheel, canvas))
+    # with Linux OS
+    canvas.bind_all("<Button-4>", partial(_on_mousewheel, canvas))
+    canvas.bind_all("<Button-5>", partial(_on_mousewheel, canvas))
+
     widgets["canvas"] = canvas
     baseX = 0
 

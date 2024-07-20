@@ -44,6 +44,8 @@ CONFIG_MEM_SIZE = 8
 DATA_MEM_SIZE = 4
 HIGHLIGHT_THICKNESS = 1
 
+FRAME_LABEL_LEVEL_1_FONT_SIZE = 15
+
 
 def window_size(window, width, height):
     window.geometry(f"{width}x{height}")
@@ -675,7 +677,7 @@ def clickTile(ID):
     widgets["xbarConfigPannel"].config(text='Tile ' + str(ID) + ' crossbar outgoing links')
     # After clicking the tile, the pannel will fill all directions
     widgets["xbarConfigPannel"].grid(columnspan=4, row=7, column=0, rowspan=2, sticky="nsew")
-    widgets["entireTileCheckbutton"].config(text='Disable entire Tile ' + str(ID), state="normal")
+    widgets["entireTileCheckbutton"].configure(text='Disable entire Tile ' + str(ID), state="normal")
     widgets["spmConfigPannel"].grid_forget()
     paramCGRA.targetTileID = ID
 
@@ -1482,7 +1484,7 @@ def create_cgra_pannel(master, rows, columns):
     cgraPannel.grid(row=0, column=0, rowspan=1, columnspan=1, padx=(5, 5), pady=(5, 5), sticky="nsew")
 
     # create label for cgraPannel
-    cgraLabel = customtkinter.CTkLabel(cgraPannel, text='CGRA', font=customtkinter.CTkFont(size=12, weight="bold"))
+    cgraLabel = customtkinter.CTkLabel(cgraPannel, text='CGRA', font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_1_FONT_SIZE, weight="bold"))
     # cgraLabel.grid(row=0, column=0, sticky="nsew")
     cgraLabel.pack(anchor="w", ipadx=5)
 
@@ -1652,57 +1654,77 @@ def place_xbar_options(master):
 
 
 def create_param_pannel(master):
-    paramPannel = tkinter.LabelFrame(master, text='Configuration', bd=BORDER, relief='groove')
+    # paramPannel = tkinter.LabelFrame(master, text='Configuration', bd=BORDER, relief='groove')
+    paramPannel = customtkinter.CTkFrame(master)
     paramPannel.grid(row=0, column=1, rowspan=1, columnspan=1, sticky="nsew")
 
     # Use columnconfigure and rowconfigure to partition the columns, so that each column and row will fill the corresponding space
     # The 'weight' represents the weight of the corresponding row/column length
-    for i in range(10):
+    for i in range(11):
         paramPannel.rowconfigure(i, weight=1)
     for i in range(3):
         paramPannel.columnconfigure(i, weight=1)
-    rowsLabel = tkinter.Label(paramPannel, text='Rows  Columns:')
-    rowsLabel.grid(row=0, column=0)
-    rowsEntry = tkinter.Entry(paramPannel, justify=tkinter.CENTER, highlightbackground="black",
-                              highlightthickness=HIGHLIGHT_THICKNESS)
-    rowsEntry.grid(row=0, column=1, padx=5, pady=5)
+    configurationLabel = customtkinter.CTkLabel(paramPannel, text='Configuration', font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_1_FONT_SIZE, weight="bold"))
+    configurationLabel.grid(row=0, column=0, ipadx=5, sticky="w")
+
+    rowsLabel = customtkinter.CTkLabel(paramPannel, text='Rows  Columns:')
+    rowsLabel.grid(row=1, column=0)
+    rowsEntry = customtkinter.CTkEntry(paramPannel, justify=tkinter.CENTER#,
+                                       #highlightbackground="black",
+                                       #highlightthickness=HIGHLIGHT_THICKNESS
+                                       )
+    rowsEntry.grid(row=1, column=1, padx=5, pady=5)
     rowsEntry.insert(0, str(paramCGRA.rows))
     widgets["rowsEntry"] = rowsEntry
-    columnsEntry = tkinter.Entry(paramPannel, justify=tkinter.CENTER, highlightbackground="black",
-                                 highlightthickness=HIGHLIGHT_THICKNESS)
-    columnsEntry.grid(row=0, column=2, padx=2, pady=5)
+    columnsEntry = customtkinter.CTkEntry(paramPannel, justify=tkinter.CENTER#,
+                                          #highlightbackground="black",
+                                          #highlightthickness=HIGHLIGHT_THICKNESS
+                                          )
+    columnsEntry.grid(row=1, column=2, padx=2, pady=5)
     columnsEntry.insert(0, str(paramCGRA.columns))
     widgets["columnsEntry"] = columnsEntry
 
-    configMemLabel = tkinter.Label(paramPannel, text='Config Memory \n (entries/tile):')
-    configMemLabel.grid(row=2, column=0)
-    configMemEntry = tkinter.Entry(paramPannel, justify=tkinter.CENTER, highlightbackground="black",
-                                   highlightthickness=HIGHLIGHT_THICKNESS)
-    configMemEntry.grid(row=2, column=1, pady=5)
-    configMemEntry.insert(0, paramCGRA.configMemSize)
-    widgets["configMemEntry"] = configMemEntry
-
-    dataMemLabel = tkinter.Label(paramPannel, text='Data SPM (KBs):')
-    dataMemLabel.grid(row=1, column=0)
-    dataMemEntry = tkinter.Entry(paramPannel, justify=tkinter.CENTER, highlightbackground="black",
-                                 highlightthickness=HIGHLIGHT_THICKNESS)
-    dataMemEntry.grid(row=1, column=1, padx=5, pady=5)
+    dataMemLabel = customtkinter.CTkLabel(paramPannel, text='Data SPM (KBs):')
+    dataMemLabel.grid(row=2, column=0)
+    dataMemEntry = customtkinter.CTkEntry(paramPannel, justify=tkinter.CENTER#,
+                                          #highlightbackground="black",
+                                          #highlightthickness=HIGHLIGHT_THICKNESS
+                                          )
+    dataMemEntry.grid(row=2, column=1, padx=5, pady=5)
     dataMemEntry.insert(0, str(paramCGRA.dataMemSize))
     widgets["dataMemEntry"] = dataMemEntry
-    updateButton = tkinter.Button(paramPannel, text=" Reset ", relief='raised', command=partial(clickReset, master),
-                                  highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS)
-    updateButton.grid(row=1, column=2, columnspan=2)
-
-    entireTileCheckVar.set(0)
-    entireTileCheckbutton = tkinter.Checkbutton(paramPannel, variable=entireTileCheckVar, text="Disable entire Tile 0")
-    entireTileCheckbutton.grid(row=3, column=0)
-    widgets["entireTileCheckbutton"] = entireTileCheckbutton
-    resetButton = tkinter.Button(paramPannel, text="Update", relief='raised', command=partial(clickUpdate, master),
-                                 highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS)
+    resetButton = customtkinter.CTkButton(paramPannel, text=" Reset ",
+                                          #relief='raised',
+                                          command=partial(clickReset, master)#,
+                                          #highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS
+                                          )
     resetButton.grid(row=2, column=2, columnspan=2)
 
+
+    configMemLabel = customtkinter.CTkLabel(paramPannel, text='Config Memory \n (entries/tile):')
+    configMemLabel.grid(row=3, column=0)
+    configMemEntry = customtkinter.CTkEntry(paramPannel, justify=tkinter.CENTER#,
+                                            #highlightbackground="black",
+                                            #highlightthickness=HIGHLIGHT_THICKNESS
+                                            )
+    configMemEntry.grid(row=3, column=1, pady=5)
+    configMemEntry.insert(0, paramCGRA.configMemSize)
+    widgets["configMemEntry"] = configMemEntry
+    updateButton = customtkinter.CTkButton(paramPannel, text="Update",
+                                           #relief='raised',
+                                           command=partial(clickUpdate, master)#,
+                                           #highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS
+                                           )
+    updateButton.grid(row=3, column=2, columnspan=2)
+
+
+    entireTileCheckVar.set(0)
+    entireTileCheckbutton = customtkinter.CTkCheckBox(paramPannel, variable=entireTileCheckVar, text="Disable entire Tile 0")
+    entireTileCheckbutton.grid(row=4, column=0)
+    widgets["entireTileCheckbutton"] = entireTileCheckbutton
+
     fuConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 functional units', bd=BORDER, relief='groove')
-    fuConfigPannel.grid(columnspan=4, row=4, column=0, rowspan=3, sticky="nsew")
+    fuConfigPannel.grid(columnspan=4, row=5, column=0, rowspan=3, sticky="nsew")
     widgets["fuConfigPannel"] = fuConfigPannel
 
     # Use columnconfigure to partition the columns, so that each column fills the corresponding space
@@ -1712,7 +1734,7 @@ def create_param_pannel(master):
 
     xbarConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 crossbar outgoing links', bd=BORDER,
                                           relief='groove')
-    xbarConfigPannel.grid(columnspan=4, row=7, column=0, rowspan=2, sticky="nsew")
+    xbarConfigPannel.grid(columnspan=4, row=8, column=0, rowspan=2, sticky="nsew")
     widgets["xbarConfigPannel"] = xbarConfigPannel
 
     # Use columnconfigure to partition the columns, so that each column fills the corresponding space
@@ -1721,7 +1743,7 @@ def create_param_pannel(master):
     place_xbar_options(xbarConfigPannel)
 
     spmConfigPannel = tkinter.LabelFrame(paramPannel, text='Data SPM outgoing links', bd=BORDER, relief='groove')
-    spmConfigPannel.grid(row=7, column=0, rowspan=2, columnspan=4, sticky="nsew")
+    spmConfigPannel.grid(row=8, column=0, rowspan=2, columnspan=4, sticky="nsew")
     widgets["spmConfigPannel"] = spmConfigPannel
 
     # Use columnconfigure and rowconfigure to partition the columns, so that each column and row fills the corresponding space

@@ -12,6 +12,9 @@ from tkinter import filedialog as fd
 from PIL import Image, ImageTk, ImageFile
 from functools import partial
 
+import customtkinter
+customtkinter.set_appearance_mode("dark")  # Modes: system (default), light, dark
+customtkinter.set_default_color_theme("blue")  # Themes: blue (default), dark-blue, green
 
 # from VectorCGRA.cgra.translate.CGRATemplateRTL_test import *
 
@@ -38,7 +41,7 @@ def window_size(window, width, height):
     window.geometry(f"{width}x{height}")
 
 
-master = tkinter.Tk()
+master = customtkinter.CTk()
 master.title("CGRA-Flow: An Integrated End-to-End Framework for CGRA Exploration, Compilation, and Development")
 
 fuTypeList = ["Phi", "Add", "Shift", "Ld", "Sel", "Cmp", "MAC", "St", "Ret", "Mul", "Logic", "Br"]
@@ -1456,9 +1459,16 @@ def create_cgra_pannel(master, rows, columns):
     ROWS = rows
     COLS = columns
     # Use solid black board to let the pannel look better
-    cgraPannel = tkinter.LabelFrame(master, text='CGRA', bd=BORDER, relief='groove')
-    cgraPannel.grid(row=0, column=0, rowspan=1, columnspan=1, sticky="nsew")
-    canvas = tkinter.Canvas(cgraPannel)
+    cgraPannel = customtkinter.CTkFrame(master)
+    # cgraPannel = tkinter.LabelFrame(master, text='CGRA', bd=BORDER, relief='groove')
+    cgraPannel.grid(row=0, column=0, rowspan=1, columnspan=1, padx=(5, 5), pady=(5, 5), sticky="nsew")
+
+    # create label for cgraPannel
+    cgraLabel = customtkinter.CTkLabel(cgraPannel, text='CGRA', font=customtkinter.CTkFont(size=12, weight="bold"))
+    # cgraLabel.grid(row=0, column=0, sticky="nsew")
+    cgraLabel.pack(anchor="w", ipadx=5)
+
+    canvas = customtkinter.CTkCanvas(cgraPannel, bg='#2B2B2B', bd=0, highlightthickness=0)
     widgets["canvas"] = canvas
     baseX = 0
 
@@ -1474,8 +1484,14 @@ def create_cgra_pannel(master, rows, columns):
 
     # draw data memory
     memHeight = GRID_HEIGHT
-    spmLabel = tkinter.Button(canvas, text="Data\nSPM", fg='black', bg='gray', relief='raised', bd=BORDER,
-                              command=clickSPM, highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS)
+    # spmLabel = tkinter.Button(canvas, text="Data\nSPM", fg='black', bg='gray', relief='raised', bd=BORDER,
+    #                           command=clickSPM, highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS)
+    spmLabel = customtkinter.CTkButton(canvas, text="Data\nSPM",
+                                       #fg='black', bg='gray', relief='raised', bd=BORDER,
+                                       command=clickSPM#,
+                                       #highlightbackground="black",
+                                       #highlightthickness=HIGHLIGHT_THICKNESS
+                                       )
     # Data memory will be placed in the upper left corner
     canvas.create_window(baseX + BORDER, BORDER, window=spmLabel, height=GRID_HEIGHT, width=MEM_WIDTH, anchor="nw")
 
@@ -1493,9 +1509,15 @@ def create_cgra_pannel(master, rows, columns):
     # draw tiles
     for tile in paramCGRA.tiles:
         if not tile.disabled:
-            button = tkinter.Button(canvas, text="Tile " + str(tile.ID), fg='black', bg='gray', relief='raised',
-                                    bd=BORDER, command=partial(clickTile, tile.ID), highlightbackground="black",
-                                    highlightthickness=HIGHLIGHT_THICKNESS)
+            # button = tkinter.Button(canvas, text="Tile " + str(tile.ID), fg='black', bg='gray', relief='raised',
+            #                         bd=BORDER, command=partial(clickTile, tile.ID), highlightbackground="black",
+            #                         highlightthickness=HIGHLIGHT_THICKNESS)
+            button = customtkinter.CTkButton(canvas, text="Tile " + str(tile.ID),
+                                    # fg='black', bg='gray', relief='raised', bd=BORDER,
+                                    command=partial(clickTile, tile.ID)#,
+                                    # highlightbackground="black",
+                                    # highlightthickness=HIGHLIGHT_THICKNESS
+                                    )
             posX, posY = tile.getPosXY()
             # Tiles will be placed near the Data memory
             canvas.create_window(posX, posY, window=button, height=TILE_HEIGHT, width=TILE_WIDTH, anchor="nw")
@@ -1560,12 +1582,12 @@ def create_cgra_pannel(master, rows, columns):
             dstX, dstY = link.getDstXY()
             canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
 
-    vbar = tkinter.Scrollbar(cgraPannel, orient="vertical", command=canvas.yview)
+    vbar = customtkinter.CTkScrollbar(cgraPannel, orientation="vertical", command=canvas.yview)
     vbar.pack(side=tkinter.RIGHT, fill="y")
     canvas.config(yscrollcommand=vbar.set)
     canvas.config(scrollregion=canvas.bbox("all"))
     canvas.pack(side="top", fill="both", expand=True)
-    hbar = tkinter.Scrollbar(cgraPannel, orient="horizontal", command=canvas.xview)
+    hbar = customtkinter.CTkScrollbar(cgraPannel, orientation="horizontal", command=canvas.xview)
     hbar.pack(side="bottom", fill="x")
     canvas.config(xscrollcommand=hbar.set)
 

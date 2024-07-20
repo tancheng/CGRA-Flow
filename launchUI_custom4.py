@@ -1482,6 +1482,7 @@ def create_cgra_pannel(master, rows, columns):
     padHeight = TILE_HEIGHT + LINK_LENGTH
     padWidth = TILE_WIDTH + LINK_LENGTH
 
+    GRID_HEIGHT = (TILE_HEIGHT + LINK_LENGTH) * ROWS - LINK_LENGTH
     # draw data memory
     memHeight = GRID_HEIGHT
     # spmLabel = tkinter.Button(canvas, text="Data\nSPM", fg='black', bg='gray', relief='raised', bd=BORDER,

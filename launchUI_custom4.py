@@ -45,6 +45,7 @@ DATA_MEM_SIZE = 4
 HIGHLIGHT_THICKNESS = 1
 
 FRAME_LABEL_LEVEL_1_FONT_SIZE = 15
+FRAME_LABEL_LEVEL_2_FONT_SIZE = FRAME_LABEL_LEVEL_1_FONT_SIZE - 3
 
 
 def window_size(window, width, height):
@@ -673,10 +674,12 @@ paramCGRA = ParamCGRA(ROWS, COLS, CONFIG_MEM_SIZE, DATA_MEM_SIZE)
 
 
 def clickTile(ID):
-    widgets["fuConfigPannel"].config(text='Tile ' + str(ID) + ' functional units')
-    widgets["xbarConfigPannel"].config(text='Tile ' + str(ID) + ' crossbar outgoing links')
+    # widgets["fuConfigPannel"].configure(text='Tile ' + str(ID) + ' functional units')
+    widgets["fuConfigPannelLabel"].configure(text='Tile ' + str(ID) + ' functional units')
+    # widgets["xbarConfigPannel"].config(text='Tile ' + str(ID) + ' crossbar outgoing links')
+    widgets["xbarConfigPannelLabel"].configure(text='Tile ' + str(ID) + ' crossbar outgoing links')
     # After clicking the tile, the pannel will fill all directions
-    widgets["xbarConfigPannel"].grid(columnspan=4, row=7, column=0, rowspan=2, sticky="nsew")
+    widgets["xbarConfigPannel"].grid(columnspan=4, row=9, column=0, rowspan=3, sticky="nsew")
     widgets["entireTileCheckbutton"].configure(text='Disable entire Tile ' + str(ID), state="normal")
     widgets["spmConfigPannel"].grid_forget()
     paramCGRA.targetTileID = ID
@@ -695,7 +698,8 @@ def clickTile(ID):
 
 
 def clickSPM():
-    widgets["fuConfigPannel"].config(text='Tile ' + str(paramCGRA.targetTileID) + ' functional units')
+    # widgets["fuConfigPannel"].config(text='Tile ' + str(paramCGRA.targetTileID) + ' functional units')
+    widgets["fuConfigPannelLabel"].configure(text='Tile ' + str(paramCGRA.targetTileID) + ' functional units')
 
     for fuType in fuTypeList:
         fuCheckVars[fuType].set(paramCGRA.tiles[paramCGRA.targetTileID].fuDict[fuType])
@@ -706,7 +710,7 @@ def clickSPM():
     spmConfigPannel = widgets["spmConfigPannel"]
     spmConfigPannel.config(text='DataSPM outgoing links')
     # After clicking the SPM, the pannel will fill all directions
-    spmConfigPannel.grid(row=7, column=0, rowspan=2, columnspan=4, sticky="nsew")
+    spmConfigPannel.grid(row=9, column=0, rowspan=3, columnspan=4, sticky="nsew")
 
     spmEnabledListbox = widgets["spmEnabledListbox"]
     spmDisabledListbox = widgets["spmDisabledListbox"]
@@ -1624,12 +1628,12 @@ def place_fu_options(master):
     for i in range(len(fuTypeList)):
         fuVar = tkinter.IntVar()
         fuCheckVars[fuTypeList[i]] = fuVar
-        fuCheckbutton = tkinter.Checkbutton(master, variable=fuVar, text=fuTypeList[i],
+        fuCheckbutton = customtkinter.CTkCheckBox(master, variable=fuVar, text=fuTypeList[i],
                                             command=partial(clickFuCheckbutton, fuTypeList[i]))
         fuCheckbuttons[fuTypeList[i]] = fuCheckbutton
         fuCheckbutton.select()
         paramCGRA.updateFuCheckbutton(fuTypeList[i], fuVar.get())
-        fuCheckbutton.grid(row=i // 4, column=i % 4, padx=15, pady=15, sticky="nsew")
+        fuCheckbutton.grid(row=(i // 4) + 1, column=i % 4, padx=15, pady=15, sticky="nsew")
 
 
 def place_xbar_options(master):
@@ -1638,7 +1642,7 @@ def place_xbar_options(master):
         xbarType = xbarPort2Type[i]
         xbarVar = tkinter.IntVar()
         xbarCheckVars[xbarType] = xbarVar
-        xbarCheckbutton = tkinter.Checkbutton(master, variable=xbarVar, text=xbarType,
+        xbarCheckbutton = customtkinter.CTkCheckBox(master, variable=xbarVar, text=xbarType,
                                               command=partial(clickXbarCheckbutton, xbarType))
         xbarCheckbuttons[xbarType] = xbarCheckbutton
 
@@ -1650,7 +1654,7 @@ def place_xbar_options(master):
         if portType in paramCGRA.getTileOfID(0).neverUsedOutPorts:
             xbarCheckbutton.configure(state="disabled")
 
-        xbarCheckbutton.grid(row=i // 4, column=i % 4, padx=15, pady=15, sticky="nsew")
+        xbarCheckbutton.grid(row=(i // 4)+1, column=i % 4, padx=15, pady=15, sticky="nsew")
 
 
 def create_param_pannel(master):
@@ -1660,7 +1664,7 @@ def create_param_pannel(master):
 
     # Use columnconfigure and rowconfigure to partition the columns, so that each column and row will fill the corresponding space
     # The 'weight' represents the weight of the corresponding row/column length
-    for i in range(11):
+    for i in range(13):
         paramPannel.rowconfigure(i, weight=1)
     for i in range(3):
         paramPannel.columnconfigure(i, weight=1)
@@ -1723,27 +1727,40 @@ def create_param_pannel(master):
     entireTileCheckbutton.grid(row=4, column=0)
     widgets["entireTileCheckbutton"] = entireTileCheckbutton
 
-    fuConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 functional units', bd=BORDER, relief='groove')
-    fuConfigPannel.grid(columnspan=4, row=5, column=0, rowspan=3, sticky="nsew")
+    # Tile x functional units
+    fuConfigPannel = customtkinter.CTkFrame(paramPannel)
+    fuConfigPannel.grid(columnspan=4, row=5, column=0, rowspan=4, sticky="nsew")
     widgets["fuConfigPannel"] = fuConfigPannel
 
     # Use columnconfigure to partition the columns, so that each column fills the corresponding space
     for i in range(4):
         fuConfigPannel.columnconfigure(i, weight=1)
+    fuConfigPannelLabel = customtkinter.CTkLabel(fuConfigPannel, text='Tile 0 functional units',
+                                                font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE,
+                                                                           weight="bold", slant='italic'))
+    fuConfigPannelLabel.grid(row=0, column=0, ipadx=5, pady=(5, 0), sticky="w")
+    widgets["fuConfigPannelLabel"] = fuConfigPannelLabel
     place_fu_options(fuConfigPannel)
 
-    xbarConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 crossbar outgoing links', bd=BORDER,
-                                          relief='groove')
-    xbarConfigPannel.grid(columnspan=4, row=8, column=0, rowspan=2, sticky="nsew")
+
+    # Tile x crossbar outgoing links
+    xbarConfigPannel = customtkinter.CTkFrame(paramPannel)
+    xbarConfigPannel.grid(columnspan=4, row=9, column=0, rowspan=3, sticky="nsew")
     widgets["xbarConfigPannel"] = xbarConfigPannel
 
     # Use columnconfigure to partition the columns, so that each column fills the corresponding space
     for i in range(4):
         xbarConfigPannel.columnconfigure(i, weight=1)
+    xbarConfigPannelLabel = customtkinter.CTkLabel(xbarConfigPannel, text='Tile 0 crossbar outgoing links',
+                                                   font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE,
+                                                                              weight="bold", slant='italic'))
+    xbarConfigPannelLabel.grid(row=0, column=0, ipadx=5, pady=(5, 0), sticky="w")
+    widgets["xbarConfigPannelLabel"] = xbarConfigPannelLabel
     place_xbar_options(xbarConfigPannel)
 
+
     spmConfigPannel = tkinter.LabelFrame(paramPannel, text='Data SPM outgoing links', bd=BORDER, relief='groove')
-    spmConfigPannel.grid(row=8, column=0, rowspan=2, columnspan=4, sticky="nsew")
+    spmConfigPannel.grid(row=9, column=0, rowspan=3, columnspan=4, sticky="nsew")
     widgets["spmConfigPannel"] = spmConfigPannel
 
     # Use columnconfigure and rowconfigure to partition the columns, so that each column and row fills the corresponding space

@@ -675,13 +675,15 @@ paramCGRA = ParamCGRA(ROWS, COLS, CONFIG_MEM_SIZE, DATA_MEM_SIZE)
 
 def clickTile(ID):
     # widgets["fuConfigPannel"].configure(text='Tile ' + str(ID) + ' functional units')
-    widgets["fuConfigPannelLabel"].configure(text='Tile ' + str(ID) + ' functional units')
+    widgets["fuConfigPannelLabel"].configure(text='Tile ' + str(ID) + '\nfunctional units')
     # widgets["xbarConfigPannel"].config(text='Tile ' + str(ID) + ' crossbar outgoing links')
-    widgets["xbarConfigPannelLabel"].configure(text='Tile ' + str(ID) + ' crossbar outgoing links')
+    widgets["xbarConfigPannelLabel"].configure(text='Tile ' + str(ID) + '\ncrossbar outgoing links')
+    widgets["centralRadioButton"].configure(text='Tile ' + str(ID))
+    print(widgets['spmOutlinksSwitches'])
     # After clicking the tile, the pannel will fill all directions
-    widgets["xbarConfigPannel"].grid(columnspan=4, row=9, column=0, rowspan=3, sticky="nsew")
+    # widgets["xbarConfigPannel"].grid(columnspan=4, row=9, column=0, rowspan=3, sticky="nsew")
     widgets["entireTileCheckbutton"].configure(text='Disable entire Tile ' + str(ID), state="normal")
-    widgets["spmConfigPannel"].grid_forget()
+    # widgets["spmConfigPannel"].grid_forget()
     paramCGRA.targetTileID = ID
 
     disabled = paramCGRA.getTileOfID(ID).disabled
@@ -1482,11 +1484,13 @@ def _on_mousewheel(canvas, event):
 def create_cgra_pannel(master, rows, columns):
     ROWS = rows
     COLS = columns
+    # master.grid_propagate(0)
     # Use solid black board to let the pannel look better
     cgraPannel = customtkinter.CTkFrame(master)
     # cgraPannel = tkinter.LabelFrame(master, text='CGRA', bd=BORDER, relief='groove')
     cgraPannel.grid(row=0, column=0, rowspan=1, columnspan=1, padx=(5, 5), pady=(5, 5), sticky="nsew")
-
+    # cgraPannel.pack()
+    # cgraPannel.grid_propagate(0)
     # create label for cgraPannel
     cgraLabel = customtkinter.CTkLabel(cgraPannel, text='CGRA', font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_1_FONT_SIZE, weight="bold"))
     # cgraLabel.grid(row=0, column=0, sticky="nsew")
@@ -1494,10 +1498,10 @@ def create_cgra_pannel(master, rows, columns):
 
     canvas = customtkinter.CTkCanvas(cgraPannel, bg='#2B2B2B', bd=0, highlightthickness=0)
     # with Windows OS
-    canvas.bind_all("<MouseWheel>", partial(_on_mousewheel, canvas))
+    # canvas.bind_all("<MouseWheel>", partial(_on_mousewheel, canvas))
     # with Linux OS
-    canvas.bind_all("<Button-4>", partial(_on_mousewheel, canvas))
-    canvas.bind_all("<Button-5>", partial(_on_mousewheel, canvas))
+    # canvas.bind_all("<Button-4>", partial(_on_mousewheel, canvas))
+    # canvas.bind_all("<Button-5>", partial(_on_mousewheel, canvas))
 
     widgets["canvas"] = canvas
     baseX = 0
@@ -1633,7 +1637,7 @@ def place_fu_options(master):
         fuCheckbuttons[fuTypeList[i]] = fuCheckbutton
         fuCheckbutton.select()
         paramCGRA.updateFuCheckbutton(fuTypeList[i], fuVar.get())
-        fuCheckbutton.grid(row=(i // 4) + 1, column=i % 4, padx=15, pady=15, sticky="nsew")
+        fuCheckbutton.grid(row=(i // 2), column=i % 2, pady=10)
 
 
 def place_xbar_options(master):
@@ -1654,20 +1658,41 @@ def place_xbar_options(master):
         if portType in paramCGRA.getTileOfID(0).neverUsedOutPorts:
             xbarCheckbutton.configure(state="disabled")
 
-        xbarCheckbutton.grid(row=(i // 4)+1, column=i % 4, padx=15, pady=15, sticky="nsew")
+        # xbarCheckbutton.grid(row=(i // 3)+1, column=i % 3, padx=15, pady=15, sticky="nsew")
+        if i== PORT_NORTH:
+            xbarCheckbutton.grid(row=(0) + 0, column=1, padx=0, pady=30)
+        elif i== PORT_SOUTH:
+            xbarCheckbutton.grid(row=(2) + 0, column=1, padx=0, pady=30)
+        elif i== PORT_WEST:
+            xbarCheckbutton.grid(row=(1) + 0, column=0, padx=0, pady=30)
+        elif i== PORT_EAST:
+            xbarCheckbutton.grid(row=(1) + 0, column=2, padx=0, pady=30)
+        elif i== PORT_NORTHWEST:
+            xbarCheckbutton.grid(row=(0) + 0, column=0, padx=0, pady=30)
+        elif i== PORT_NORTHEAST:
+            xbarCheckbutton.grid(row=(0) + 0, column=2, padx=0, pady=30)
+        elif i== PORT_SOUTHEAST:
+            xbarCheckbutton.grid(row=(2) + 0, column=2, padx=0, pady=30)
+        elif i== PORT_SOUTHWEST:
+            xbarCheckbutton.grid(row=(2) + 0, column=0, padx=0, pady=30)
 
+        centralRadioButton = customtkinter.CTkRadioButton(master, text='Tile 0', variable=tkinter.IntVar(value=0))
+        centralRadioButton.configure(state="disabled")
+        centralRadioButton.grid(row=(1) + 0, column=1, padx=0, pady=30)
+        widgets["centralRadioButton"] = centralRadioButton
 
 def create_param_pannel(master):
     # paramPannel = tkinter.LabelFrame(master, text='Configuration', bd=BORDER, relief='groove')
-    paramPannel = customtkinter.CTkFrame(master)
+    paramPannel = customtkinter.CTkFrame(master, width=550, height=480)
     paramPannel.grid(row=0, column=1, rowspan=1, columnspan=1, sticky="nsew")
 
     # Use columnconfigure and rowconfigure to partition the columns, so that each column and row will fill the corresponding space
     # The 'weight' represents the weight of the corresponding row/column length
-    for i in range(13):
+    for i in range(9):
         paramPannel.rowconfigure(i, weight=1)
     for i in range(3):
         paramPannel.columnconfigure(i, weight=1)
+    paramPannel.grid_propagate(0)
     configurationLabel = customtkinter.CTkLabel(paramPannel, text='Configuration', font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_1_FONT_SIZE, weight="bold"))
     configurationLabel.grid(row=0, column=0, ipadx=5, sticky="w")
 
@@ -1727,99 +1752,158 @@ def create_param_pannel(master):
     entireTileCheckbutton.grid(row=4, column=0)
     widgets["entireTileCheckbutton"] = entireTileCheckbutton
 
+
+    # Data SPM outgoing links
+    spmConfigPannel = customtkinter.CTkFrame(paramPannel)
+    spmConfigPannel.grid(row=5, column=0, rowspan=2, pady=(5,0), sticky="nsew")
+    widgets["spmConfigPannel"] = spmConfigPannel
+    # spmConfigPannel.rowconfigure(0, weight=1)
+    # spmConfigPannel.rowconfigure(1, weight=3)
+    # for i in range(4):
+    #     spmConfigPannel.columnconfigure(i, weight=1)
+    # spmConfigPannel.grid_propagate(0)
+    spmConfigPannelLabel = customtkinter.CTkLabel(spmConfigPannel, text='Data SPM\noutgoing links',
+                                                  font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE,
+                                                                             weight="bold", slant='italic'))
+    # spmConfigPannelLabel.grid(row=0, column=0, sticky="nsew")
+    spmConfigPannelLabel.pack()
+    # spmConfigPannelLabel.grid_propagate(0)
+    spmConfigScrollablePannel = customtkinter.CTkScrollableFrame(spmConfigPannel, height=240)
+    # spmConfigScrollablePannel.grid(row=1, column=0, sticky="nsew")
+    spmConfigScrollablePannel.pack()
+
+    spmOutlinksSwitches = []
+    # for i in range(10):
+    #     switch = customtkinter.CTkSwitch(spmConfigScrollablePannel, text=f"link {i}")
+    #     switch.select()
+    #     # switch.grid(row=i + 1, column=0, padx=5, pady=(0, 10))
+    #     switch.pack(pady=(5, 10))
+    #     scrollable_frame_switches.append(switch)
+    for port in paramCGRA.dataSPM.outLinks:
+        if not paramCGRA.dataSPM.outLinks[port].disabled:
+            switch = customtkinter.CTkSwitch(spmConfigScrollablePannel, text=f"link {port}")
+            switch.select()
+            switch.pack(pady=(5, 10))
+        else:
+            switch = customtkinter.CTkSwitch(spmConfigScrollablePannel, text=f"link {port}")
+            # switch.select()
+            switch.pack(pady=(5, 10))
+        spmOutlinksSwitches.append(switch)
+    widgets['spmOutlinksSwitches'] = spmOutlinksSwitches
+
+
+
     # Tile x functional units
     fuConfigPannel = customtkinter.CTkFrame(paramPannel)
-    fuConfigPannel.grid(columnspan=4, row=5, column=0, rowspan=4, pady=(5,5), sticky="nsew")
+    fuConfigPannel.grid(row=5, column=1, rowspan=4, padx=(5,5), pady=(5,0), sticky="nsew")
     widgets["fuConfigPannel"] = fuConfigPannel
 
     # Use columnconfigure to partition the columns, so that each column fills the corresponding space
-    for i in range(4):
-        fuConfigPannel.columnconfigure(i, weight=1)
-    fuConfigPannelLabel = customtkinter.CTkLabel(fuConfigPannel, text='Tile 0 functional units',
-                                                font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE,
-                                                                           weight="bold", slant='italic'))
-    fuConfigPannelLabel.grid(row=0, column=0, ipadx=5, pady=(5, 0), sticky="w")
+    # for i in range(2):
+    #     fuConfigPannel.columnconfigure(i, weight=1)
+    # fuConfigPannel.grid_propagate(0)
+    fuConfigPannelLabel = customtkinter.CTkLabel(fuConfigPannel, text='Tile 0\nfunctional units',
+                                                 font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE,
+                                                                            weight="bold", slant='italic'))
+    # fuConfigPannelLabel.grid(row=0, column=0, sticky="nsew")
+    fuConfigPannelLabel.pack()
     widgets["fuConfigPannelLabel"] = fuConfigPannelLabel
-    place_fu_options(fuConfigPannel)
+    fuConfigSubPannel = customtkinter.CTkFrame(fuConfigPannel)
+    for i in range(2):
+        fuConfigSubPannel.columnconfigure(i, weight=1)
+    place_fu_options(fuConfigSubPannel)
+    fuConfigSubPannel.pack()
 
 
     # Tile x crossbar outgoing links
     xbarConfigPannel = customtkinter.CTkFrame(paramPannel)
-    xbarConfigPannel.grid(columnspan=4, row=9, column=0, rowspan=3, sticky="nsew")
+    xbarConfigPannel.grid(row=5, column=2, rowspan=4, pady=(5, 0), sticky="nsew")
     widgets["xbarConfigPannel"] = xbarConfigPannel
 
     # Use columnconfigure to partition the columns, so that each column fills the corresponding space
-    for i in range(4):
-        xbarConfigPannel.columnconfigure(i, weight=1)
-    xbarConfigPannelLabel = customtkinter.CTkLabel(xbarConfigPannel, text='Tile 0 crossbar outgoing links',
+    # for i in range(3):
+    #     xbarConfigPannel.columnconfigure(i, weight=1)
+    # for i in range(4):
+    #     xbarConfigPannel.rowconfigure(i, weight=1)
+    # xbarConfigPannel.grid_propagate(0)
+    xbarConfigPannelLabel = customtkinter.CTkLabel(xbarConfigPannel, text='Tile 0\ncrossbar outgoing links',
                                                    font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE,
                                                                               weight="bold", slant='italic'))
-    xbarConfigPannelLabel.grid(row=0, column=0, ipadx=5, pady=(5, 0), sticky="w")
+    # xbarConfigPannelLabel.grid(row=0, column=0, sticky="nsew")
+    xbarConfigPannelLabel.pack()
     widgets["xbarConfigPannelLabel"] = xbarConfigPannelLabel
-    place_xbar_options(xbarConfigPannel)
-
-
-    spmConfigPannel = tkinter.LabelFrame(paramPannel, text='Data SPM outgoing links', bd=BORDER, relief='groove')
-    spmConfigPannel.grid(row=9, column=0, rowspan=3, columnspan=4, sticky="nsew")
-    widgets["spmConfigPannel"] = spmConfigPannel
-
-    # Use columnconfigure and rowconfigure to partition the columns, so that each column and row fills the corresponding space
+    xbarConfigSubPannel = customtkinter.CTkFrame(xbarConfigPannel)
     for i in range(3):
-        spmConfigPannel.rowconfigure(i, weight=1)
-    for i in range(5):
-        spmConfigPannel.columnconfigure(i, weight=1)
+        xbarConfigSubPannel.columnconfigure(i, weight=1)
+    for i in range(3):
+        xbarConfigSubPannel.rowconfigure(i, weight=1)
+    place_xbar_options(xbarConfigSubPannel)
+    xbarConfigSubPannel.pack()
 
-    spmEnabledOutVar = tkinter.IntVar()
-    spmDisabledOutVar = tkinter.IntVar()
 
-    spmEnabledLabel = tkinter.Label(spmConfigPannel)
-    spmDisabledLabel = tkinter.Label(spmConfigPannel)
 
-    spmEnabledScrollbar = tkinter.Scrollbar(spmEnabledLabel)
-    spmDisabledScrollbar = tkinter.Scrollbar(spmDisabledLabel)
 
-    spmEnabledListbox = tkinter.Listbox(spmEnabledLabel, listvariable=spmEnabledOutVar)
-    spmDisabledListbox = tkinter.Listbox(spmDisabledLabel, listvariable=spmDisabledOutVar)
-
-    widgets["spmEnabledListbox"] = spmEnabledListbox
-    widgets["spmDisabledListbox"] = spmDisabledListbox
-
-    spmDisableButton = tkinter.Button(spmConfigPannel, text="Disable", relief='raised', command=clickSPMPortDisable,
-                                      highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS)
-    spmEnableButton = tkinter.Button(spmConfigPannel, text="Enable", relief='raised', command=clickSPMPortEnable,
-                                     highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS)
-    spmEnabledScrollbar.config(command=spmEnabledListbox.yview)
-    spmEnabledListbox.config(yscrollcommand=spmEnabledScrollbar.set)
-    spmDisabledScrollbar.config(command=spmDisabledListbox.yview)
-    spmDisabledListbox.config(yscrollcommand=spmDisabledScrollbar.set)
-    spmEnabledLabel.grid(row=0, column=0, rowspan=3, sticky="nsew")
-
-    spmEnabledScrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
-    spmEnabledListbox.pack()
-
-    spmDisableArrow0 = tkinter.Label(spmConfigPannel, text="=>")
-    spmDisableArrow1 = tkinter.Label(spmConfigPannel, text="=>")
-    spmEnableArrow0 = tkinter.Label(spmConfigPannel, text="<=")
-    spmEnableArrow1 = tkinter.Label(spmConfigPannel, text="<=")
-
-    spmDisableArrow0.grid(row=0, column=1, sticky="nsew")
-    spmDisableButton.grid(row=0, column=2, sticky="nsew")
-    spmDisableArrow1.grid(row=0, column=3, sticky="nsew")
-
-    spmEnableArrow0.grid(row=2, column=1, sticky="nsew")
-    spmEnableButton.grid(row=2, column=2, sticky="nsew")
-    spmEnableArrow1.grid(row=2, column=3, sticky="nsew")
-
-    spmDisabledLabel.grid(row=0, column=4, rowspan=3, sticky="new")
-
-    spmDisabledScrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
-    spmDisabledListbox.pack()
-
-    spmEnabledListbox.delete(0)
-    spmDisabledListbox.delete(0)
-    for port in paramCGRA.dataSPM.outLinks:
-        if not paramCGRA.dataSPM.outLinks[port].disabled:
-            spmEnabledListbox.insert(0, port)
+    # spmConfigPannel = tkinter.LabelFrame(paramPannel, text='Data SPM outgoing links', bd=BORDER, relief='groove')
+    # spmConfigPannel.grid(row=9, column=0, rowspan=3, columnspan=4, sticky="nsew")
+    # widgets["spmConfigPannel"] = spmConfigPannel
+    #
+    # # Use columnconfigure and rowconfigure to partition the columns, so that each column and row fills the corresponding space
+    # for i in range(3):
+    #     spmConfigPannel.rowconfigure(i, weight=1)
+    # for i in range(5):
+    #     spmConfigPannel.columnconfigure(i, weight=1)
+    #
+    # spmEnabledOutVar = tkinter.IntVar()
+    # spmDisabledOutVar = tkinter.IntVar()
+    #
+    # spmEnabledLabel = tkinter.Label(spmConfigPannel)
+    # spmDisabledLabel = tkinter.Label(spmConfigPannel)
+    #
+    # spmEnabledScrollbar = tkinter.Scrollbar(spmEnabledLabel)
+    # spmDisabledScrollbar = tkinter.Scrollbar(spmDisabledLabel)
+    #
+    # spmEnabledListbox = tkinter.Listbox(spmEnabledLabel, listvariable=spmEnabledOutVar)
+    # spmDisabledListbox = tkinter.Listbox(spmDisabledLabel, listvariable=spmDisabledOutVar)
+    #
+    # widgets["spmEnabledListbox"] = spmEnabledListbox
+    # widgets["spmDisabledListbox"] = spmDisabledListbox
+    #
+    # spmDisableButton = tkinter.Button(spmConfigPannel, text="Disable", relief='raised', command=clickSPMPortDisable,
+    #                                   highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS)
+    # spmEnableButton = tkinter.Button(spmConfigPannel, text="Enable", relief='raised', command=clickSPMPortEnable,
+    #                                  highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS)
+    # spmEnabledScrollbar.config(command=spmEnabledListbox.yview)
+    # spmEnabledListbox.config(yscrollcommand=spmEnabledScrollbar.set)
+    # spmDisabledScrollbar.config(command=spmDisabledListbox.yview)
+    # spmDisabledListbox.config(yscrollcommand=spmDisabledScrollbar.set)
+    # spmEnabledLabel.grid(row=0, column=0, rowspan=3, sticky="nsew")
+    #
+    # spmEnabledScrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
+    # spmEnabledListbox.pack()
+    #
+    # spmDisableArrow0 = tkinter.Label(spmConfigPannel, text="=>")
+    # spmDisableArrow1 = tkinter.Label(spmConfigPannel, text="=>")
+    # spmEnableArrow0 = tkinter.Label(spmConfigPannel, text="<=")
+    # spmEnableArrow1 = tkinter.Label(spmConfigPannel, text="<=")
+    #
+    # spmDisableArrow0.grid(row=0, column=1, sticky="nsew")
+    # spmDisableButton.grid(row=0, column=2, sticky="nsew")
+    # spmDisableArrow1.grid(row=0, column=3, sticky="nsew")
+    #
+    # spmEnableArrow0.grid(row=2, column=1, sticky="nsew")
+    # spmEnableButton.grid(row=2, column=2, sticky="nsew")
+    # spmEnableArrow1.grid(row=2, column=3, sticky="nsew")
+    #
+    # spmDisabledLabel.grid(row=0, column=4, rowspan=3, sticky="new")
+    #
+    # spmDisabledScrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
+    # spmDisabledListbox.pack()
+    #
+    # spmEnabledListbox.delete(0)
+    # spmDisabledListbox.delete(0)
+    # for port in paramCGRA.dataSPM.outLinks:
+    #     if not paramCGRA.dataSPM.outLinks[port].disabled:
+    #         spmEnabledListbox.insert(0, port)
 
 
 def create_test_pannel(master):

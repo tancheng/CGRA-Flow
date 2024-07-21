@@ -1611,7 +1611,7 @@ def create_cgra_pannel(master, rows, columns):
         else:
             srcX, srcY = link.getSrcXY()
             dstX, dstY = link.getDstXY()
-            canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
+            canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST, fill="white")
 
     vbar = customtkinter.CTkScrollbar(cgraPannel, orientation="vertical", command=canvas.yview)
     vbar.pack(side=tkinter.RIGHT, fill="y")
@@ -1729,7 +1729,7 @@ def create_param_pannel(master):
 
     # Tile x functional units
     fuConfigPannel = customtkinter.CTkFrame(paramPannel)
-    fuConfigPannel.grid(columnspan=4, row=5, column=0, rowspan=4, sticky="nsew")
+    fuConfigPannel.grid(columnspan=4, row=5, column=0, rowspan=4, pady=(5,5), sticky="nsew")
     widgets["fuConfigPannel"] = fuConfigPannel
 
     # Use columnconfigure to partition the columns, so that each column fills the corresponding space
@@ -2088,7 +2088,7 @@ default_height = 1000
 window_size(master, default_width, default_height)
 # master.grid_rowconfigure(0, weight=1)
 master.grid_rowconfigure(1, weight=2)
-master.grid_columnconfigure(0, weight=1)
+master.grid_columnconfigure(0, weight=2)
 master.grid_columnconfigure(1, weight=1)
 master.grid_columnconfigure(2, weight=1)
 master.grid_columnconfigure(3, weight=1)

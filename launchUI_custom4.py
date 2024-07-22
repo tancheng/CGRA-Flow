@@ -679,7 +679,7 @@ def clickTile(ID):
     # widgets["xbarConfigPannel"].config(text='Tile ' + str(ID) + ' crossbar outgoing links')
     widgets["xbarConfigPannelLabel"].configure(text='Tile ' + str(ID) + '\ncrossbar outgoing links')
     widgets["centralRadioButton"].configure(text='Tile ' + str(ID))
-    print(widgets['spmOutlinksSwitches'])
+    # print(widgets['spmOutlinksSwitches'])
     # After clicking the tile, the pannel will fill all directions
     # widgets["xbarConfigPannel"].grid(columnspan=4, row=9, column=0, rowspan=3, sticky="nsew")
     widgets["entireTileCheckbutton"].configure(text='Disable entire Tile ' + str(ID), state="normal")
@@ -700,24 +700,38 @@ def clickTile(ID):
 
 
 def clickSPM():
+    print('clickSPM')
     # widgets["fuConfigPannel"].config(text='Tile ' + str(paramCGRA.targetTileID) + ' functional units')
-    widgets["fuConfigPannelLabel"].configure(text='Tile ' + str(paramCGRA.targetTileID) + ' functional units')
+    # widgets["fuConfigPannelLabel"].configure(text='Tile ' + str(paramCGRA.targetTileID) + ' functional units')
+    #
+    # for fuType in fuTypeList:
+    #     fuCheckVars[fuType].set(paramCGRA.tiles[paramCGRA.targetTileID].fuDict[fuType])
+    #     fuCheckbuttons[fuType].configure(state="disabled")
+    #
+    # widgets["xbarConfigPannel"].grid_forget()
+    #
+    # spmConfigPannel = widgets["spmConfigPannel"]
+    # spmConfigPannel.config(text='DataSPM outgoing links')
+    # # After clicking the SPM, the pannel will fill all directions
+    # spmConfigPannel.grid(row=9, column=0, rowspan=3, columnspan=4, sticky="nsew")
+    #
+    # spmEnabledListbox = widgets["spmEnabledListbox"]
+    # spmDisabledListbox = widgets["spmDisabledListbox"]
+    #
+    # widgets["entireTileCheckbutton"].configure(text='Disable entire Tile ' + str(paramCGRA.targetTileID), state="disabled")
 
-    for fuType in fuTypeList:
-        fuCheckVars[fuType].set(paramCGRA.tiles[paramCGRA.targetTileID].fuDict[fuType])
-        fuCheckbuttons[fuType].configure(state="disabled")
 
-    widgets["xbarConfigPannel"].grid_forget()
+def switchDataSPMOutLinks():
+    spmOutlinksSwitches = widgets['spmOutlinksSwitches']
+    for portIdx, switch in enumerate(spmOutlinksSwitches):
+        link = paramCGRA.dataSPM.outLinks[portIdx]
+        if switch.get():
+            link.disabled = False
+        else:
+            link.disabled = True
 
-    spmConfigPannel = widgets["spmConfigPannel"]
-    spmConfigPannel.config(text='DataSPM outgoing links')
-    # After clicking the SPM, the pannel will fill all directions
-    spmConfigPannel.grid(row=9, column=0, rowspan=3, columnspan=4, sticky="nsew")
 
-    spmEnabledListbox = widgets["spmEnabledListbox"]
-    spmDisabledListbox = widgets["spmDisabledListbox"]
 
-    widgets["entireTileCheckbutton"].configure(text='Disable entire Tile ' + str(paramCGRA.targetTileID), state="disabled")
 
 
 def clickSPMPortDisable():
@@ -1781,14 +1795,14 @@ def create_param_pannel(master):
     #     scrollable_frame_switches.append(switch)
     for port in paramCGRA.dataSPM.outLinks:
         if not paramCGRA.dataSPM.outLinks[port].disabled:
-            switch = customtkinter.CTkSwitch(spmConfigScrollablePannel, text=f"link {port}")
+            switch = customtkinter.CTkSwitch(spmConfigScrollablePannel, text=f"link {port}", command=switchDataSPMOutLinks)
             switch.select()
             switch.pack(pady=(5, 10))
         else:
-            switch = customtkinter.CTkSwitch(spmConfigScrollablePannel, text=f"link {port}")
+            switch = customtkinter.CTkSwitch(spmConfigScrollablePannel, text=f"link {port}", command=switchDataSPMOutLinks)
             # switch.select()
             switch.pack(pady=(5, 10))
-        spmOutlinksSwitches.append(switch)
+        spmOutlinksSwitches.insert(0, switch)
     widgets['spmOutlinksSwitches'] = spmOutlinksSwitches
 
 

@@ -675,10 +675,10 @@ paramCGRA = ParamCGRA(ROWS, COLS, CONFIG_MEM_SIZE, DATA_MEM_SIZE)
 
 def clickTile(ID):
     # widgets["fuConfigPannel"].configure(text='Tile ' + str(ID) + ' functional units')
-    widgets["fuConfigPannelLabel"].configure(text='Tile ' + str(ID) + '\nfunctional units')
+    widgets["fuConfigPannel"].configure(label_text='Tile ' + str(ID) + '\nfunctional units')
     # widgets["xbarConfigPannel"].config(text='Tile ' + str(ID) + ' crossbar outgoing links')
-    widgets["xbarConfigPannelLabel"].configure(text='Tile ' + str(ID) + '\ncrossbar outgoing links')
-    widgets["centralRadioButton"].configure(text='Tile ' + str(ID))
+    widgets["xbarConfigPannel"].configure(label_text='Tile ' + str(ID) + '\ncrossbar outgoing links')
+    widgets["xbarCentralTilelabel"].configure(text='Tile ' + str(ID))
     # print(widgets['spmOutlinksSwitches'])
     # After clicking the tile, the pannel will fill all directions
     # widgets["xbarConfigPannel"].grid(columnspan=4, row=9, column=0, rowspan=3, sticky="nsew")
@@ -1651,7 +1651,7 @@ def place_fu_options(master):
         fuCheckbuttons[fuTypeList[i]] = fuCheckbutton
         fuCheckbutton.select()
         paramCGRA.updateFuCheckbutton(fuTypeList[i], fuVar.get())
-        fuCheckbutton.grid(row=(i // 2), column=i % 2, pady=10)
+        fuCheckbutton.grid(row=(i // 2), column=i % 2, pady=6)
 
 
 def place_xbar_options(master):
@@ -1674,26 +1674,29 @@ def place_xbar_options(master):
 
         # xbarCheckbutton.grid(row=(i // 3)+1, column=i % 3, padx=15, pady=15, sticky="nsew")
         if i== PORT_NORTH:
-            xbarCheckbutton.grid(row=(0) + 0, column=1, padx=0, pady=30)
+            xbarCheckbutton.grid(row=0, column=1, padx=5, pady=(6, 25))
         elif i== PORT_SOUTH:
-            xbarCheckbutton.grid(row=(2) + 0, column=1, padx=0, pady=30)
+            xbarCheckbutton.grid(row=2, column=1, padx=5, pady=25)
         elif i== PORT_WEST:
-            xbarCheckbutton.grid(row=(1) + 0, column=0, padx=0, pady=30)
+            xbarCheckbutton.grid(row=1, column=0, padx=5, pady=25)
         elif i== PORT_EAST:
-            xbarCheckbutton.grid(row=(1) + 0, column=2, padx=0, pady=30)
+            xbarCheckbutton.grid(row=1, column=2, padx=5, pady=25)
         elif i== PORT_NORTHWEST:
-            xbarCheckbutton.grid(row=(0) + 0, column=0, padx=0, pady=30)
+            xbarCheckbutton.grid(row=0, column=0, padx=5, pady=(6, 25))
         elif i== PORT_NORTHEAST:
-            xbarCheckbutton.grid(row=(0) + 0, column=2, padx=0, pady=30)
+            xbarCheckbutton.grid(row=0, column=2, padx=5, pady=(6, 25))
         elif i== PORT_SOUTHEAST:
-            xbarCheckbutton.grid(row=(2) + 0, column=2, padx=0, pady=30)
+            xbarCheckbutton.grid(row=2, column=2, padx=5, pady=25)
         elif i== PORT_SOUTHWEST:
-            xbarCheckbutton.grid(row=(2) + 0, column=0, padx=0, pady=30)
+            xbarCheckbutton.grid(row=2, column=0, padx=5, pady=25)
 
-        centralRadioButton = customtkinter.CTkRadioButton(master, text='Tile 0', variable=tkinter.IntVar(value=0))
-        centralRadioButton.configure(state="disabled")
-        centralRadioButton.grid(row=(1) + 0, column=1, padx=0, pady=30)
-        widgets["centralRadioButton"] = centralRadioButton
+        # centralRadioButton = customtkinter.CTkRadioButton(master, text='Tile 0', variable=tkinter.IntVar(value=0))
+        # centralRadioButton.configure(state="disabled")
+        # centralRadioButton.grid(row=1, column=1, padx=5, pady=25)
+        # widgets["centralRadioButton"] = centralRadioButton
+        xbarCentralTilelabel = customtkinter.CTkLabel(master, text='Tile 0', font=customtkinter.CTkFont(weight="bold", underline=True))
+        xbarCentralTilelabel.grid(row=1, column=1, padx=(0, 5), pady=25)
+        widgets["xbarCentralTilelabel"] = xbarCentralTilelabel
 
 def create_param_pannel(master):
     # paramPannel = tkinter.LabelFrame(master, text='Configuration', bd=BORDER, relief='groove')
@@ -1768,23 +1771,23 @@ def create_param_pannel(master):
 
 
     # Data SPM outgoing links
-    spmConfigPannel = customtkinter.CTkFrame(paramPannel)
-    spmConfigPannel.grid(row=5, column=0, rowspan=2, pady=(5,0), sticky="nsew")
+    spmConfigPannel = customtkinter.CTkScrollableFrame(paramPannel, label_text="Data SPM\noutgoing links", width=80)
+    spmConfigPannel.grid(row=5, column=0, rowspan=3, pady=(5,0), sticky="nsew")
     widgets["spmConfigPannel"] = spmConfigPannel
     # spmConfigPannel.rowconfigure(0, weight=1)
     # spmConfigPannel.rowconfigure(1, weight=3)
     # for i in range(4):
     #     spmConfigPannel.columnconfigure(i, weight=1)
     # spmConfigPannel.grid_propagate(0)
-    spmConfigPannelLabel = customtkinter.CTkLabel(spmConfigPannel, text='Data SPM\noutgoing links',
-                                                  font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE,
-                                                                             weight="bold", slant='italic'))
+    # spmConfigPannelLabel = customtkinter.CTkLabel(spmConfigPannel, text='Data SPM\noutgoing links',
+    #                                               font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE,
+    #                                                                          weight="bold", slant='italic'))
     # spmConfigPannelLabel.grid(row=0, column=0, sticky="nsew")
-    spmConfigPannelLabel.pack()
+    # spmConfigPannelLabel.pack()
     # spmConfigPannelLabel.grid_propagate(0)
-    spmConfigScrollablePannel = customtkinter.CTkScrollableFrame(spmConfigPannel, height=240)
+    # spmConfigScrollablePannel = customtkinter.CTkScrollableFrame(spmConfigPannel, height=240)
     # spmConfigScrollablePannel.grid(row=1, column=0, sticky="nsew")
-    spmConfigScrollablePannel.pack()
+    # spmConfigScrollablePannel.pack()
 
     spmOutlinksSwitches = []
     # for i in range(10):
@@ -1795,11 +1798,11 @@ def create_param_pannel(master):
     #     scrollable_frame_switches.append(switch)
     for port in paramCGRA.dataSPM.outLinks:
         if not paramCGRA.dataSPM.outLinks[port].disabled:
-            switch = customtkinter.CTkSwitch(spmConfigScrollablePannel, text=f"link {port}", command=switchDataSPMOutLinks)
+            switch = customtkinter.CTkSwitch(spmConfigPannel, text=f"link {port}", command=switchDataSPMOutLinks)
             switch.select()
             switch.pack(pady=(5, 10))
         else:
-            switch = customtkinter.CTkSwitch(spmConfigScrollablePannel, text=f"link {port}", command=switchDataSPMOutLinks)
+            switch = customtkinter.CTkSwitch(spmConfigPannel, text=f"link {port}", command=switchDataSPMOutLinks)
             # switch.select()
             switch.pack(pady=(5, 10))
         spmOutlinksSwitches.insert(0, switch)
@@ -1808,30 +1811,30 @@ def create_param_pannel(master):
 
 
     # Tile x functional units
-    fuConfigPannel = customtkinter.CTkFrame(paramPannel)
-    fuConfigPannel.grid(row=5, column=1, rowspan=4, padx=(5,5), pady=(5,0), sticky="nsew")
+    fuConfigPannel = customtkinter.CTkScrollableFrame(paramPannel, label_text="Tile 0\nfunctional units")
+    fuConfigPannel.grid(row=5, column=1, rowspan=3, padx=(5,5), pady=(5,0), sticky="nsew")
     widgets["fuConfigPannel"] = fuConfigPannel
 
     # Use columnconfigure to partition the columns, so that each column fills the corresponding space
     # for i in range(2):
     #     fuConfigPannel.columnconfigure(i, weight=1)
     # fuConfigPannel.grid_propagate(0)
-    fuConfigPannelLabel = customtkinter.CTkLabel(fuConfigPannel, text='Tile 0\nfunctional units',
-                                                 font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE,
-                                                                            weight="bold", slant='italic'))
+    # fuConfigPannelLabel = customtkinter.CTkLabel(fuConfigPannel, text='Tile 0\nfunctional units',
+    #                                              font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE,
+    #                                                                         weight="bold", slant='italic'))
     # fuConfigPannelLabel.grid(row=0, column=0, sticky="nsew")
-    fuConfigPannelLabel.pack()
-    widgets["fuConfigPannelLabel"] = fuConfigPannelLabel
-    fuConfigSubPannel = customtkinter.CTkFrame(fuConfigPannel)
+    # fuConfigPannelLabel.pack()
+    # widgets["fuConfigPannelLabel"] = fuConfigPannelLabel
+    # fuConfigSubPannel = customtkinter.CTkFrame(fuConfigPannel)
     for i in range(2):
-        fuConfigSubPannel.columnconfigure(i, weight=1)
-    place_fu_options(fuConfigSubPannel)
-    fuConfigSubPannel.pack()
+        fuConfigPannel.columnconfigure(i, weight=1)
+    place_fu_options(fuConfigPannel)
+    # fuConfigSubPannel.pack()
 
 
     # Tile x crossbar outgoing links
-    xbarConfigPannel = customtkinter.CTkFrame(paramPannel)
-    xbarConfigPannel.grid(row=5, column=2, rowspan=4, pady=(5, 0), sticky="nsew")
+    xbarConfigPannel = customtkinter.CTkScrollableFrame(paramPannel, label_text="Tile 0\ncrossbar outgoing links")
+    xbarConfigPannel.grid(row=5, column=2, rowspan=3, pady=(5, 0), sticky="nsew")
     widgets["xbarConfigPannel"] = xbarConfigPannel
 
     # Use columnconfigure to partition the columns, so that each column fills the corresponding space
@@ -1840,19 +1843,19 @@ def create_param_pannel(master):
     # for i in range(4):
     #     xbarConfigPannel.rowconfigure(i, weight=1)
     # xbarConfigPannel.grid_propagate(0)
-    xbarConfigPannelLabel = customtkinter.CTkLabel(xbarConfigPannel, text='Tile 0\ncrossbar outgoing links',
-                                                   font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE,
-                                                                              weight="bold", slant='italic'))
-    # xbarConfigPannelLabel.grid(row=0, column=0, sticky="nsew")
-    xbarConfigPannelLabel.pack()
-    widgets["xbarConfigPannelLabel"] = xbarConfigPannelLabel
-    xbarConfigSubPannel = customtkinter.CTkFrame(xbarConfigPannel)
+    # xbarConfigPannelLabel = customtkinter.CTkLabel(xbarConfigPannel, text='Tile 0\ncrossbar outgoing links',
+    #                                                font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE,
+    #                                                                           weight="bold", slant='italic'))
+    # # xbarConfigPannelLabel.grid(row=0, column=0, sticky="nsew")
+    # xbarConfigPannelLabel.pack()
+    # widgets["xbarConfigPannelLabel"] = xbarConfigPannelLabel
+    # xbarConfigSubPannel = customtkinter.CTkFrame(xbarConfigPannel)
     for i in range(3):
-        xbarConfigSubPannel.columnconfigure(i, weight=1)
+        xbarConfigPannel.columnconfigure(i, weight=1)
     for i in range(3):
-        xbarConfigSubPannel.rowconfigure(i, weight=1)
-    place_xbar_options(xbarConfigSubPannel)
-    xbarConfigSubPannel.pack()
+        xbarConfigPannel.rowconfigure(i, weight=1)
+    place_xbar_options(xbarConfigPannel)
+    # xbarConfigSubPannel.pack()
 
 
 

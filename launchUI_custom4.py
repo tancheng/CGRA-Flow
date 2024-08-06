@@ -2052,21 +2052,26 @@ def create_test_pannel(master):
 
 
 def create_layout_pannel(master):
-    layoutPannel = tkinter.LabelFrame(master, text='Layout', bd=BORDER, relief='groove')
-    layoutPannel.grid(row=0, column=3, rowspan=1, columnspan=1, sticky="nsew")
-    canvas = tkinter.Canvas(layoutPannel, bd=0)
-    scrollbar = tkinter.Scrollbar(layoutPannel, orient="horizontal", command=canvas.xview)
+    # layoutPannel = tkinter.LabelFrame(master, text='Layout', bd=BORDER, relief='groove')
+    layoutPannel = customtkinter.CTkFrame(master)
+    layoutPannel.grid(row=0, column=3, rowspan=1, columnspan=1, padx=(5,0), sticky="nsew")
+    layoutPannelLabel = customtkinter.CTkLabel(layoutPannel, text='Layout ',
+                                             # width=100,
+                                             font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE,
+                                             weight="bold", slant='italic'))
+    layoutPannelLabel.pack(anchor="w", padx=(5,0))
+    canvas = customtkinter.CTkCanvas(layoutPannel, bg='#2B2B2B', bd=0, highlightthickness=0)
+    scrollbar = customtkinter.CTkScrollbar(layoutPannel, orientation="horizontal", command=canvas.xview)
     scrollbar.pack(side="bottom", fill="x")
     canvas.config(xscrollcommand=scrollbar.set)
     canvas.pack(side="top", fill="both", expand=True)
-    layout_frame = tkinter.Frame(canvas)
+    layout_frame = customtkinter.CTkFrame(canvas)
     canvas.create_window((0, 0), window=layout_frame, anchor="nw")
-    showButton = tkinter.Button(layoutPannel, text="Display layout", relief='raised', highlightbackground="black",
-                                highlightthickness=HIGHLIGHT_THICKNESS)
+    showButton = customtkinter.CTkButton(layoutPannel, text="Display layout")
     CreateToolTip(showButton, text="The layout demonstration is\nunder development.")
-    showButton.place(relx=0.5, rely=0.05, anchor="center")
-    X = tkinter.Label(layout_frame, fg="black")
-    X.pack()
+    showButton.place(relx=0.5, rely=0.1, anchor="center")
+    # X = customtkinter.CTkLabel(layout_frame)
+    # X.pack()
 
 
 def create_mapping_pannel(master):

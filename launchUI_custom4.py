@@ -642,12 +642,14 @@ class ToolTip(object):
         x, y, cx, cy = self.widget.bbox("insert")
         x = x + self.widget.winfo_rootx() + 57
         y = y + cy + self.widget.winfo_rooty() + 27
-        self.tipwindow = tw = tkinter.Toplevel(self.widget)
+        # self.tipwindow = tw = tkinter.Toplevel(self.widget)
+        self.tipwindow = tw = customtkinter.CTkToplevel(self.widget)
         tw.wm_overrideredirect(1)
         tw.wm_geometry("+%d+%d" % (x, y))
-        label = tkinter.Label(tw, text=self.text, justify=tkinter.LEFT,
-                              background="#ffffe0", relief=tkinter.SOLID, borderwidth=1,
-                              font=("tahoma", "8", "normal"))
+        # label = tkinter.Label(tw, text=self.text, justify=tkinter.LEFT,
+        #                       background="#ffffe0", relief=tkinter.SOLID, borderwidth=1,
+        #                       font=("tahoma", "8", "normal"))
+        label = customtkinter.CTkLabel(tw, text=self.text)
         label.pack(ipadx=1)
 
     def hidetip(self):
@@ -807,6 +809,9 @@ def clickUpdate(root):
     if paramCGRA.rows != rows or paramCGRA.columns != columns:
         paramCGRA = ParamCGRA(rows, columns)
 
+    dataSPM = ParamSPM(MEM_WIDTH, rows, rows)
+    paramCGRA.initDataSPM(dataSPM)
+
     create_cgra_pannel(root, rows, columns)
 
     # kernel related information and be kept to avoid redundant compilation
@@ -849,15 +854,20 @@ def clickReset(root):
 
     create_cgra_pannel(root, rows, columns)
 
-    for _ in range(paramCGRA.rows):
-        widgets["spmEnabledListbox"].delete(0)
-        widgets["spmDisabledListbox"].delete(0)
+    # for _ in range(paramCGRA.rows):
+    #     widgets["spmEnabledListbox"].delete(0)
+    #     widgets["spmDisabledListbox"].delete(0)
 
+    widgets['spmOutlinksSwitches'] = []
+    spmOutlinksSwitches = []
+    spmConfigPannel = widgets["spmConfigPannel"]
     for port in paramCGRA.dataSPM.outLinks:
+        switch = customtkinter.CTkSwitch(spmConfigPannel, text=f"link {port}", command=switchDataSPMOutLinks)
         if not paramCGRA.dataSPM.outLinks[port].disabled:
-            widgets["spmEnabledListbox"].insert(0, port)
-        else:
-            widgets["spmDisabledListbox"].insert(0, port)
+            switch.select()
+        switch.pack(pady=(5, 10))
+        spmOutlinksSwitches.insert(0, switch)
+    widgets['spmOutlinksSwitches'] = spmOutlinksSwitches
 
     # kernel related information and be kept to avoid redundant compilation
     paramCGRA.targetAppName = oldCGRA.targetAppName
@@ -1701,7 +1711,7 @@ def place_xbar_options(master):
 def create_param_pannel(master):
     # paramPannel = tkinter.LabelFrame(master, text='Configuration', bd=BORDER, relief='groove')
     paramPannel = customtkinter.CTkFrame(master, width=550, height=480)
-    paramPannel.grid(row=0, column=1, rowspan=1, columnspan=1, sticky="nsew")
+    paramPannel.grid(row=0, column=1, rowspan=1, columnspan=1, padx=(0, 5), sticky="nsew")
 
     # Use columnconfigure and rowconfigure to partition the columns, so that each column and row will fill the corresponding space
     # The 'weight' represents the weight of the corresponding row/column length
@@ -1797,14 +1807,10 @@ def create_param_pannel(master):
     #     switch.pack(pady=(5, 10))
     #     scrollable_frame_switches.append(switch)
     for port in paramCGRA.dataSPM.outLinks:
+        switch = customtkinter.CTkSwitch(spmConfigPannel, text=f"link {port}", command=switchDataSPMOutLinks)
         if not paramCGRA.dataSPM.outLinks[port].disabled:
-            switch = customtkinter.CTkSwitch(spmConfigPannel, text=f"link {port}", command=switchDataSPMOutLinks)
             switch.select()
-            switch.pack(pady=(5, 10))
-        else:
-            switch = customtkinter.CTkSwitch(spmConfigPannel, text=f"link {port}", command=switchDataSPMOutLinks)
-            # switch.select()
-            switch.pack(pady=(5, 10))
+        switch.pack(pady=(5, 10))
         spmOutlinksSwitches.insert(0, switch)
     widgets['spmOutlinksSwitches'] = spmOutlinksSwitches
 
@@ -1924,7 +1930,7 @@ def create_param_pannel(master):
 
 
 def create_test_pannel(master):
-    dataPannel = tkinter.LabelFrame(master)
+    dataPannel = customtkinter.CTkFrame(master, width=280, height=480)
     dataPannel.grid(row=0, column=2, rowspan=1, columnspan=1, sticky="nsew")
     # Increase the size of the 'SVerilog' panel
     dataPannel.grid_rowconfigure(1, weight=2)
@@ -1932,98 +1938,117 @@ def create_test_pannel(master):
     dataPannel.grid_columnconfigure(0, weight=1)
     dataPannel.grid_columnconfigure(1, weight=1)
     dataPannel.grid_columnconfigure(2, weight=1)
-    testPannel = tkinter.LabelFrame(dataPannel, text='Verification', bd=BORDER, relief='groove')
+    dataPannel.grid_propagate(0)
+    # testPannel = tkinter.LabelFrame(dataPannel, text='Verification', bd=BORDER, relief='groove')
+    testPannel = customtkinter.CTkFrame(dataPannel)
     testPannel.grid(row=0, column=0, rowspan=1, columnspan=3, sticky="nsew")
     testPannel.columnconfigure(0, weight=1)
     testPannel.columnconfigure(1, weight=1)
     testPannel.columnconfigure(2, weight=1)
-    testButton = tkinter.Button(testPannel, text="Run tests", relief='raised', command=clickTest,
-                                highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS)
-    testButton.grid(row=0, column=0, rowspan=1, columnspan=1)
-    testProgress = ttk.Progressbar(testPannel, orient='horizontal', mode='determinate')
+    testPannelLabel = customtkinter.CTkLabel(testPannel, text='Verification ',
+                                             # width=100,
+                                             font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE,
+                                             weight="bold", slant='italic'))
+    testPannelLabel.grid(row=0, column=0, columnspan=3, ipadx=5, sticky="w")
+    testButton = customtkinter.CTkButton(testPannel, text="Run tests", # relief='raised',
+                                         command=clickTest,
+                                         width=50
+                                         # highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS
+                                         )
+    testButton.grid(row=1, column=0, ipadx=5)
+    # testProgress = ttk.Progressbar(testPannel, orient='horizontal', mode='determinate')
+    testProgress = customtkinter.CTkProgressBar(testPannel, orientation='horizontal', mode='determinate', width=160)
     testProgress['value'] = 0
     widgets["testProgress"] = testProgress
-    testProgress.grid(row=0, column=1, rowspan=1, columnspan=1, sticky="nsew")
-    testShow = tkinter.Label(testPannel, text="  IDLE ", fg='gray')
+    testProgress.grid(row=1, column=1, rowspan=1, columnspan=1, padx=5, sticky="ew")
+    testShow = customtkinter.CTkLabel(testPannel, text="IDLE ")
     widgets["testShow"] = testShow
-    testShow.grid(row=0, column=2, sticky=tkinter.E)
+    testShow.grid(row=1, column=2, sticky=tkinter.E, padx=(5, 5))
 
-    verilogPannel = tkinter.LabelFrame(dataPannel, text="SVerilog", bd=BORDER, relief="groove")
-    verilogPannel.grid(row=1, column=0, rowspan=1, columnspan=3, sticky="nsew")
+    # verilogPannel = tkinter.LabelFrame(dataPannel, text="SVerilog", bd=BORDER, relief="groove")
+    verilogPannel = customtkinter.CTkFrame(dataPannel)
+    verilogPannel.grid(row=1, column=0, rowspan=1, columnspan=3, pady=(5,5), sticky="nsew")
+    verilogPannelLabel = customtkinter.CTkLabel(verilogPannel, text='SVerilog ',
+                                             # width=100,
+                                             font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE,
+                                             weight="bold", slant='italic'))
+    verilogPannelLabel.pack(anchor="w", padx=(5,0))
     CreateToolTip(verilogPannel,
                   text="The code might be too big to be copied,\nthe generated verilog can be found in\nthe 'verilog' folder.")
-    generateVerilogButton = tkinter.Button(verilogPannel, text="Generate", relief='raised',
-                                           command=clickGenerateVerilog, highlightbackground="black",
-                                           highlightthickness=HIGHLIGHT_THICKNESS)
+    generateVerilogButton = customtkinter.CTkButton(verilogPannel, text="Generate", width=50,
+                                           command=clickGenerateVerilog)
     generateVerilogButton.pack(side=tkinter.BOTTOM, anchor="sw", padx=BORDER, pady=BORDER)
-    verilogScroll = tkinter.Scrollbar(verilogPannel, orient="vertical")
-    verilogScroll.pack(side=tkinter.RIGHT, fill="y")
-    verilogText = tkinter.Text(verilogPannel, yscrollcommand=verilogScroll.set, width=10, height=5)
+    # verilogScroll = tkinter.Scrollbar(verilogPannel, orient="vertical")
+    # verilogScroll.pack(side=tkinter.RIGHT, fill="y")
+    # verilogText = tkinter.Text(verilogPannel, yscrollcommand=verilogScroll.set, width=10, height=5)
+    # verilogText.pack(side=tkinter.LEFT, fill="both", expand=True)
+    # verilogScroll.config(command=verilogText.yview)
+    verilogText = customtkinter.CTkTextbox(verilogPannel, width=10, height=5)
     verilogText.pack(side=tkinter.LEFT, fill="both", expand=True)
-    verilogScroll.config(command=verilogText.yview)
     widgets["verilogText"] = verilogText
 
-    reportPannel = tkinter.LabelFrame(dataPannel, text='Report area/power', bd=BORDER, relief='groove')
+    # reportPannel = tkinter.LabelFrame(dataPannel, text='Report area/power', bd=BORDER, relief='groove')
+    reportPannel = customtkinter.CTkFrame(dataPannel)
     reportPannel.grid(row=2, column=0, rowspan=1, columnspan=3, sticky='nesw')
     reportPannel.columnconfigure(0, weight=1)
     reportPannel.columnconfigure(1, weight=1)
-    reportButton = tkinter.Button(reportPannel, text="Synthesize", relief="raised", command=clickSynthesize,
-                                  highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS)
+    reportPannelLabel = customtkinter.CTkLabel(reportPannel, text='Report area/power ',
+                                             # width=100,
+                                             font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE,
+                                             weight="bold", slant='italic'))
 
-    reportProgress = ttk.Progressbar(reportPannel, orient="horizontal", mode="determinate")
+    reportButton = customtkinter.CTkButton(reportPannel, text="Synthesize", command=clickSynthesize, width=60)
+
+    reportProgress = customtkinter.CTkProgressBar(reportPannel, orientation="horizontal", mode="determinate", width=140)
     reportProgress['value'] = 0
     widgets["reportProgress"] = reportProgress
 
-    synthesisTimeEntry = tkinter.Entry(reportPannel, fg="black", justify=tkinter.CENTER, highlightbackground="black",
-                                       highlightthickness=HIGHLIGHT_THICKNESS)
+    synthesisTimeEntry = customtkinter.CTkEntry(reportPannel, justify=tkinter.CENTER)
     widgets["synthesisTimeEntry"] = synthesisTimeEntry
 
-    reportTimecostLabel = tkinter.Label(reportPannel, text=" Time cost:")
+    reportTimecostLabel = customtkinter.CTkLabel(reportPannel, text=" Time cost:")
     CreateToolTip(reportTimecostLabel, text="Time is in s.")
 
-    reportTileAreaLabel = tkinter.Label(reportPannel, text=" Tiles area:")
+    reportTileAreaLabel = customtkinter.CTkLabel(reportPannel, text=" Tiles area:")
     CreateToolTip(reportTileAreaLabel, text="Area is in mm^2.")
 
-    reportTileAreaData = tkinter.Entry(reportPannel, justify=tkinter.CENTER, highlightbackground="black",
-                                       highlightthickness=HIGHLIGHT_THICKNESS)
+    reportTileAreaData = customtkinter.CTkEntry(reportPannel, justify=tkinter.CENTER)
     widgets["reportTileAreaData"] = reportTileAreaData
 
-    reportTilePowerLabel = tkinter.Label(reportPannel, text="Tiles power:")
+    reportTilePowerLabel = customtkinter.CTkLabel(reportPannel, text="Tiles power:")
     CreateToolTip(reportTilePowerLabel, text="Yosys is not able to provide\npower estimation.")
 
-    reportTilePowerData = tkinter.Entry(reportPannel, justify=tkinter.CENTER, highlightbackground="black",
-                                        highlightthickness=HIGHLIGHT_THICKNESS)
+    reportTilePowerData = customtkinter.CTkEntry(reportPannel, justify=tkinter.CENTER)
     widgets["reportTilePowerData"] = reportTilePowerData
 
-    reportSPMAreaLabel = tkinter.Label(reportPannel, text=" SPM area:")
+    reportSPMAreaLabel = customtkinter.CTkLabel(reportPannel, text=" SPM area:")
     CreateToolTip(reportSPMAreaLabel, text="Area is in mm^2.")
 
-    reportSPMAreaData = tkinter.Entry(reportPannel, justify=tkinter.CENTER, highlightbackground="black",
-                                      highlightthickness=HIGHLIGHT_THICKNESS)
+    reportSPMAreaData = customtkinter.CTkEntry(reportPannel, justify=tkinter.CENTER)
     widgets["reportSPMAreaData"] = reportSPMAreaData
 
-    reportSPMPowerLabel = tkinter.Label(reportPannel, text="SPM power:")
+    reportSPMPowerLabel = customtkinter.CTkLabel(reportPannel, text="SPM power:")
     CreateToolTip(reportSPMPowerLabel, text="Power is in mW.")
 
-    reportSPMPowerData = tkinter.Entry(reportPannel, justify=tkinter.CENTER, highlightbackground="black",
-                                       highlightthickness=HIGHLIGHT_THICKNESS)
+    reportSPMPowerData = customtkinter.CTkEntry(reportPannel, justify=tkinter.CENTER)
     widgets["reportSPMPowerData"] = reportSPMPowerData
 
-    reportButton.grid(row=0, column=0)
-    reportProgress.grid(row=0, column=1)
+    reportPannelLabel.grid(row=0, column=0, columnspan=2, padx=(5,0), sticky="w")
+    reportButton.grid(row=1, column=0)
+    reportProgress.grid(row=1, column=1)
 
-    synthesisTimeEntry.grid(row=1, column=1, pady=10, sticky="w")
-    reportTimecostLabel.grid(row=1, column=0, pady=10)
+    synthesisTimeEntry.grid(row=2, column=1, pady=5)
+    reportTimecostLabel.grid(row=2, column=0, pady=5)
 
-    reportTileAreaLabel.grid(row=2, column=0, pady=10)
-    reportTileAreaData.grid(row=2, column=1, pady=10, sticky="w")
-    reportTilePowerLabel.grid(row=3, column=0, pady=10)
-    reportTilePowerData.grid(row=3, column=1, pady=10, sticky="w")
+    reportTileAreaLabel.grid(row=3, column=0, pady=5)
+    reportTileAreaData.grid(row=3, column=1, pady=5)
+    reportTilePowerLabel.grid(row=4, column=0, pady=5)
+    reportTilePowerData.grid(row=4, column=1, pady=5)
 
-    reportSPMAreaLabel.grid(row=4, column=0, pady=10)
-    reportSPMAreaData.grid(row=4, column=1, pady=10, sticky="w")
-    reportSPMPowerLabel.grid(row=5, column=0, pady=10)
-    reportSPMPowerData.grid(row=5, column=1, pady=10, sticky="w")
+    reportSPMAreaLabel.grid(row=5, column=0, pady=5)
+    reportSPMAreaData.grid(row=5, column=1, pady=5)
+    reportSPMPowerLabel.grid(row=6, column=0, pady=5)
+    reportSPMPowerData.grid(row=6, column=1, pady=5)
 
 
 def create_layout_pannel(master):

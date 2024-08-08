@@ -2094,110 +2094,121 @@ def create_mapping_pannel(master):
 
 
 def create_kernel_pannel(master):
-    kernelPannel = tkinter.LabelFrame(master, text="Kernel", bd=BORDER, relief='groove')
-    kernelPannel.grid(row=1, column=0, rowspan=1, columnspan=1, sticky="nsew")
-    for row in range(12):
+    # kernelPannel = tkinter.LabelFrame(master, text="Kernel", bd=BORDER, relief='groove')
+    kernelPannel = customtkinter.CTkFrame(master)
+    kernelPannel.grid(row=1, column=0, rowspan=1, columnspan=1, padx=(0, 5), pady=(5, 0), sticky="nsew")
+    for row in range(13):
         kernelPannel.grid_rowconfigure(row, weight=1)
     kernelPannel.grid_columnconfigure(0, weight=3)
     kernelPannel.grid_columnconfigure(1, weight=2)
     kernelPannel.grid_columnconfigure(2, weight=2)
     kernelPannel.grid_columnconfigure(3, weight=1)
 
-    selectAppLabel = tkinter.Label(kernelPannel, text=" Application:", fg='black')
-    selectAppLabel.grid(row=0, column=0, sticky="nsew")
+    kernelPannellLabel = customtkinter.CTkLabel(kernelPannel, text='Kernel ',
+                                                # width=100,
+                                                font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_1_FONT_SIZE,
+                                                                           weight="bold"))
+    kernelPannellLabel.grid(row=0, column=0, padx=(5, 0), sticky="wn")
 
-    appPathEntry = tkinter.Entry(kernelPannel, fg="black")
+    selectAppLabel = customtkinter.CTkLabel(kernelPannel, text=" Application:")
+    selectAppLabel.grid(row=1, column=0, sticky="nsew")
+
+    appPathEntry = customtkinter.CTkEntry(kernelPannel)
     widgets["appPathEntry"] = appPathEntry
-    appPathEntry.grid(row=0, column=1, sticky="nsew")
+    appPathEntry.grid(row=1, column=1)
     appPathEntry.bind("<Button-1>", clickSelectApp)
 
-    compileAppButton = tkinter.Button(kernelPannel, text=" Compile app  ", fg="black", command=clickCompileApp,
-                                      highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS)
-    compileAppButton.grid(row=0, column=2, sticky="nse")
+    compileAppButton = customtkinter.CTkButton(kernelPannel, text=" Compile app  ", command=clickCompileApp)
+    compileAppButton.grid(row=1, column=2)
 
-    compileAppShow = tkinter.Label(kernelPannel, text=" IDLE", fg='gray')
-    compileAppShow.grid(row=0, column=3, sticky="ew")
+    compileAppShow = customtkinter.CTkLabel(kernelPannel, text=" IDLE")
+    compileAppShow.grid(row=1, column=3)
     widgets["compileAppShow"] = compileAppShow
 
-    kernelNameLabel = tkinter.Label(kernelPannel, text=" Kernel name:", fg='black')
-    kernelNameLabel.grid(row=1, column=0, sticky="nsew")
+    kernelNameLabel = customtkinter.CTkLabel(kernelPannel, text=" Kernel name:")
+    kernelNameLabel.grid(row=2, column=0)
 
     tempOptions = ["Not selected yet"]
-    kernelNameMenu = tkinter.OptionMenu(kernelPannel, kernelOptions, *tempOptions)
-    kernelOptions.trace("w", clickKernelMenu)
+    # kernelNameMenu = tkinter.OptionMenu(kernelPannel, kernelOptions, *tempOptions)
+    kernelNameMenu = customtkinter.CTkOptionMenu(kernelPannel, values=tempOptions, command=clickKernelMenu)
+    # kernelOptions.trace("w", clickKernelMenu)
     widgets["kernelNameMenu"] = kernelNameMenu
-    kernelNameMenu.grid(row=1, column=1, sticky="nsew")
+    kernelNameMenu.grid(row=2, column=1)
 
-    generateDFGButton = tkinter.Button(kernelPannel, text="Generate DFG", fg="black", command=clickShowDFG,
-                                       highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS)
-    generateDFGButton.grid(row=1, column=2, sticky="nse")
+    generateDFGButton = customtkinter.CTkButton(kernelPannel, text="Generate DFG", command=clickShowDFG)
+    generateDFGButton.grid(row=2, column=2)
 
-    generateDFGShow = tkinter.Label(kernelPannel, text=" IDLE", fg='gray')
-    generateDFGShow.grid(row=1, column=3, sticky="ew")
+    generateDFGShow = customtkinter.CTkLabel(kernelPannel, text=" IDLE")
+    generateDFGShow.grid(row=2, column=3, sticky="ew")
     widgets["generateDFGShow"] = generateDFGShow
 
-    dfgPannel = tkinter.LabelFrame(kernelPannel, text='Data-Flow Graph', fg="black", bd=BORDER, relief='groove',
-                                   highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS)
-    dfgPannel.grid(row=2, column=0, rowspan=10, columnspan=2, sticky="nsew")
-    dfgLabel = tkinter.Label(dfgPannel)
+    dfgPannel = customtkinter.CTkFrame(kernelPannel)
+    dfgPannel.grid(row=3, column=0, rowspan=10, columnspan=2, padx=(0,5), pady=(5,0), sticky="nsew")
+    dfgPannelLabel = customtkinter.CTkLabel(dfgPannel, text='Data-Flow Graph ',
+                                             font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE,
+                                                                        weight="bold", slant='italic'))
+    dfgPannelLabel.pack(anchor="w", padx=(5, 0))
+    dfgLabel = customtkinter.CTkLabel(dfgPannel, text="")
     widgets["dfgLabel"] = dfgLabel
     dfgLabel.pack()
 
-    recMIILabel = tkinter.Label(kernelPannel, text=" RecMII: ", fg='black')
-    recMIILabel.grid(row=2, column=2, sticky="nsew")
-    recMIIEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER, highlightbackground="black",
-                                highlightthickness=HIGHLIGHT_THICKNESS)
+    recMIILabel = customtkinter.CTkLabel(kernelPannel, text=" RecMII: ")
+    recMIILabel.grid(row=3, column=2, sticky="nsew")
+    recMIIEntry = customtkinter.CTkEntry(kernelPannel, justify=tkinter.CENTER)
     widgets["recMIIEntry"] = recMIIEntry
     recMIIEntry.insert(0, "0")
-    recMIIEntry.grid(row=2, column=3)
-    resMIILabel = tkinter.Label(kernelPannel, text=" ResMII: ", fg='black')
-    resMIILabel.grid(row=3, column=2, sticky="nsew")
-    resMIIEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER, highlightbackground="black",
-                                highlightthickness=HIGHLIGHT_THICKNESS)
+    recMIIEntry.grid(row=3, column=3)
+    resMIILabel = customtkinter.CTkLabel(kernelPannel, text=" ResMII: ")
+    resMIILabel.grid(row=4, column=2, sticky="nsew")
+    resMIIEntry = customtkinter.CTkEntry(kernelPannel, justify=tkinter.CENTER)
     widgets["resMIIEntry"] = resMIIEntry
     resMIIEntry.insert(0, "0")
-    resMIIEntry.grid(row=3, column=3)
+    resMIIEntry.grid(row=4, column=3)
 
-    mappingOptionLabel = tkinter.Label(kernelPannel, text="Mapping algo:", fg='black')
-    mappingOptionLabel.grid(row=4, column=2, columnspan=2, sticky="nsew")
-    heuristicRatiobutton = tkinter.Radiobutton(kernelPannel, text="Heuristic", variable=mappingAlgoCheckVar, value=1)
+    mappingAlgoPannel = customtkinter.CTkFrame(kernelPannel)
+    mappingAlgoPannel.grid(row=5, column=2, rowspan=3, columnspan=2, pady=(5,10), sticky="nsew")
+    for row in range(3):
+        mappingAlgoPannel.grid_rowconfigure(row, weight=1)
+    mappingAlgoPannel.grid_columnconfigure(0, weight=1)
+    mappingAlgoPannel.grid_columnconfigure(1, weight=1)
+    # mappingOptionLabel = customtkinter.CTkLabel(mappingAlgoPannel, text="Mapping algo:")
+    mappingOptionLabel = customtkinter.CTkLabel(mappingAlgoPannel, text='Mapping algo: ',
+                                            font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE,
+                                                                       weight="bold", slant='italic'))
+    mappingOptionLabel.grid(row=0, column=0, columnspan=2, sticky="wn")
+    heuristicRatiobutton = customtkinter.CTkRadioButton(mappingAlgoPannel, text="Heuristic", variable=mappingAlgoCheckVar, value=1)
     widgets["heuristicRatiobutton"] = heuristicRatiobutton
-    heuristicRatiobutton.grid(row=5, column=2, columnspan=2, sticky="nsew")
-    exhaustiveRatiobutton = tkinter.Radiobutton(kernelPannel, text="Exhaustive", variable=mappingAlgoCheckVar, value=0)
+    heuristicRatiobutton.grid(row=1, column=1, sticky="nsew")
+    exhaustiveRatiobutton = customtkinter.CTkRadioButton(mappingAlgoPannel, text="Exhaustive", variable=mappingAlgoCheckVar, value=0)
     widgets["exhaustiveRatiobutton"] = exhaustiveRatiobutton
-    exhaustiveRatiobutton.grid(row=6, column=2, columnspan=2, sticky="nsew")
+    exhaustiveRatiobutton.grid(row=2, column=1, sticky="nsew")
 
-    mapDFGButton = tkinter.Button(kernelPannel, text="Map DFG", fg="black", command=clickMapDFG,
-                                  highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS)
-    mapDFGButton.grid(row=7, column=2, columnspan=2, sticky="new")
-    terminateMapButton = tkinter.Button(kernelPannel, text="Terminate", fg="black", command=clickTerminateMapping,
-                                        highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS)
-    terminateMapButton.grid(row=8, column=2, columnspan=2, sticky="new")
+    mapDFGButton = customtkinter.CTkButton(kernelPannel, text="Map DFG", command=clickMapDFG,)
+    mapDFGButton.grid(row=8, column=2, columnspan=2, sticky="new")
+    terminateMapButton = customtkinter.CTkButton(kernelPannel, text="Terminate", command=clickTerminateMapping)
+    terminateMapButton.grid(row=9, column=2, columnspan=2, sticky="new")
 
-    mapSecLabel = tkinter.Label(kernelPannel, text="Time (s): ", fg='black')
-    mapSecLabel.grid(row=9, column=2, sticky="nsew")
-    mapTimeEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER, highlightbackground="black",
-                                 highlightthickness=HIGHLIGHT_THICKNESS)
+    mapSecLabel = customtkinter.CTkLabel(kernelPannel, text="Time (s): ")
+    mapSecLabel.grid(row=10, column=2, sticky="nsew")
+    mapTimeEntry = customtkinter.CTkEntry(kernelPannel, justify=tkinter.CENTER)
     widgets["mapTimeEntry"] = mapTimeEntry
     mapTimeEntry.insert(0, "0")
-    mapTimeEntry.grid(row=9, column=3)
-    mapIILabel = tkinter.Label(kernelPannel, text=" Map II: ", fg='black')
-    mapIILabel.grid(row=10, column=2, sticky="nsew")
-    mapIIEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER, highlightbackground="black",
-                               highlightthickness=HIGHLIGHT_THICKNESS)
+    mapTimeEntry.grid(row=10, column=3)
+    mapIILabel = customtkinter.CTkLabel(kernelPannel, text=" Map II: ")
+    mapIILabel.grid(row=11, column=2, sticky="nsew")
+    mapIIEntry = customtkinter.CTkEntry(kernelPannel, justify=tkinter.CENTER)
     widgets["mapIIEntry"] = mapIIEntry
     mapIIEntry.insert(0, "0")
-    mapIIEntry.grid(row=10, column=3)
+    mapIIEntry.grid(row=11, column=3)
 
-    speedupLabel = tkinter.Label(kernelPannel, text="Speedup: ", fg='black')
-    speedupLabel.grid(row=11, column=2, sticky="nsew")
+    speedupLabel = customtkinter.CTkLabel(kernelPannel, text="Speedup: ")
+    speedupLabel.grid(row=12, column=2, sticky="nsew")
     CreateToolTip(speedupLabel,
                   text="The speedup is the improvement of\nthe execution cycles with respect to\na single-issue in-order CPU.")
-    mapSpeedupEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER, highlightbackground="black",
-                                    highlightthickness=HIGHLIGHT_THICKNESS)
+    mapSpeedupEntry = customtkinter.CTkEntry(kernelPannel, justify=tkinter.CENTER)
     widgets["mapSpeedupEntry"] = mapSpeedupEntry
     mapSpeedupEntry.insert(0, "0")
-    mapSpeedupEntry.grid(row=11, column=3)
+    mapSpeedupEntry.grid(row=12, column=3)
 
 
 # paramPadPosX = GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + INTERVAL * 3

@@ -2057,8 +2057,7 @@ def create_layout_pannel(master):
     layoutPannel.grid(row=0, column=3, rowspan=1, columnspan=1, padx=(5,0), sticky="nsew")
     layoutPannelLabel = customtkinter.CTkLabel(layoutPannel, text='Layout ',
                                              # width=100,
-                                             font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE,
-                                             weight="bold", slant='italic'))
+                                             font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_1_FONT_SIZE, weight="bold"))
     layoutPannelLabel.pack(anchor="w", padx=(5,0))
     canvas = customtkinter.CTkCanvas(layoutPannel, bg='#2B2B2B', bd=0, highlightthickness=0)
     scrollbar = customtkinter.CTkScrollbar(layoutPannel, orientation="horizontal", command=canvas.xview)
@@ -2075,14 +2074,20 @@ def create_layout_pannel(master):
 
 
 def create_mapping_pannel(master):
-    mappingPannel = tkinter.LabelFrame(master, text='Mapping', bd=BORDER, relief='groove')
-    mappingPannel.grid(row=1, column=1, rowspan=1, columnspan=3, sticky="nsew")
-    mappingCanvas = tkinter.Canvas(mappingPannel, bd=0)
+    # mappingPannel = tkinter.LabelFrame(master, text='Mapping', bd=BORDER, relief='groove')
+    mappingPannel = customtkinter.CTkFrame(master)
+    mappingPannel.grid(row=1, column=1, rowspan=1, columnspan=3, pady=(5, 0), sticky="nsew")
+    mappingPannelLabel = customtkinter.CTkLabel(mappingPannel, text='Mapping ',
+                                               # width=100,
+                                               font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_1_FONT_SIZE,
+                                                                          weight="bold"))
+    mappingPannelLabel.pack(anchor="w", padx=(5, 0))
+    mappingCanvas = customtkinter.CTkCanvas(mappingPannel, bg='#2B2B2B', bd=0, highlightthickness=0)
     widgets["mappingCanvas"] = mappingCanvas
-    hbar = tkinter.Scrollbar(mappingPannel, orient="horizontal", command=mappingCanvas.xview)
+    hbar = customtkinter.CTkScrollbar(mappingPannel, orientation="horizontal", command=mappingCanvas.xview)
     hbar.pack(side="bottom", fill="x")
     mappingCanvas.config(xscrollcommand=hbar.set)
-    vbar = tkinter.Scrollbar(mappingPannel, orient="vertical", command=mappingCanvas.yview)
+    vbar = customtkinter.CTkScrollbar(mappingPannel, orientation="vertical", command=mappingCanvas.yview)
     vbar.pack(side=tkinter.RIGHT, fill="y")
     mappingCanvas.config(yscrollcommand=vbar.set)
     mappingCanvas.pack(side="top", fill="both", expand=True)

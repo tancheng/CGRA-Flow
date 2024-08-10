@@ -1512,7 +1512,7 @@ def create_cgra_pannel(master, rows, columns):
     # Use solid black board to let the pannel look better
     cgraPannel = customtkinter.CTkFrame(master)
     # cgraPannel = tkinter.LabelFrame(master, text='CGRA', bd=BORDER, relief='groove')
-    cgraPannel.grid(row=0, column=0, rowspan=1, columnspan=1, padx=(5, 5), pady=(5, 5), sticky="nsew")
+    cgraPannel.grid(row=0, column=0, rowspan=1, columnspan=1, padx=(5, 5), pady=(5, 0), sticky="nsew")
     # cgraPannel.pack()
     # cgraPannel.grid_propagate(0)
     # create label for cgraPannel
@@ -1721,7 +1721,7 @@ def create_param_pannel(master):
         paramPannel.columnconfigure(i, weight=1)
     paramPannel.grid_propagate(0)
     configurationLabel = customtkinter.CTkLabel(paramPannel, text='Configuration', font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_1_FONT_SIZE, weight="bold"))
-    configurationLabel.grid(row=0, column=0, ipadx=5, sticky="w")
+    configurationLabel.grid(row=0, column=0, ipadx=5, pady=(5,0), sticky="w")
 
     rowsLabel = customtkinter.CTkLabel(paramPannel, text='Rows  Columns:')
     rowsLabel.grid(row=1, column=0)
@@ -1776,7 +1776,7 @@ def create_param_pannel(master):
 
     entireTileCheckVar.set(0)
     entireTileCheckbutton = customtkinter.CTkCheckBox(paramPannel, variable=entireTileCheckVar, text="Disable entire Tile 0")
-    entireTileCheckbutton.grid(row=4, column=0)
+    entireTileCheckbutton.grid(row=4, column=0, columnspan=2, padx=(5,0), sticky="w")
     widgets["entireTileCheckbutton"] = entireTileCheckbutton
 
 
@@ -1931,7 +1931,7 @@ def create_param_pannel(master):
 
 def create_test_pannel(master):
     dataPannel = customtkinter.CTkFrame(master, width=280, height=480)
-    dataPannel.grid(row=0, column=2, rowspan=1, columnspan=1, sticky="nsew")
+    dataPannel.grid(row=0, column=2, rowspan=1, columnspan=1, pady=(5,0), sticky="nsew")
     # Increase the size of the 'SVerilog' panel
     dataPannel.grid_rowconfigure(1, weight=2)
 
@@ -2054,7 +2054,7 @@ def create_test_pannel(master):
 def create_layout_pannel(master):
     # layoutPannel = tkinter.LabelFrame(master, text='Layout', bd=BORDER, relief='groove')
     layoutPannel = customtkinter.CTkFrame(master)
-    layoutPannel.grid(row=0, column=3, rowspan=1, columnspan=1, padx=(5,0), sticky="nsew")
+    layoutPannel.grid(row=0, column=3, rowspan=1, columnspan=1, padx=(5,0), pady=(5,0), sticky="nsew")
     layoutPannelLabel = customtkinter.CTkLabel(layoutPannel, text='Layout ',
                                              # width=100,
                                              font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_1_FONT_SIZE, weight="bold"))

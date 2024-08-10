@@ -572,7 +572,6 @@ class ParamCGRA:
 
     # TODO: also need to consider adding back after removing...
     def updateLinks(s):
-
         needRemoveLinks = set()
         for link in s.updatedLinks:
             if link.disabled:
@@ -625,6 +624,17 @@ class ParamCGRA:
                 if type(link.srcTile) == ParamTile:
                     link.srcTile.xbarDict[xbarPort2Type[link.srcPort]] = 0
 
+    def updateSpmOutlinks(s):
+        spmOutlinksSwitches = widgets['spmOutlinksSwitches']
+        spmConfigPannel = widgets["spmConfigPannel"]
+        for switch in spmOutlinksSwitches:
+            switch.destroy()
+        for port in paramCGRA.dataSPM.outLinks:
+            switch = customtkinter.CTkSwitch(spmConfigPannel, text=f"link {port}", command=switchDataSPMOutLinks)
+            if not paramCGRA.dataSPM.outLinks[port].disabled:
+                switch.select()
+            switch.pack(pady=(5, 10))
+            spmOutlinksSwitches.insert(0, switch)
 
 class ToolTip(object):
 
@@ -806,11 +816,12 @@ def clickUpdate(root):
     global paramCGRA
     oldCGRA = paramCGRA
 
+    old_rows_num = paramCGRA.rows
     if paramCGRA.rows != rows or paramCGRA.columns != columns:
         paramCGRA = ParamCGRA(rows, columns)
 
-    dataSPM = ParamSPM(MEM_WIDTH, rows, rows)
-    paramCGRA.initDataSPM(dataSPM)
+    # dataSPM = ParamSPM(MEM_WIDTH, rows, rows)
+    # paramCGRA.initDataSPM(dataSPM)
 
     create_cgra_pannel(root, rows, columns)
 
@@ -818,6 +829,9 @@ def clickUpdate(root):
     paramCGRA.updateMemSize(configMemSize, dataMemSize)
     paramCGRA.updateTiles()
     paramCGRA.updateLinks()
+    if old_rows_num != rows:
+        paramCGRA.updateSpmOutlinks()
+
     paramCGRA.targetAppName = oldCGRA.targetAppName
     paramCGRA.compilationDone = oldCGRA.compilationDone
     paramCGRA.targetKernels = oldCGRA.targetKernels

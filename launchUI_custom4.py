@@ -866,22 +866,24 @@ def clickReset(root):
     paramCGRA.enableAllTemplateLinks()
     paramCGRA.resetLinks()
 
+    paramCGRA.updateSpmOutlinks()
+
     create_cgra_pannel(root, rows, columns)
 
     # for _ in range(paramCGRA.rows):
     #     widgets["spmEnabledListbox"].delete(0)
     #     widgets["spmDisabledListbox"].delete(0)
 
-    widgets['spmOutlinksSwitches'] = []
-    spmOutlinksSwitches = []
-    spmConfigPannel = widgets["spmConfigPannel"]
-    for port in paramCGRA.dataSPM.outLinks:
-        switch = customtkinter.CTkSwitch(spmConfigPannel, text=f"link {port}", command=switchDataSPMOutLinks)
-        if not paramCGRA.dataSPM.outLinks[port].disabled:
-            switch.select()
-        switch.pack(pady=(5, 10))
-        spmOutlinksSwitches.insert(0, switch)
-    widgets['spmOutlinksSwitches'] = spmOutlinksSwitches
+    # widgets['spmOutlinksSwitches'] = []
+    # spmOutlinksSwitches = []
+    # spmConfigPannel = widgets["spmConfigPannel"]
+    # for port in paramCGRA.dataSPM.outLinks:
+    #     switch = customtkinter.CTkSwitch(spmConfigPannel, text=f"link {port}", command=switchDataSPMOutLinks)
+    #     if not paramCGRA.dataSPM.outLinks[port].disabled:
+    #         switch.select()
+    #     switch.pack(pady=(5, 10))
+    #     spmOutlinksSwitches.insert(0, switch)
+    # widgets['spmOutlinksSwitches'] = spmOutlinksSwitches
 
     # kernel related information and be kept to avoid redundant compilation
     paramCGRA.targetAppName = oldCGRA.targetAppName
@@ -1763,7 +1765,7 @@ def create_param_pannel(master):
     dataMemEntry.grid(row=2, column=1, padx=5, pady=5)
     dataMemEntry.insert(0, str(paramCGRA.dataMemSize))
     widgets["dataMemEntry"] = dataMemEntry
-    resetButton = customtkinter.CTkButton(paramPannel, text=" Reset ",
+    resetButton = customtkinter.CTkButton(paramPannel, text="Reset",
                                           #relief='raised',
                                           command=partial(clickReset, master)#,
                                           #highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS
@@ -1789,7 +1791,7 @@ def create_param_pannel(master):
 
 
     entireTileCheckVar.set(0)
-    entireTileCheckbutton = customtkinter.CTkCheckBox(paramPannel, variable=entireTileCheckVar, text="Disable entire Tile 0")
+    entireTileCheckbutton = customtkinter.CTkCheckBox(paramPannel, variable=entireTileCheckVar, text="Disable entire Tile 0", command=clickEntireTileCheckbutton)
     entireTileCheckbutton.grid(row=4, column=0, columnspan=2, padx=(5,0), sticky="w")
     widgets["entireTileCheckbutton"] = entireTileCheckbutton
 

@@ -9,7 +9,6 @@ import tkinter
 import tkinter.messagebox
 from functools import partial
 from tkinter import filedialog as fd
-from tkinter import ttk
 
 import customtkinter
 from PIL import Image, ImageTk, ImageFile

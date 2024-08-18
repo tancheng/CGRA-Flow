@@ -16,7 +16,7 @@ from PIL import Image, ImageTk, ImageFile
 customtkinter.set_appearance_mode("dark")  # Modes: system (default), light, dark
 customtkinter.set_default_color_theme("blue")  # Themes: blue (default), dark-blue, green
 
-# from VectorCGRA.cgra.translate.CGRATemplateRTL_test import *
+from VectorCGRA.cgra.translate.CGRATemplateRTL_test import *
 
 # importing module
 import logging
@@ -907,7 +907,7 @@ def clickTest():
     # os.system("cd test")
     os.chdir("test")
 
-    widgets["testShow"].configure(text="0%", fg="red")
+    widgets["testShow"].configure(text="0%")
     master.update_idletasks()
 
     # os.system("pytest ../../VectorCGRA")
@@ -927,7 +927,7 @@ def clickTest():
                 if ".py F" in outputLine:
                     failed += 1
 
-    widgets["testShow"].configure(text="PASSED" if failed == 0 else str(total - failed) + "/" + str(total), fg="green")
+    widgets["testShow"].configure(text="PASSED" if failed == 0 else str(total - failed) + "/" + str(total))
     # (out, err) = testProc.communicate()
     # print("check test output:", out)
 
@@ -969,7 +969,8 @@ def clickGenerateVerilog():
 
 
 def setReportProgress(value):
-    widgets["reportProgress"].configure(value=value)
+    # widgets["reportProgress"].configure(value=value)
+    widgets["reportProgress"].set(value)
 
 
 def countSynthesisTime():
@@ -1116,7 +1117,7 @@ def clickSelectApp(event):
     widgets["appPathEntry"].insert(0, paramCGRA.targetAppName)
     # widgets["appPathEntry"].configure(state="disabled")
 
-    widgets["compileAppShow"].config(text="IDLE", fg='grey')
+    widgets["compileAppShow"].configure(text="IDLE")
 
 
 def clickCompileApp():
@@ -1138,17 +1139,17 @@ def clickCompileApp():
     (disassembleOut, disassembleErr) = disassembleProc.communicate()
 
     if compileErr:
-        widgets["compileAppShow"].config(text=u'\u2717\u2717\u2717', fg='red')
+        widgets["compileAppShow"].configure(text=u'\u2717\u2717\u2717')
         os.chdir("..")
         print("Compile error message: ", compileErr)
         return
     if disassembleErr:
-        widgets["compileAppShow"].config(text=u'\u2717\u2717\u2717', fg='red')
+        widgets["compileAppShow"].configure(text=u'\u2717\u2717\u2717')
         os.chdir("..")
         print("Disassemble error message: ", disassembleErr)
         return
 
-    widgets["compileAppShow"].config(text=u'\u2713\u2713\u2713', fg='green')
+    widgets["compileAppShow"].configure(text=u'\u2713\u2713\u2713')
     paramCGRA.compilationDone = True
 
     # collect the potentially targeting kernel/function
@@ -1166,12 +1167,13 @@ def clickCompileApp():
     irFile.close()
 
     kernelNameMenu = widgets["kernelNameMenu"]
-    kernelNameMenu["menu"].delete(0, "end")
+    # kernelNameMenu["menu"].delete(0, "end")
     for kernelName in paramCGRA.targetKernels:
-        kernelNameMenu["menu"].add_command(label=kernelName, command=tkinter._setit(kernelOptions, kernelName))
+        # kernelNameMenu["menu"].add_command(label=kernelName, command=tkinter._setit(kernelOptions, kernelName))
+        print(f'kernelName: {kernelName}')
     # options.set(my_list[0])
 
-    widgets["generateDFGShow"].config(text="IDLE", fg='grey')
+    widgets["generateDFGShow"].configure(text="IDLE")
 
     os.chdir("..")
 
@@ -1317,11 +1319,10 @@ def clickShowDFG():
     PIL_image_stretched.putdata(new_data)
 
     dfgImage = ImageTk.PhotoImage(PIL_image_stretched)
-    images[
-        "dfgImage"] = dfgImage  # This is important due to the garbage collection would remove local variable of image
-    widgets["dfgLabel"].config(image=dfgImage)
+    images["dfgImage"] = dfgImage  # This is important due to the garbage collection would remove local variable of image
+    widgets["dfgLabel"].configure(image=dfgImage)
 
-    widgets["generateDFGShow"].config(text=u'\u2713\u2713\u2713', fg='green')
+    widgets["generateDFGShow"].configure(text=u'\u2713\u2713\u2713')
 
     os.chdir("..")
 
@@ -2015,7 +2016,7 @@ def create_test_pannel(master):
     reportButton = customtkinter.CTkButton(reportPannel, text="Synthesize", command=clickSynthesize, width=60)
 
     reportProgress = customtkinter.CTkProgressBar(reportPannel, orientation="horizontal", mode="determinate", width=140)
-    reportProgress['value'] = 0
+    reportProgress.set(0)
     widgets["reportProgress"] = reportProgress
 
     synthesisTimeEntry = customtkinter.CTkEntry(reportPannel, justify=tkinter.CENTER)
@@ -2145,8 +2146,8 @@ def create_kernel_pannel(master):
 
     tempOptions = ["Not selected yet"]
     # kernelNameMenu = tkinter.OptionMenu(kernelPannel, kernelOptions, *tempOptions)
-    kernelNameMenu = customtkinter.CTkOptionMenu(kernelPannel, values=tempOptions, command=clickKernelMenu)
-    # kernelOptions.trace("w", clickKernelMenu)
+    kernelNameMenu = customtkinter.CTkOptionMenu(kernelPannel, variable=kernelOptions, values=tempOptions)
+    kernelOptions.trace("w", clickKernelMenu)
     widgets["kernelNameMenu"] = kernelNameMenu
     kernelNameMenu.grid(row=2, column=1)
 

@@ -1167,10 +1167,15 @@ def clickCompileApp():
     irFile.close()
 
     kernelNameMenu = widgets["kernelNameMenu"]
+    kernelPannel = widgets["kernelPannel"]
     # kernelNameMenu["menu"].delete(0, "end")
-    for kernelName in paramCGRA.targetKernels:
-        # kernelNameMenu["menu"].add_command(label=kernelName, command=tkinter._setit(kernelOptions, kernelName))
-        print(f'kernelName: {kernelName}')
+    kernelNameMenu.destroy()
+    kernelNameOptions = [kernelName for kernelName in paramCGRA.targetKernels]
+    kernelNameMenu = customtkinter.CTkOptionMenu(kernelPannel, variable=kernelOptions, values=kernelNameOptions)
+    kernelNameMenu.grid(row=2, column=1)
+    # for kernelName in paramCGRA.targetKernels:
+    #     # kernelNameMenu["menu"].add_command(label=kernelName, command=tkinter._setit(kernelOptions, kernelName))
+    #     print(f'kernelName: {kernelName}')
     # options.set(my_list[0])
 
     widgets["generateDFGShow"].configure(text="IDLE")
@@ -2149,6 +2154,7 @@ def create_kernel_pannel(master):
     kernelNameMenu = customtkinter.CTkOptionMenu(kernelPannel, variable=kernelOptions, values=tempOptions)
     kernelOptions.trace("w", clickKernelMenu)
     widgets["kernelNameMenu"] = kernelNameMenu
+    widgets["kernelPannel"] = kernelPannel
     kernelNameMenu.grid(row=2, column=1)
 
     generateDFGButton = customtkinter.CTkButton(kernelPannel, text="Generate DFG", command=clickShowDFG)
@@ -2183,7 +2189,7 @@ def create_kernel_pannel(master):
 
     mappingAlgoPannel = customtkinter.CTkFrame(kernelPannel)
     mappingAlgoPannel.grid(row=5, column=2, rowspan=3, columnspan=2, pady=(5,10), sticky="nsew")
-    for row in range(3):
+    for row in range(2):
         mappingAlgoPannel.grid_rowconfigure(row, weight=1)
     mappingAlgoPannel.grid_columnconfigure(0, weight=1)
     mappingAlgoPannel.grid_columnconfigure(1, weight=1)
@@ -2191,13 +2197,13 @@ def create_kernel_pannel(master):
     mappingOptionLabel = customtkinter.CTkLabel(mappingAlgoPannel, text='Mapping algo: ',
                                             font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE,
                                                                        weight="bold", slant='italic'))
-    mappingOptionLabel.grid(row=0, column=0, columnspan=2, sticky="wn")
+    mappingOptionLabel.grid(row=0, column=0, sticky="wn")
     heuristicRatiobutton = customtkinter.CTkRadioButton(mappingAlgoPannel, text="Heuristic", variable=mappingAlgoCheckVar, value=1)
     widgets["heuristicRatiobutton"] = heuristicRatiobutton
-    heuristicRatiobutton.grid(row=1, column=1, sticky="nsew")
+    heuristicRatiobutton.grid(row=1, column=0, pady=(0, 5), sticky="nsew")
     exhaustiveRatiobutton = customtkinter.CTkRadioButton(mappingAlgoPannel, text="Exhaustive", variable=mappingAlgoCheckVar, value=0)
     widgets["exhaustiveRatiobutton"] = exhaustiveRatiobutton
-    exhaustiveRatiobutton.grid(row=2, column=1, sticky="nsew")
+    exhaustiveRatiobutton.grid(row=1, column=1, pady=(0, 5), sticky="nsew")
 
     mapDFGButton = customtkinter.CTkButton(kernelPannel, text="Map DFG", command=clickMapDFG,)
     mapDFGButton.grid(row=8, column=2, columnspan=2, sticky="new")

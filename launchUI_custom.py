@@ -1323,7 +1323,8 @@ def clickShowDFG():
             new_data.append(item)
     PIL_image_stretched.putdata(new_data)
 
-    dfgImage = ImageTk.PhotoImage(PIL_image_stretched)
+    # dfgImage = ImageTk.PhotoImage(PIL_image_stretched)
+    dfgImage = customtkinter.CTkImage(PIL_image_stretched, size=(260, 380))
     images["dfgImage"] = dfgImage  # This is important due to the garbage collection would remove local variable of image
     widgets["dfgLabel"].configure(image=dfgImage)
 
@@ -1408,8 +1409,9 @@ def drawSchedule():
 
     for ii in range(mappingII):
         # draw data memory
-        spmLabel = tkinter.Label(canvas, text="Data\nSPM", fg='black', bg='gray', relief='raised', bd=BORDER,
-                                 highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS)
+        # spmLabel = tkinter.Label(canvas, text="Data\nSPM", fg='black', bg='gray', relief='raised', bd=BORDER,
+        #                          highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS)
+        spmLabel = customtkinter.CTkButton(canvas, text="Data\nSPM", state='disabled')
         canvas.create_window(baseX + BORDER, BORDER, window=spmLabel, height=GRID_HEIGHT, width=MEM_WIDTH, anchor="nw")
 
         # draw tiles
@@ -1417,13 +1419,15 @@ def drawSchedule():
             if not tile.disabled:
                 button = None
                 if ii in tile.mapping:
-                    button = tkinter.Label(canvas, text="Opt " + str(tile.mapping[ii]), fg="black", bg="cornflowerblue",
-                                           relief="raised", bd=BORDER, highlightbackground="black",
-                                           highlightthickness=HIGHLIGHT_THICKNESS)
+                    # button = tkinter.Label(canvas, text="Opt " + str(tile.mapping[ii]), fg="black", bg="cornflowerblue",
+                    #                        relief="raised", bd=BORDER, highlightbackground="black",
+                    #                        highlightthickness=HIGHLIGHT_THICKNESS)
+                    button = customtkinter.CTkButton(canvas, text="Opt " + str(tile.mapping[ii]), state='disabled')
                 else:
-                    button = tkinter.Label(canvas, text="Tile " + str(tile.ID), fg="black", bg="grey", relief="raised",
-                                           bd=BORDER, highlightbackground="black",
-                                           highlightthickness=HIGHLIGHT_THICKNESS)
+                    # button = tkinter.Label(canvas, text="Tile " + str(tile.ID), fg="black", bg="grey", relief="raised",
+                    #                        bd=BORDER, highlightbackground="black",
+                    #                        highlightthickness=HIGHLIGHT_THICKNESS)
+                    button = customtkinter.CTkButton(canvas, text="Tile " + str(tile.ID), state='disabled')
                 posX, posY = tile.getPosXY(baseX + BORDER, BORDER)
                 canvas.create_window(posX, posY, window=button, height=tileHeight, width=tileWidth, anchor="nw")
 
@@ -1433,15 +1437,17 @@ def drawSchedule():
                 srcX, srcY = link.getSrcXY(baseX + BORDER, BORDER)
                 dstX, dstY = link.getDstXY(baseX + BORDER, BORDER)
                 if ii in link.mapping:
-                    canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST, fill="red")
+                    canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST, fill="gold")
                 else:
-                    canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST, fill="black")
+                    canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST, fill="white")
 
-        cycleLabel = tkinter.Label(canvas, text="Cycle " + str(ii))
+        # cycleLabel = tkinter.Label(canvas, text="Cycle " + str(ii))
+        cycleLabel = customtkinter.CTkLabel(canvas, text="Cycle " + str(ii) + " ",
+                                            font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE, weight="bold", slant='italic'))
         canvas.create_window(baseX + 280, GRID_HEIGHT + 10 + BORDER, window=cycleLabel, height=20, width=80)
 
         baseX += GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + 20
-        canvas.create_line(baseX - 5, INTERVAL, baseX - 5, GRID_HEIGHT, width=2, dash=(10, 2))
+        canvas.create_line(baseX - 5, INTERVAL, baseX - 5, GRID_HEIGHT, width=2, dash=(10, 2), fill="grey")
 
 
 def clickTerminateMapping():
@@ -1968,8 +1974,7 @@ def create_test_pannel(master):
     testPannel.columnconfigure(2, weight=1)
     testPannelLabel = customtkinter.CTkLabel(testPannel, text='Verification ',
                                              # width=100,
-                                             font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE,
-                                             weight="bold", slant='italic'))
+                                             font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE, weight="bold", slant='italic'))
     testPannelLabel.grid(row=0, column=0, columnspan=3, ipadx=5, sticky="w")
     testButton = customtkinter.CTkButton(testPannel, text="Run tests", # relief='raised',
                                          command=clickTest,

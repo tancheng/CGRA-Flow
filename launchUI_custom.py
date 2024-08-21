@@ -100,6 +100,7 @@ kernelOptions = tkinter.StringVar()
 kernelOptions.set("Not selected yet")
 synthesisRunning = False
 
+mapped_tile_color_list = ['#FFF113', '#FDDB76', '#F3993A', '#F2CB67', '#C13C33', '#FEEBCD', '#95D3D2', '#F9D3E3', '#C0C3C2', '#FFC501', '#FED52D', '#BBFF05', '#B3FF04', '#E6E6E6', '#75D561', '#FFAC73', '#C2FFFF']
 
 class ParamTile:
     def __init__(s, ID, dimX, dimY, posX, posY, tileWidth, tileHeight):
@@ -1411,8 +1412,10 @@ def drawSchedule():
         # draw data memory
         # spmLabel = tkinter.Label(canvas, text="Data\nSPM", fg='black', bg='gray', relief='raised', bd=BORDER,
         #                          highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS)
-        spmLabel = customtkinter.CTkButton(canvas, text="Data\nSPM", state='disabled')
+        spmLabel = customtkinter.CTkButton(canvas, text="Data\nSPM", state='disabled', text_color_disabled='white')
         canvas.create_window(baseX + BORDER, BORDER, window=spmLabel, height=GRID_HEIGHT, width=MEM_WIDTH, anchor="nw")
+
+        mapped_tile_color = mapped_tile_color_list[ii % len(mapped_tile_color_list)]
 
         # draw tiles
         for tile in paramCGRA.tiles:
@@ -1422,12 +1425,16 @@ def drawSchedule():
                     # button = tkinter.Label(canvas, text="Opt " + str(tile.mapping[ii]), fg="black", bg="cornflowerblue",
                     #                        relief="raised", bd=BORDER, highlightbackground="black",
                     #                        highlightthickness=HIGHLIGHT_THICKNESS)
-                    button = customtkinter.CTkButton(canvas, text="Opt " + str(tile.mapping[ii]), state='disabled')
+                    button = customtkinter.CTkButton(canvas, text="Opt " + str(tile.mapping[ii]), state='disabled',
+                                                     border_width=2,
+                                                     font=customtkinter.CTkFont(weight="bold"),
+                                                     text_color_disabled=mapped_tile_color,
+                                                     border_color=mapped_tile_color)
                 else:
                     # button = tkinter.Label(canvas, text="Tile " + str(tile.ID), fg="black", bg="grey", relief="raised",
                     #                        bd=BORDER, highlightbackground="black",
                     #                        highlightthickness=HIGHLIGHT_THICKNESS)
-                    button = customtkinter.CTkButton(canvas, text="Tile " + str(tile.ID), state='disabled')
+                    button = customtkinter.CTkButton(canvas, text="Tile " + str(tile.ID), state='disabled', text_color_disabled='white')
                 posX, posY = tile.getPosXY(baseX + BORDER, BORDER)
                 canvas.create_window(posX, posY, window=button, height=tileHeight, width=tileWidth, anchor="nw")
 
@@ -1437,7 +1444,7 @@ def drawSchedule():
                 srcX, srcY = link.getSrcXY(baseX + BORDER, BORDER)
                 dstX, dstY = link.getDstXY(baseX + BORDER, BORDER)
                 if ii in link.mapping:
-                    canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST, fill="gold")
+                    canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST, width=2, fill=mapped_tile_color)
                 else:
                     canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST, fill="white")
 

@@ -100,7 +100,7 @@ kernelOptions = tkinter.StringVar()
 kernelOptions.set("Not selected yet")
 synthesisRunning = False
 
-mapped_tile_color_list = ['#FFF113', '#FDDB76', '#F3993A', '#F2CB67', '#C13C33', '#FEEBCD', '#95D3D2', '#F9D3E3', '#C0C3C2', '#FFC501', '#FED52D', '#BBFF05', '#B3FF04', '#E6E6E6', '#75D561', '#FFAC73', '#C2FFFF']
+mapped_tile_color_list = ['#FFF113', '#F3993A', '#C13C33', '#FEEBCD', '#FDDB76', '#95D3D2', '#F2CB67', '#F9D3E3', '#C0C3C2', '#FFC501', '#FED52D', '#BBFF05', '#B3FF04', '#E6E6E6', '#75D561', '#FFAC73', '#C2FFFF']
 
 class ParamTile:
     def __init__(s, ID, dimX, dimY, posX, posY, tileWidth, tileHeight):
@@ -1428,7 +1428,8 @@ def drawSchedule():
                     button = customtkinter.CTkButton(canvas, text="Opt " + str(tile.mapping[ii]), state='disabled',
                                                      border_width=2,
                                                      font=customtkinter.CTkFont(weight="bold"),
-                                                     text_color_disabled=mapped_tile_color,
+                                                     text_color_disabled='black',
+                                                     fg_color=mapped_tile_color,
                                                      border_color=mapped_tile_color)
                 else:
                     # button = tkinter.Label(canvas, text="Tile " + str(tile.ID), fg="black", bg="grey", relief="raised",

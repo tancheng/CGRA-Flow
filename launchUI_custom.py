@@ -100,7 +100,7 @@ kernelOptions = tkinter.StringVar()
 kernelOptions.set("Not selected yet")
 synthesisRunning = False
 
-mapped_tile_color_list = ['#FFF113', '#F3993A', '#C13C33', '#FEEBCD', '#FDDB76', '#95D3D2', '#F2CB67', '#F9D3E3', '#C0C3C2', '#FFC501', '#FED52D', '#BBFF05', '#B3FF04', '#E6E6E6', '#75D561', '#FFAC73', '#C2FFFF']
+mapped_tile_color_list = ['#FFF113', '#75D561', '#F2CB67', '#FFAC73', '#F3993A', '#B3FF04', '#C2FFFF']
 
 class ParamTile:
     def __init__(s, ID, dimX, dimY, posX, posY, tileWidth, tileHeight):
@@ -1445,7 +1445,7 @@ def drawSchedule():
                 srcX, srcY = link.getSrcXY(baseX + BORDER, BORDER)
                 dstX, dstY = link.getDstXY(baseX + BORDER, BORDER)
                 if ii in link.mapping:
-                    canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST, width=2, fill=mapped_tile_color)
+                    canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST, width=3, fill=mapped_tile_color)
                 else:
                     canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST, fill="white")
 

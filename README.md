@@ -44,7 +44,7 @@ As CGRA-Flow requires GUI, a script is provided for setting up the display:
 ```
 
 ```shell
-# Windows Docker customtkinter style UI
+# Windows Docker customtkinter style UI (Please setup GUI (X-11) first)
 # In WSL
 docker pull yuqisun/cgra-flow-win:latest
 docker run -it yuqisun/cgra-flow-win bash

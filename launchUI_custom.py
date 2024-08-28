@@ -921,8 +921,9 @@ def clickTest():
             print(outputLine)
             if "%]" in outputLine:
                 value = int(outputLine.split("[")[1].split("%]")[0])
-                widgets["testProgress"].configure(value=value)
-                widgets["testShow"].configure(text=str(value) + "%", fg="red")
+                # print(f'testProgress value: {value}')
+                widgets["testProgress"].set(value/100)
+                widgets["testShow"].configure(text=str(value) + "%")
                 master.update_idletasks()
                 total += 1
                 if ".py F" in outputLine:
@@ -1405,8 +1406,12 @@ def drawSchedule():
 
     canvas = widgets["mappingCanvas"]
     canvas.delete("all")
+    ROWS = widgets["ROWS"]
+    COLS = widgets["COLS"]
+    GRID_WIDTH = (TILE_WIDTH + LINK_LENGTH) * COLS - LINK_LENGTH
+    GRID_HEIGHT = (TILE_HEIGHT + LINK_LENGTH) * ROWS - LINK_LENGTH
     cgraWidth = GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + 20
-    canvas.configure(scrollregion=(0, 0, mappingII * cgraWidth, GRID_HEIGHT))
+    canvas.configure(scrollregion=(0, 0, mappingII * cgraWidth, GRID_HEIGHT + 40 + BORDER))
 
     for ii in range(mappingII):
         # draw data memory
@@ -1452,7 +1457,7 @@ def drawSchedule():
         # cycleLabel = tkinter.Label(canvas, text="Cycle " + str(ii))
         cycleLabel = customtkinter.CTkLabel(canvas, text="Cycle " + str(ii) + " ",
                                             font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE, weight="bold", slant='italic'))
-        canvas.create_window(baseX + 280, GRID_HEIGHT + 10 + BORDER, window=cycleLabel, height=20, width=80)
+        canvas.create_window(baseX + (cgraWidth)/2, GRID_HEIGHT + 30 + BORDER, window=cycleLabel, height=20, width=80)
 
         baseX += GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + 20
         canvas.create_line(baseX - 5, INTERVAL, baseX - 5, GRID_HEIGHT, width=2, dash=(10, 2), fill="grey")
@@ -1543,6 +1548,9 @@ def _on_mousewheel(canvas, event):
 def create_cgra_pannel(master, rows, columns):
     ROWS = rows
     COLS = columns
+    widgets["ROWS"] = ROWS
+    widgets["COLS"] = COLS
+    print(f"create_cgra_pannel - ROWS: {ROWS}, COLS: {COLS}")
     # master.grid_propagate(0)
     # Use solid black board to let the pannel look better
     cgraPannel = customtkinter.CTkFrame(master)
@@ -1992,7 +2000,7 @@ def create_test_pannel(master):
     testButton.grid(row=1, column=0, ipadx=5)
     # testProgress = ttk.Progressbar(testPannel, orient='horizontal', mode='determinate')
     testProgress = customtkinter.CTkProgressBar(testPannel, orientation='horizontal', mode='determinate', width=160)
-    testProgress['value'] = 0
+    testProgress.set(0)
     widgets["testProgress"] = testProgress
     testProgress.grid(row=1, column=1, rowspan=1, columnspan=1, padx=5, sticky="ew")
     testShow = customtkinter.CTkLabel(testPannel, text="IDLE ")

@@ -53,8 +53,8 @@ docker run -it --name cgra-flow-win yuqisun/cgra-flow-win bash
 # In container
 root@2cd33efd97b3 WORK_REPO# export DISPLAY=192.168.3.38:0.0 # change to your own ipv4 address with 0.0
 root@2cd33efd97b3 WORK_REPO# source venv/bin/activate
-(venv) root@2cd33efd97b3 WORK_REPO# cd CGRA-Flow/
-(venv) root@2cd33efd97b3 CGRA-Flow# python launchUI_custom.py
+(venv) root@2cd33efd97b3 WORK_REPO# cd /WORK_REPO/CGRA-Flow/build
+(venv) root@2cd33efd97b3 build# python ../launchUI_custom.py
 ```
 
 Otherwise, if you don't need the GUI, development can be performed in the container with the environment well set up:

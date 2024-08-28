@@ -972,7 +972,7 @@ def clickGenerateVerilog():
 
 def setReportProgress(value):
     # widgets["reportProgress"].configure(value=value)
-    widgets["reportProgress"].set(value)
+    widgets["reportProgress"].set(value/100)
 
 
 def countSynthesisTime():
@@ -1006,7 +1006,8 @@ def runYosys():
     widgets["reportTilePowerData"].delete(0, tkinter.END)
     widgets["reportTilePowerData"].insert(0, "-")
 
-    widgets["reportProgress"].configure(value=100)
+    # widgets["reportProgress"].configure(value=100)
+    widgets["reportProgress"].set(1)
 
     os.chdir("../../../build")
 

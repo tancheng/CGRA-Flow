@@ -13,8 +13,22 @@ from tkinter import filedialog as fd
 import customtkinter
 from PIL import Image, ImageTk, ImageFile
 
+import argparse
+parser=argparse.ArgumentParser()
+parser.add_argument("--theme")
+args=parser.parse_args()
 customtkinter.set_appearance_mode("dark")  # Modes: system (default), light, dark
 customtkinter.set_default_color_theme("blue")  # Themes: blue (default), dark-blue, green
+CANVAS_BG_COLOR = "#2B2B2B"
+CANVAS_LINE_COLOR = "white"
+
+if args.theme:
+   # print(f'Input theme argument: {args.theme}')
+   if args.theme == 'light':
+       customtkinter.set_appearance_mode("light")  # Modes: system (default), light, dark
+       customtkinter.set_default_color_theme("blue")  # Themes: blue (default), dark-blue, green
+       CANVAS_BG_COLOR = "#DBDBDB"
+       CANVAS_LINE_COLOR = "black"
 
 from VectorCGRA.cgra.translate.CGRATemplateRTL_test import *
 
@@ -50,12 +64,10 @@ FRAME_LABEL_LEVEL_2_FONT_SIZE = FRAME_LABEL_LEVEL_1_FONT_SIZE - 3
 def window_size(window, width, height):
     window.geometry(f"{width}x{height}")
 
-
 master = customtkinter.CTk()
 master.title("CGRA-Flow: An Integrated End-to-End Framework for CGRA Exploration, Compilation, and Development")
 
 fuTypeList = ["Phi", "Add", "Shift", "Ld", "Sel", "Cmp", "MAC", "St", "Ret", "Mul", "Logic", "Br"]
-
 xbarTypeList = ["W", "E", "N", "S", "NE", "NW", "SE", "SW"]
 
 xbarType2Port = {}
@@ -1453,7 +1465,7 @@ def drawSchedule():
                 if ii in link.mapping:
                     canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST, width=3, fill=mapped_tile_color)
                 else:
-                    canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST, fill="white")
+                    canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST, fill=CANVAS_LINE_COLOR)
 
         # cycleLabel = tkinter.Label(canvas, text="Cycle " + str(ii))
         cycleLabel = customtkinter.CTkLabel(canvas, text="Cycle " + str(ii) + " ",
@@ -1564,7 +1576,7 @@ def create_cgra_pannel(master, rows, columns):
     # cgraLabel.grid(row=0, column=0, sticky="nsew")
     cgraLabel.pack(anchor="w", ipadx=5)
 
-    canvas = customtkinter.CTkCanvas(cgraPannel, bg='#2B2B2B', bd=0, highlightthickness=0)
+    canvas = customtkinter.CTkCanvas(cgraPannel, bg=CANVAS_BG_COLOR, bd=0, highlightthickness=0)
     # with Windows OS
     # canvas.bind_all("<MouseWheel>", partial(_on_mousewheel, canvas))
     # with Linux OS
@@ -1683,7 +1695,7 @@ def create_cgra_pannel(master, rows, columns):
         else:
             srcX, srcY = link.getSrcXY()
             dstX, dstY = link.getDstXY()
-            canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST, fill="white")
+            canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST, fill=CANVAS_LINE_COLOR)
 
     vbar = customtkinter.CTkScrollbar(cgraPannel, orientation="vertical", command=canvas.yview)
     vbar.pack(side=tkinter.RIGHT, fill="y")
@@ -2102,7 +2114,7 @@ def create_layout_pannel(master):
                                              # width=100,
                                              font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_1_FONT_SIZE, weight="bold"))
     layoutPannelLabel.pack(anchor="w", padx=(5,0))
-    canvas = customtkinter.CTkCanvas(layoutPannel, bg='#2B2B2B', bd=0, highlightthickness=0)
+    canvas = customtkinter.CTkCanvas(layoutPannel, bg=CANVAS_BG_COLOR, bd=0, highlightthickness=0)
     scrollbar = customtkinter.CTkScrollbar(layoutPannel, orientation="horizontal", command=canvas.xview)
     scrollbar.pack(side="bottom", fill="x")
     canvas.config(xscrollcommand=scrollbar.set)
@@ -2125,7 +2137,7 @@ def create_mapping_pannel(master):
                                                font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_1_FONT_SIZE,
                                                                           weight="bold"))
     mappingPannelLabel.pack(anchor="w", padx=(5, 0))
-    mappingCanvas = customtkinter.CTkCanvas(mappingPannel, bg='#2B2B2B', bd=0, highlightthickness=0)
+    mappingCanvas = customtkinter.CTkCanvas(mappingPannel, bg=CANVAS_BG_COLOR, bd=0, highlightthickness=0)
     widgets["mappingCanvas"] = mappingCanvas
     hbar = customtkinter.CTkScrollbar(mappingPannel, orientation="horizontal", command=mappingCanvas.xview)
     hbar.pack(side="bottom", fill="x")

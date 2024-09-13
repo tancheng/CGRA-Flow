@@ -4,17 +4,17 @@ input_theme=$1
 echo "Theme: $input_theme"
 
 cd build
-if [ "$input_theme" == "dark" ]; then
-      echo "Dark theme selected"
+if [ "$input_theme" == "classic" ]; then
+      echo "classic theme selected"
       #start dark theme
-      python ../launchUI_custom.py
+      python ../launchUI_classic.py
 elif [ "$input_theme" == "light" ]; then
-      echo "Light theme selected"
+      echo "light theme selected"
       #start light theme
-      python ../launchUI_custom.py --theme light
+      python ../launchUI.py --theme light
 else
-      echo "No theme selected, will start default theme"
-      #start default theme
+      echo "No theme selected, will start default theme (dark mode)"
+      #start default theme (dark mode)
       python ../launchUI.py
 fi
 

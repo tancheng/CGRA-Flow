@@ -1,23 +1,49 @@
-import sys
-import os
-import time
-import threading
-import subprocess
 import json
 import math
+import os
+import platform
+import subprocess
+import threading
+import time
 import tkinter
 import tkinter.messagebox
-from tkinter import ttk
-from tkinter import filedialog as fd
-from PIL import Image, ImageTk, ImageFile
 from functools import partial
+from tkinter import filedialog as fd
+
+import customtkinter
+from PIL import Image, ImageTk, ImageFile
+
+import argparse
+parser=argparse.ArgumentParser()
+parser.add_argument("--theme")
+args=parser.parse_args()
+customtkinter.set_appearance_mode("dark")  # Modes: system (default), light, dark
+customtkinter.set_default_color_theme("dark-blue")  # Themes: blue (default), dark-blue, green
+# CANVAS_BG_COLOR = "#2B2B2B"
+CANVAS_BG_COLOR = "#212121"
+CANVAS_LINE_COLOR = "white"
+
+if args.theme:
+   # print(f'Input theme argument: {args.theme}')
+   if args.theme == 'light':
+       customtkinter.set_appearance_mode("light")  # Modes: system (default), light, dark
+       customtkinter.set_default_color_theme("dark-blue")  # Themes: blue (default), dark-blue, green
+       CANVAS_BG_COLOR = "#DBDBDB"
+       CANVAS_LINE_COLOR = "black"
 
 from VectorCGRA.cgra.translate.CGRATemplateRTL_test import *
 
-PORT_NORTH     = 0
-PORT_SOUTH     = 1
-PORT_WEST      = 2
-PORT_EAST      = 3
+# importing module
+import logging
+
+# Create and configure logger
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+
+PORT_NORTH = 0
+PORT_SOUTH = 1
+PORT_WEST = 2
+PORT_EAST = 3
 PORT_NORTHWEST = 4
 PORT_NORTHEAST = 5
 PORT_SOUTHEAST = 6
@@ -31,41 +57,45 @@ MEM_WIDTH = 50
 CONFIG_MEM_SIZE = 8
 DATA_MEM_SIZE = 4
 HIGHLIGHT_THICKNESS = 1
+
+FRAME_LABEL_FONT_SIZE = 15
+# FRAME_LABEL_LEVEL_1_FONT_SIZE = FRAME_LABEL_LEVEL_1_FONT_SIZE - 3
+
+
 def window_size(window, width, height):
     window.geometry(f"{width}x{height}")
-master = tkinter.Tk()
+
+master = customtkinter.CTk()
 master.title("CGRA-Flow: An Integrated End-to-End Framework for CGRA Exploration, Compilation, and Development")
 
-
 fuTypeList = ["Phi", "Add", "Shift", "Ld", "Sel", "Cmp", "MAC", "St", "Ret", "Mul", "Logic", "Br"]
-
 xbarTypeList = ["W", "E", "N", "S", "NE", "NW", "SE", "SW"]
 
 xbarType2Port = {}
-xbarType2Port["W" ] = PORT_WEST
-xbarType2Port["E" ] = PORT_EAST
-xbarType2Port["N" ] = PORT_NORTH
-xbarType2Port["S" ] = PORT_SOUTH
+xbarType2Port["W"] = PORT_WEST
+xbarType2Port["E"] = PORT_EAST
+xbarType2Port["N"] = PORT_NORTH
+xbarType2Port["S"] = PORT_SOUTH
 xbarType2Port["NE"] = PORT_NORTHEAST
 xbarType2Port["NW"] = PORT_NORTHWEST
 xbarType2Port["SE"] = PORT_SOUTHEAST
 xbarType2Port["SW"] = PORT_SOUTHWEST
 
 xbarPort2Type = {}
-xbarPort2Type[PORT_WEST      ] = "W"
-xbarPort2Type[PORT_EAST      ] = "E"
-xbarPort2Type[PORT_NORTH     ] = "N"
-xbarPort2Type[PORT_SOUTH     ] = "S"
-xbarPort2Type[PORT_NORTHEAST ] = "NE"
-xbarPort2Type[PORT_NORTHWEST ] = "NW"
-xbarPort2Type[PORT_SOUTHEAST ] = "SE"
-xbarPort2Type[PORT_SOUTHWEST ] = "SW"
+xbarPort2Type[PORT_WEST] = "W"
+xbarPort2Type[PORT_EAST] = "E"
+xbarPort2Type[PORT_NORTH] = "N"
+xbarPort2Type[PORT_SOUTH] = "S"
+xbarPort2Type[PORT_NORTHEAST] = "NE"
+xbarPort2Type[PORT_NORTHWEST] = "NW"
+xbarPort2Type[PORT_SOUTHEAST] = "SE"
+xbarPort2Type[PORT_SOUTHWEST] = "SW"
 
 xbarPortOpposites = {}
-xbarPortOpposites[PORT_WEST     ] = PORT_EAST
-xbarPortOpposites[PORT_EAST     ] = PORT_WEST
-xbarPortOpposites[PORT_NORTH    ] = PORT_SOUTH
-xbarPortOpposites[PORT_SOUTH    ] = PORT_NORTH
+xbarPortOpposites[PORT_WEST] = PORT_EAST
+xbarPortOpposites[PORT_EAST] = PORT_WEST
+xbarPortOpposites[PORT_NORTH] = PORT_SOUTH
+xbarPortOpposites[PORT_SOUTH] = PORT_NORTH
 xbarPortOpposites[PORT_NORTHWEST] = PORT_SOUTHEAST
 xbarPortOpposites[PORT_NORTHEAST] = PORT_SOUTHWEST
 xbarPortOpposites[PORT_SOUTHWEST] = PORT_NORTHEAST
@@ -82,6 +112,8 @@ xbarCheckbuttons = {}
 kernelOptions = tkinter.StringVar()
 kernelOptions.set("Not selected yet")
 synthesisRunning = False
+
+mapped_tile_color_list = ['#FFF113', '#75D561', '#F2CB67', '#FFAC73', '#F3993A', '#B3FF04', '#C2FFFF']
 
 class ParamTile:
     def __init__(s, ID, dimX, dimY, posX, posY, tileWidth, tileHeight):
@@ -100,9 +132,9 @@ class ParamTile:
         s.xbarDict = {}
         s.mapping = {}
 
-        for i in range( PORT_DIRECTION_COUNTS ):
+        for i in range(PORT_DIRECTION_COUNTS):
             s.neverUsedOutPorts.add(i)
-        
+
         for xbarType in xbarTypeList:
             s.xbarDict[xbarType] = 0
 
@@ -167,7 +199,7 @@ class ParamTile:
 
         for i in range(PORT_DIRECTION_COUNTS):
             s.neverUsedOutPorts.add(i)
- 
+
         for xbarType in xbarTypeList:
             s.xbarDict[xbarType] = 0
 
@@ -182,7 +214,7 @@ class ParamTile:
 
     def resetInLink(s, portType, link):
         s.inLinks[portType] = link
-    
+
     def setOutLink(s, portType, link):
         s.outLinks[portType] = link
 
@@ -191,8 +223,8 @@ class ParamTile:
 
     # position X/Y for drawing the tile
     def getPosXY(s, baseX=0, baseY=0):
-        return (baseX+s.posX, baseY+s.posY)
-   
+        return (baseX + s.posX, baseY + s.posY)
+
     # position X/Y for connecting routing ports
     def getPosXYOnPort(s, portType, baseX=0, baseY=0):
         if portType == PORT_NORTH:
@@ -213,32 +245,32 @@ class ParamTile:
             return s.getSouthWest(baseX, baseY)
 
     def getNorthWest(s, baseX=0, baseY=0):
-        return (baseX+s.posX, baseY+s.posY)
-    
+        return (baseX + s.posX, baseY + s.posY)
+
     def getNorthEast(s, baseX=0, baseY=0):
-        return (baseX+s.posX+s.width, baseY+s.posY)
-    
+        return (baseX + s.posX + s.width, baseY + s.posY)
+
     def getSouthWest(s, baseX=0, baseY=0):
-        return (baseX+s.posX, baseY+s.posY+s.height)
-    
+        return (baseX + s.posX, baseY + s.posY + s.height)
+
     def getSouthEast(s, baseX=0, baseY=0):
-        return (baseX+s.posX+s.width, baseY+s.posY+s.height)
-    
+        return (baseX + s.posX + s.width, baseY + s.posY + s.height)
+
     def getWest(s, baseX=0, baseY=0):
-        return (baseX+s.posX, baseY+s.posY+s.height//2)
-    
+        return (baseX + s.posX, baseY + s.posY + s.height // 2)
+
     def getEast(s, baseX=0, baseY=0):
-        return (baseX+s.posX+s.width, baseY+s.posY+s.height//2)
-    
+        return (baseX + s.posX + s.width, baseY + s.posY + s.height // 2)
+
     def getNorth(s, baseX=0, baseY=0):
-        return (baseX+s.posX+s.width//2, baseY+s.posY)
-    
+        return (baseX + s.posX + s.width // 2, baseY + s.posY)
+
     def getSouth(s, baseX=0, baseY=0):
-        return (baseX+s.posX+s.width//2, baseY+s.posY+s.height)
+        return (baseX + s.posX + s.width // 2, baseY + s.posY + s.height)
 
     def getDimXY(s):
         return s.dimX, s.dimY
- 
+
     def getIndex(s, tileList):
         if s.disabled:
             return -1
@@ -249,6 +281,8 @@ class ParamTile:
             elif tile.dimY == s.dimY and tile.dimX < s.dimX and not tile.disabled:
                 index += 1
         return index
+
+
 class ParamSPM:
     def __init__(s, posX, numOfReadPorts, numOfWritePorts):
         s.posX = posX
@@ -281,7 +315,7 @@ class ParamSPM:
 
     def getValidReadPort(s, logicalPort):
         port = 0
-        for physicalPort in range(logicalPort+1):
+        for physicalPort in range(logicalPort + 1):
             if physicalPort not in s.inLinks:
                 continue
             if s.inLinks[physicalPort].disabled:
@@ -293,7 +327,7 @@ class ParamSPM:
 
     def getValidWritePort(s, logicalPort):
         port = 0
-        for physicalPort in range(logicalPort+1):
+        for physicalPort in range(logicalPort + 1):
             if physicalPort not in s.outLinks:
                 continue
             if s.outLinks[physicalPort].disabled:
@@ -311,7 +345,7 @@ class ParamSPM:
 
     def resetInLink(s, portType, link):
         s.setInLink(portType, link)
- 
+
     def setOutLink(s, portType, link):
         s.outLinks[portType] = link
 
@@ -363,6 +397,7 @@ class ParamLink:
             srcPosX, srcPosY = s.srcTile.getPosXYOnPort(s.srcPort, baseX, baseY)
             spmPosX = s.dstTile.getPosX(baseX)
             return spmPosX, srcPosY
+
 
 class ParamCGRA:
     def __init__(s, rows, columns, configMemSize=CONFIG_MEM_SIZE, dataMemSize=DATA_MEM_SIZE):
@@ -457,7 +492,7 @@ class ParamCGRA:
         s.tiles.append(tile)
 
     def initTemplateLinks(s, links):
-        numOfLinks = s.rows*s.columns*2 + (s.rows-1)*s.columns*2 + (s.rows-1)*(s.columns-1)*2*2
+        numOfLinks = s.rows * s.columns * 2 + (s.rows - 1) * s.columns * 2 + (s.rows - 1) * (s.columns - 1) * 2 * 2
 
         for link in links:
             s.templateLinks.append(link)
@@ -470,11 +505,10 @@ class ParamCGRA:
             for fuType in fuTypeList:
                 fuCheckVars[fuType].set(tile.fuDict[fuType])
                 fuCheckbuttons[fuType].configure(state="normal")
-    
+
             for xbarType in xbarTypeList:
                 xbarCheckVars[xbarType].set(tile.xbarDict[xbarType])
                 xbarCheckbuttons[xbarType].configure(state="normal")
-
 
     def enableAllTemplateLinks(s):
         for link in s.templateLinks:
@@ -489,7 +523,7 @@ class ParamCGRA:
 
         s.updatedLinks = s.templateLinks[:]
 
-        for portType in range( PORT_DIRECTION_COUNTS ):
+        for portType in range(PORT_DIRECTION_COUNTS):
             if portType in s.getTileOfID(s.targetTileID).neverUsedOutPorts:
                 xbarCheckbuttons[xbarPort2Type[portType]].configure(state="disabled")
 
@@ -527,7 +561,6 @@ class ParamCGRA:
                 return tile
         return None
 
-
     # tiles could be disabled due to the disabled links
     def updateTiles(s):
         unreachableTiles = set()
@@ -552,7 +585,6 @@ class ParamCGRA:
 
     # TODO: also need to consider adding back after removing...
     def updateLinks(s):
-
         needRemoveLinks = set()
         for link in s.updatedLinks:
             if link.disabled:
@@ -594,7 +626,6 @@ class ParamCGRA:
                     if outLink in s.updatedLinks:
                         s.removeUpdatedLink(outLink)
 
-
                 for portType in tile.inLinks:
                     inLink = tile.inLinks[portType]
                     if inLink in s.updatedLinks:
@@ -606,7 +637,17 @@ class ParamCGRA:
                 if type(link.srcTile) == ParamTile:
                     link.srcTile.xbarDict[xbarPort2Type[link.srcPort]] = 0
 
-
+    def updateSpmOutlinks(s):
+        spmOutlinksSwitches = widgets['spmOutlinksSwitches']
+        spmConfigPannel = widgets["spmConfigPannel"]
+        for switch in spmOutlinksSwitches:
+            switch.destroy()
+        for port in paramCGRA.dataSPM.outLinks:
+            switch = customtkinter.CTkSwitch(spmConfigPannel, text=f"link {port}", command=switchDataSPMOutLinks)
+            if not paramCGRA.dataSPM.outLinks[port].disabled:
+                switch.select()
+            switch.pack(pady=(5, 10))
+            spmOutlinksSwitches.insert(0, switch)
 
 class ToolTip(object):
 
@@ -623,13 +664,15 @@ class ToolTip(object):
             return
         x, y, cx, cy = self.widget.bbox("insert")
         x = x + self.widget.winfo_rootx() + 57
-        y = y + cy + self.widget.winfo_rooty() +27
-        self.tipwindow = tw = tkinter.Toplevel(self.widget)
+        y = y + cy + self.widget.winfo_rooty() + 27
+        # self.tipwindow = tw = tkinter.Toplevel(self.widget)
+        self.tipwindow = tw = customtkinter.CTkToplevel(self.widget)
         tw.wm_overrideredirect(1)
         tw.wm_geometry("+%d+%d" % (x, y))
-        label = tkinter.Label(tw, text=self.text, justify=tkinter.LEFT,
-                              background="#ffffe0", relief=tkinter.SOLID, borderwidth=1,
-                              font=("tahoma", "8", "normal"))
+        # label = tkinter.Label(tw, text=self.text, justify=tkinter.LEFT,
+        #                       background="#ffffe0", relief=tkinter.SOLID, borderwidth=1,
+        #                       font=("tahoma", "8", "normal"))
+        label = customtkinter.CTkLabel(tw, text=self.text)
         label.pack(ipadx=1)
 
     def hidetip(self):
@@ -638,12 +681,16 @@ class ToolTip(object):
         if tw:
             tw.destroy()
 
+
 def CreateToolTip(widget, text):
     toolTip = ToolTip(widget)
+
     def enter(event):
         toolTip.showtip(text)
+
     def leave(event):
         toolTip.hidetip()
+
     widget.bind('<Enter>', enter)
     widget.bind('<Leave>', leave)
 
@@ -651,14 +698,17 @@ def CreateToolTip(widget, text):
 paramCGRA = ParamCGRA(ROWS, COLS, CONFIG_MEM_SIZE, DATA_MEM_SIZE)
 
 
-
 def clickTile(ID):
-    widgets["fuConfigPannel"].config(text='Tile '+str(ID)+' functional units')
-    widgets["xbarConfigPannel"].config(text='Tile '+str(ID)+' crossbar outgoing links')
+    # widgets["fuConfigPannel"].configure(text='Tile ' + str(ID) + ' functional units')
+    widgets["fuConfigPannel"].configure(label_text='Tile ' + str(ID) + '\nfunctional units')
+    # widgets["xbarConfigPannel"].config(text='Tile ' + str(ID) + ' crossbar outgoing links')
+    widgets["xbarConfigPannel"].configure(label_text='Tile ' + str(ID) + '\ncrossbar outgoing links')
+    widgets["xbarCentralTilelabel"].configure(text='Tile ' + str(ID))
+    # print(widgets['spmOutlinksSwitches'])
     # After clicking the tile, the pannel will fill all directions
-    widgets["xbarConfigPannel"].grid(columnspan=4, row=7, column=0, rowspan=2, sticky="nsew")
-    widgets["entireTileCheckbutton"].config(text='Disable entire Tile '+str(ID), state="normal")
-    widgets["spmConfigPannel"].grid_forget()
+    # widgets["xbarConfigPannel"].grid(columnspan=4, row=9, column=0, rowspan=3, sticky="nsew")
+    widgets["entireTileCheckbutton"].configure(text='Disable entire Tile ' + str(ID), state="normal")
+    # widgets["spmConfigPannel"].grid_forget()
     paramCGRA.targetTileID = ID
 
     disabled = paramCGRA.getTileOfID(ID).disabled
@@ -668,28 +718,45 @@ def clickTile(ID):
 
     for xbarType in xbarTypeList:
         xbarCheckVars[xbarType].set(paramCGRA.tiles[ID].xbarDict[xbarType])
-        xbarCheckbuttons[xbarType].configure(state="disabled" if disabled or xbarType2Port[xbarType] in paramCGRA.tiles[ID].neverUsedOutPorts else "normal")
+        xbarCheckbuttons[xbarType].configure(state="disabled" if disabled or xbarType2Port[xbarType] in paramCGRA.tiles[
+            ID].neverUsedOutPorts else "normal")
 
     entireTileCheckVar.set(1 if paramCGRA.getTileOfID(ID).disabled else 0)
 
+
 def clickSPM():
-    widgets["fuConfigPannel"].config(text='Tile '+str(paramCGRA.targetTileID)+' functional units')
+    print('clickSPM')
+    # widgets["fuConfigPannel"].config(text='Tile ' + str(paramCGRA.targetTileID) + ' functional units')
+    # widgets["fuConfigPannelLabel"].configure(text='Tile ' + str(paramCGRA.targetTileID) + ' functional units')
+    #
+    # for fuType in fuTypeList:
+    #     fuCheckVars[fuType].set(paramCGRA.tiles[paramCGRA.targetTileID].fuDict[fuType])
+    #     fuCheckbuttons[fuType].configure(state="disabled")
+    #
+    # widgets["xbarConfigPannel"].grid_forget()
+    #
+    # spmConfigPannel = widgets["spmConfigPannel"]
+    # spmConfigPannel.config(text='DataSPM outgoing links')
+    # # After clicking the SPM, the pannel will fill all directions
+    # spmConfigPannel.grid(row=9, column=0, rowspan=3, columnspan=4, sticky="nsew")
+    #
+    # spmEnabledListbox = widgets["spmEnabledListbox"]
+    # spmDisabledListbox = widgets["spmDisabledListbox"]
+    #
+    # widgets["entireTileCheckbutton"].configure(text='Disable entire Tile ' + str(paramCGRA.targetTileID), state="disabled")
 
-    for fuType in fuTypeList:
-        fuCheckVars[fuType].set(paramCGRA.tiles[paramCGRA.targetTileID].fuDict[fuType])
-        fuCheckbuttons[fuType].configure(state="disabled")
 
-    widgets["xbarConfigPannel"].grid_forget()
+def switchDataSPMOutLinks():
+    spmOutlinksSwitches = widgets['spmOutlinksSwitches']
+    for portIdx, switch in enumerate(spmOutlinksSwitches):
+        link = paramCGRA.dataSPM.outLinks[portIdx]
+        if switch.get():
+            link.disabled = False
+        else:
+            link.disabled = True
 
-    spmConfigPannel = widgets["spmConfigPannel"]
-    spmConfigPannel.config(text='DataSPM outgoing links')
-    # After clicking the SPM, the pannel will fill all directions
-    spmConfigPannel.grid(row=7, column=0, rowspan=2, columnspan=4, sticky="nsew")
 
-    spmEnabledListbox = widgets["spmEnabledListbox"]
-    spmDisabledListbox = widgets["spmDisabledListbox"]
 
-    widgets["entireTileCheckbutton"].config(text='Disable entire Tile '+str(paramCGRA.targetTileID), state="disabled")
 
 
 def clickSPMPortDisable():
@@ -702,6 +769,7 @@ def clickSPMPortDisable():
 
         link = paramCGRA.dataSPM.outLinks[port]
         link.disabled = True
+
 
 def clickSPMPortEnable():
     spmDisabledListbox = widgets["spmDisabledListbox"]
@@ -717,7 +785,6 @@ def clickSPMPortEnable():
 
 
 def clickEntireTileCheckbutton():
-
     if entireTileCheckVar.get() == 1:
 
         for fuType in fuTypeList:
@@ -748,9 +815,10 @@ def clickFuCheckbutton(fuType):
         paramCGRA.updateFuCheckbutton("Ld", fuCheckVars["Ld"].get())
     paramCGRA.updateFuCheckbutton(fuType, fuCheckVars[fuType].get())
 
+
 def clickXbarCheckbutton(xbarType):
     paramCGRA.updateXbarCheckbutton(xbarType, xbarCheckVars[xbarType].get())
-    
+
 
 def clickUpdate(root):
     rows = int(widgets["rowsEntry"].get())
@@ -761,8 +829,12 @@ def clickUpdate(root):
     global paramCGRA
     oldCGRA = paramCGRA
 
+    old_rows_num = paramCGRA.rows
     if paramCGRA.rows != rows or paramCGRA.columns != columns:
         paramCGRA = ParamCGRA(rows, columns)
+
+    # dataSPM = ParamSPM(MEM_WIDTH, rows, rows)
+    # paramCGRA.initDataSPM(dataSPM)
 
     create_cgra_pannel(root, rows, columns)
 
@@ -770,6 +842,9 @@ def clickUpdate(root):
     paramCGRA.updateMemSize(configMemSize, dataMemSize)
     paramCGRA.updateTiles()
     paramCGRA.updateLinks()
+    if old_rows_num != rows:
+        paramCGRA.updateSpmOutlinks()
+
     paramCGRA.targetAppName = oldCGRA.targetAppName
     paramCGRA.compilationDone = oldCGRA.compilationDone
     paramCGRA.targetKernels = oldCGRA.targetKernels
@@ -781,7 +856,7 @@ def clickUpdate(root):
     widgets["verilogText"].delete("1.0", tkinter.END)
     widgets["resMIIEntry"].delete(0, tkinter.END)
     if len(paramCGRA.getValidTiles()) > 0 and paramCGRA.DFGNodeCount > 0:
-        paramCGRA.resMII = math.ceil((paramCGRA.DFGNodeCount+0.0)/len(paramCGRA.getValidTiles())) // 1
+        paramCGRA.resMII = math.ceil((paramCGRA.DFGNodeCount + 0.0) / len(paramCGRA.getValidTiles())) // 1
         widgets["resMIIEntry"].insert(0, paramCGRA.resMII)
     else:
         widgets["resMIIEntry"].insert(0, 0)
@@ -804,17 +879,24 @@ def clickReset(root):
     paramCGRA.enableAllTemplateLinks()
     paramCGRA.resetLinks()
 
+    paramCGRA.updateSpmOutlinks()
+
     create_cgra_pannel(root, rows, columns)
 
-    for _ in range(paramCGRA.rows):
-        widgets["spmEnabledListbox"].delete(0)
-        widgets["spmDisabledListbox"].delete(0)
+    # for _ in range(paramCGRA.rows):
+    #     widgets["spmEnabledListbox"].delete(0)
+    #     widgets["spmDisabledListbox"].delete(0)
 
-    for port in paramCGRA.dataSPM.outLinks:
-        if not paramCGRA.dataSPM.outLinks[port].disabled:
-            widgets["spmEnabledListbox"].insert(0, port)
-        else:
-            widgets["spmDisabledListbox"].insert(0, port)
+    # widgets['spmOutlinksSwitches'] = []
+    # spmOutlinksSwitches = []
+    # spmConfigPannel = widgets["spmConfigPannel"]
+    # for port in paramCGRA.dataSPM.outLinks:
+    #     switch = customtkinter.CTkSwitch(spmConfigPannel, text=f"link {port}", command=switchDataSPMOutLinks)
+    #     if not paramCGRA.dataSPM.outLinks[port].disabled:
+    #         switch.select()
+    #     switch.pack(pady=(5, 10))
+    #     spmOutlinksSwitches.insert(0, switch)
+    # widgets['spmOutlinksSwitches'] = spmOutlinksSwitches
 
     # kernel related information and be kept to avoid redundant compilation
     paramCGRA.targetAppName = oldCGRA.targetAppName
@@ -827,7 +909,7 @@ def clickReset(root):
     widgets["verilogText"].delete(0, tkinter.END)
     widgets["resMIIEntry"].delete(0, tkinter.END)
     if len(paramCGRA.getValidTiles()) > 0 and paramCGRA.DFGNodeCount > 0:
-        paramCGRA.resMII = math.ceil((paramCGRA.DFGNodeCount+0.0)/len(paramCGRA.getValidTiles())) // 1
+        paramCGRA.resMII = math.ceil((paramCGRA.DFGNodeCount + 0.0) / len(paramCGRA.getValidTiles())) // 1
         widgets["resMIIEntry"].insert(0, paramCGRA.resMII)
     else:
         widgets["resMIIEntry"].insert(0, 0)
@@ -839,7 +921,7 @@ def clickTest():
     # os.system("cd test")
     os.chdir("test")
 
-    widgets["testShow"].configure(text="0%", fg="red")
+    widgets["testShow"].configure(text="0%")
     master.update_idletasks()
 
     # os.system("pytest ../../VectorCGRA")
@@ -852,14 +934,15 @@ def clickTest():
             print(outputLine)
             if "%]" in outputLine:
                 value = int(outputLine.split("[")[1].split("%]")[0])
-                widgets["testProgress"].configure(value=value)
-                widgets["testShow"].configure(text=str(value)+"%", fg="red")
+                # print(f'testProgress value: {value}')
+                widgets["testProgress"].set(value/100)
+                widgets["testShow"].configure(text=str(value) + "%")
                 master.update_idletasks()
                 total += 1
                 if ".py F" in outputLine:
                     failed += 1
 
-    widgets["testShow"].configure(text="PASSED" if failed==0 else str(total-failed)+"/"+str(total), fg="green")
+    widgets["testShow"].configure(text="PASSED" if failed == 0 else str(total - failed) + "/" + str(total))
     # (out, err) = testProc.communicate()
     # print("check test output:", out)
 
@@ -867,7 +950,6 @@ def clickTest():
 
 
 def clickGenerateVerilog():
-
     message = paramCGRA.getErrorMessage()
     if message != "":
         tkinter.messagebox.showerror(title="CGRA Model Checking", message=message)
@@ -902,7 +984,9 @@ def clickGenerateVerilog():
 
 
 def setReportProgress(value):
-    widgets["reportProgress"].configure(value=value)
+    # widgets["reportProgress"].configure(value=value)
+    widgets["reportProgress"].set(value/100)
+
 
 def countSynthesisTime():
     global synthesisRunning
@@ -913,13 +997,14 @@ def countSynthesisTime():
         widgets["synthesisTimeEntry"].insert(0, round(timeCost, 1))
         timeCost += 0.1
 
+
 def runYosys():
     global synthesisRunning
     os.system("make 3")
 
     statsFile = open("3-open-yosys-synthesis/stats.txt", 'r')
     statsLines = statsFile.readlines()
-      
+
     tileArea = 0.0
     for line in statsLines:
         if "Chip area for module " in line:
@@ -934,7 +1019,8 @@ def runYosys():
     widgets["reportTilePowerData"].delete(0, tkinter.END)
     widgets["reportTilePowerData"].insert(0, "-")
 
-    widgets["reportProgress"].configure(value=100)
+    # widgets["reportProgress"].configure(value=100)
+    widgets["reportProgress"].set(1)
 
     os.chdir("../../../build")
 
@@ -942,7 +1028,6 @@ def runYosys():
 
 
 def clickSynthesize():
-
     global paramCGRA
     global synthesisRunning
 
@@ -964,25 +1049,26 @@ def clickSynthesize():
     sizePattern = "[SPM_SIZE]"
     readPortPattern = "[READ_PORT_COUNT]"
     writePortPattern = "[WRITE_PORT_COUNT]"
-      
+
     updatedSizePattern = str(paramCGRA.dataMemSize * 1024)
     updatedReadPortPattern = str(paramCGRA.dataSPM.getNumOfValidReadPorts())
     updatedWritePortPattern = str(paramCGRA.dataSPM.getNumOfValidWritePorts())
-      
+
     with open(r'../../tools/cacti/spm_template.cfg', 'r') as file:
         data = file.read()
 
         data = data.replace(sizePattern, updatedSizePattern)
         data = data.replace(readPortPattern, updatedReadPortPattern)
         data = data.replace(writePortPattern, updatedWritePortPattern)
-      
+
     with open(r'../../tools/cacti/spm_temp.cfg', 'w') as file:
         file.write(data)
 
     os.chdir("../../tools/cacti")
 
     cactiCommand = "./cacti -infile spm_temp.cfg"
-    cactiProc = subprocess.Popen([cactiCommand, '-u'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, bufsize=1)
+    cactiProc = subprocess.Popen([cactiCommand, '-u'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True,
+                                 bufsize=1)
     (out, err) = cactiProc.communicate()
     success = False
     line = out.decode("ISO-8859-1")
@@ -1037,8 +1123,9 @@ def clickSynthesize():
 
 def clickSelectApp(event):
     global paramCGRA
-    paramCGRA.compilationDone = False 
-    appName = fd.askopenfilename(title="choose an application", initialdir="../", filetypes=(("C/C++ file", "*.cpp"), ("C/C++ file", "*.c"), ("C/C++ file", "*.C"), ("C/C++ file", "*.CPP")))
+    paramCGRA.compilationDone = False
+    appName = fd.askopenfilename(title="choose an application", initialdir="../", filetypes=(
+    ("C/C++ file", "*.cpp"), ("C/C++ file", "*.c"), ("C/C++ file", "*.C"), ("C/C++ file", "*.CPP")))
     paramCGRA.targetAppName = appName
 
     # widgets["appPathEntry"].configure(state="normal")
@@ -1046,7 +1133,8 @@ def clickSelectApp(event):
     widgets["appPathEntry"].insert(0, paramCGRA.targetAppName)
     # widgets["appPathEntry"].configure(state="disabled")
 
-    widgets["compileAppShow"].config(text="IDLE", fg='grey')
+    widgets["compileAppShow"].configure(text="IDLE")
+
 
 def clickCompileApp():
     global paramCGRA
@@ -1062,27 +1150,28 @@ def clickCompileApp():
     (compileOut, compileErr) = compileProc.communicate()
 
     disassembleCommand = "llvm-dis-12 kernel.bc -o kernel.ll"
-    disassembleProc = subprocess.Popen([disassembleCommand, '-u'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    disassembleProc = subprocess.Popen([disassembleCommand, '-u'], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                       shell=True)
     (disassembleOut, disassembleErr) = disassembleProc.communicate()
 
     if compileErr:
-        widgets["compileAppShow"].config(text=u'\u2717\u2717\u2717', fg='red')
+        widgets["compileAppShow"].configure(text=u'\u2717\u2717\u2717')
         os.chdir("..")
         print("Compile error message: ", compileErr)
         return
     if disassembleErr:
-        widgets["compileAppShow"].config(text=u'\u2717\u2717\u2717', fg='red')
+        widgets["compileAppShow"].configure(text=u'\u2717\u2717\u2717')
         os.chdir("..")
         print("Disassemble error message: ", disassembleErr)
         return
-    
-    widgets["compileAppShow"].config(text=u'\u2713\u2713\u2713', fg='green')
+
+    widgets["compileAppShow"].configure(text=u'\u2713\u2713\u2713')
     paramCGRA.compilationDone = True
 
     # collect the potentially targeting kernel/function
     irFile = open('kernel.ll', 'r')
     irLines = irFile.readlines()
-      
+
     # Strips the newline character
     paramCGRA.targetKernels = []
     for line in irLines:
@@ -1094,14 +1183,22 @@ def clickCompileApp():
     irFile.close()
 
     kernelNameMenu = widgets["kernelNameMenu"]
-    kernelNameMenu["menu"].delete(0, "end")
-    for kernelName in paramCGRA.targetKernels: 
-        kernelNameMenu["menu"].add_command(label=kernelName, command=tkinter._setit(kernelOptions, kernelName))
+    kernelPannel = widgets["kernelPannel"]
+    # kernelNameMenu["menu"].delete(0, "end")
+    kernelNameMenu.destroy()
+    kernelNameOptions = [kernelName for kernelName in paramCGRA.targetKernels]
+    kernelNameMenu = customtkinter.CTkOptionMenu(kernelPannel, variable=kernelOptions, values=kernelNameOptions)
+    kernelNameMenu.grid(row=2, column=1)
+    widgets["kernelNameMenu"] = kernelNameMenu
+    # for kernelName in paramCGRA.targetKernels:
+    #     # kernelNameMenu["menu"].add_command(label=kernelName, command=tkinter._setit(kernelOptions, kernelName))
+    #     print(f'kernelName: {kernelName}')
     # options.set(my_list[0])
 
-    widgets["generateDFGShow"].config(text="IDLE", fg='grey')
+    widgets["generateDFGShow"].configure(text="IDLE")
 
     os.chdir("..")
+
 
 def clickKernelMenu(*args):
     global paramCGRA
@@ -1109,6 +1206,7 @@ def clickKernelMenu(*args):
     if name == None or name == " " or name == "Not selected yet":
         return
     paramCGRA.targetKernelName = name
+
 
 def dumpParamCGRA2JSON(fileName):
     global paramCGRA
@@ -1128,9 +1226,9 @@ def dumpParamCGRA2JSON(fileName):
                 for fuType in tile.fuDict:
                     if tile.fuDict[fuType] == 1:
                         curDict["supportedFUs"].append(fuType)
-            
-            if (tile.hasFromMem() and tile.fuDict["Ld"] == 1) and\
-               (tile.hasToMem()   and tile.fuDict["St"] == 1):
+
+            if (tile.hasFromMem() and tile.fuDict["Ld"] == 1) and \
+                    (tile.hasToMem() and tile.fuDict["St"] == 1):
                 curDict["accessMem"] = True
 
         paramCGRAJson["tiles"][str(tile.ID)] = curDict
@@ -1140,17 +1238,17 @@ def dumpParamCGRA2JSON(fileName):
         curDict = {}
         srcTile = link.srcTile
         dstTile = link.dstTile
-        if not link.disabled and not srcTile.disabled and not dstTile.disabled and type(srcTile) != ParamSPM and type(dstTile) != ParamSPM:
+        if not link.disabled and not srcTile.disabled and not dstTile.disabled and type(srcTile) != ParamSPM and type(
+                dstTile) != ParamSPM:
             curDict["srcTile"] = srcTile.ID
             curDict["dstTile"] = dstTile.ID
             paramCGRAJson["links"].append(curDict)
 
     paramCGRAJsonObject = json.dumps(paramCGRAJson, indent=4)
-     
+
     # Writing to sample.json
     with open(fileName, "w") as outfile:
         outfile.write(paramCGRAJsonObject)
-
 
 
 def clickShowDFG():
@@ -1158,36 +1256,37 @@ def clickShowDFG():
     os.chdir("kernel")
     fileExist = os.path.exists("kernel.bc")
     global paramCGRA
-    
+
     if not fileExist or not paramCGRA.compilationDone or paramCGRA.targetKernelName == None:
         os.chdir("..")
-        tkinter.messagebox.showerror(title="DFG Generation", message="The compilation and kernel selection need to be done first.")
+        tkinter.messagebox.showerror(title="DFG Generation",
+                                     message="The compilation and kernel selection need to be done first.")
         return
 
     paramCGRA.targetKernelName = kernelOptions.get()
 
     genDFGJson = {
-            "kernel"                : paramCGRA.targetKernelName,
-            "targetFunction"        : False,
-            "targetNested"          : True,
-            "targetLoopsID"         : [0],
-            "doCGRAMapping"         : False,
-            "row"                   : paramCGRA.rows,
-            "column"                : paramCGRA.columns,
-            "precisionAware"        : False,
-            "heterogeneity"         : False,
-            "isTrimmedDemo"         : True,
-            "heuristicMapping"      : True,
-            "parameterizableCGRA"   : True,
-            "diagonalVectorization" : False,
-            "bypassConstraint"      : 8,
-            "isStaticElasticCGRA"   : False,
-            "ctrlMemConstraint"     : 200,
-            "regConstraint"         : 12,
-        }
-     
+        "kernel": paramCGRA.targetKernelName,
+        "targetFunction": False,
+        "targetNested": True,
+        "targetLoopsID": [0],
+        "doCGRAMapping": False,
+        "row": paramCGRA.rows,
+        "column": paramCGRA.columns,
+        "precisionAware": False,
+        "heterogeneity": False,
+        "isTrimmedDemo": True,
+        "heuristicMapping": True,
+        "parameterizableCGRA": True,
+        "diagonalVectorization": False,
+        "bypassConstraint": 8,
+        "isStaticElasticCGRA": False,
+        "ctrlMemConstraint": 200,
+        "regConstraint": 12,
+    }
+
     json_object = json.dumps(genDFGJson, indent=4)
-     
+
     with open("param.json", "w") as outfile:
         outfile.write(json_object)
 
@@ -1210,7 +1309,7 @@ def clickShowDFG():
     print("opt-12 out: ", out)
     print("opt-12 err: ", err)
 
-    paramCGRA.resMII = math.ceil((paramCGRA.DFGNodeCount+0.0)/len(paramCGRA.getValidTiles())) // 1
+    paramCGRA.resMII = math.ceil((paramCGRA.DFGNodeCount + 0.0) / len(paramCGRA.getValidTiles())) // 1
     widgets["resMIIEntry"].delete(0, tkinter.END)
     widgets["resMIIEntry"].insert(0, paramCGRA.resMII)
 
@@ -1241,16 +1340,18 @@ def clickShowDFG():
             new_data.append(item)
     PIL_image_stretched.putdata(new_data)
 
-    
-    dfgImage = ImageTk.PhotoImage(PIL_image_stretched)
-    images["dfgImage"] = dfgImage # This is important due to the garbage collection would remove local variable of image
-    widgets["dfgLabel"].config(image=dfgImage)
+    # dfgImage = ImageTk.PhotoImage(PIL_image_stretched)
+    dfgImage = customtkinter.CTkImage(PIL_image_stretched, size=(260, 380))
+    images["dfgImage"] = dfgImage  # This is important due to the garbage collection would remove local variable of image
+    widgets["dfgLabel"].configure(image=dfgImage)
 
-    widgets["generateDFGShow"].config(text=u'\u2713\u2713\u2713', fg='green')
- 
+    widgets["generateDFGShow"].configure(text=u'\u2713\u2713\u2713')
+
     os.chdir("..")
 
+
 mappingProc = None
+
 
 def countMapTime():
     global mappingProc
@@ -1261,10 +1362,12 @@ def countMapTime():
         widgets["mapTimeEntry"].insert(0, round(timeCost, 1))
         timeCost += 0.1
 
+
 def drawSchedule():
     global mappingProc
     mappingCommand = "opt-12 -load ../../CGRA-Mapper/build/src/libmapperPass.so -mapperPass ./kernel.bc"
-    mappingProc = subprocess.Popen(["exec " + mappingCommand, '-u'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, bufsize=1)
+    mappingProc = subprocess.Popen(["exec " + mappingCommand, '-u'], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                   shell=True, bufsize=1)
     (out, err) = mappingProc.communicate()
     success = False
     mappingII = -1
@@ -1283,7 +1386,7 @@ def drawSchedule():
     widgets["mapIIEntry"].delete(0, tkinter.END)
     widgets["mapIIEntry"].insert(0, mappingII)
     widgets["mapSpeedupEntry"].delete(0, tkinter.END)
-    widgets["mapSpeedupEntry"].insert(0, paramCGRA.DFGNodeCount/mappingII)
+    widgets["mapSpeedupEntry"].insert(0, paramCGRA.DFGNodeCount / mappingII)
 
     # pad contains tile and links
     tileWidth = paramCGRA.tiles[0].width
@@ -1295,7 +1398,7 @@ def drawSchedule():
     # load schedule.json for mapping demonstration
     f = open("schedule.json")
     schedule = json.load(f)
-    
+
     # Iterating through the json
     for strTileID in schedule["tiles"]:
         tileID = int(strTileID)
@@ -1304,7 +1407,6 @@ def drawSchedule():
             cycle = int(strCycle)
             optID = schedule["tiles"][strTileID][strCycle]
             tile.mapping[cycle] = optID[0]
-
 
     for strSrcTileID in schedule["links"]:
         for strDstTileID in schedule["links"][strSrcTileID]:
@@ -1319,43 +1421,62 @@ def drawSchedule():
 
     canvas = widgets["mappingCanvas"]
     canvas.delete("all")
+    ROWS = widgets["ROWS"]
+    COLS = widgets["COLS"]
+    GRID_WIDTH = (TILE_WIDTH + LINK_LENGTH) * COLS - LINK_LENGTH
+    GRID_HEIGHT = (TILE_HEIGHT + LINK_LENGTH) * ROWS - LINK_LENGTH
     cgraWidth = GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + 20
-    canvas.configure(scrollregion=(0, 0, mappingII*cgraWidth, GRID_HEIGHT))
-    
+    canvas.configure(scrollregion=(0, 0, mappingII * cgraWidth, GRID_HEIGHT + 40 + BORDER))
 
     for ii in range(mappingII):
         # draw data memory
-        spmLabel = tkinter.Label(canvas, text="Data\nSPM", fg='black', bg='gray', relief='raised', bd=BORDER, highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
-        canvas.create_window(baseX+BORDER, BORDER, window=spmLabel, height=GRID_HEIGHT, width=MEM_WIDTH, anchor="nw")
+        # spmLabel = tkinter.Label(canvas, text="Data\nSPM", fg='black', bg='gray', relief='raised', bd=BORDER,
+        #                          highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS)
+        spmLabel = customtkinter.CTkButton(canvas, text="Data\nSPM", state='disabled', text_color_disabled='white')
+        canvas.create_window(baseX + BORDER, BORDER, window=spmLabel, height=GRID_HEIGHT, width=MEM_WIDTH, anchor="nw")
 
-
+        mapped_tile_color = mapped_tile_color_list[ii % len(mapped_tile_color_list)]
 
         # draw tiles
         for tile in paramCGRA.tiles:
             if not tile.disabled:
                 button = None
                 if ii in tile.mapping:
-                    button = tkinter.Label(canvas, text = "Opt "+str(tile.mapping[ii]), fg="black", bg="cornflowerblue", relief="raised", bd=BORDER, highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
+                    # button = tkinter.Label(canvas, text="Opt " + str(tile.mapping[ii]), fg="black", bg="cornflowerblue",
+                    #                        relief="raised", bd=BORDER, highlightbackground="black",
+                    #                        highlightthickness=HIGHLIGHT_THICKNESS)
+                    button = customtkinter.CTkButton(canvas, text="Opt " + str(tile.mapping[ii]), state='disabled',
+                                                     border_width=2,
+                                                     font=customtkinter.CTkFont(weight="bold"),
+                                                     text_color_disabled='black',
+                                                     fg_color=mapped_tile_color,
+                                                     border_color=mapped_tile_color)
                 else:
-                    button = tkinter.Label(canvas, text = "Tile "+str(tile.ID), fg="black", bg="grey", relief="raised", bd=BORDER, highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
-                posX, posY = tile.getPosXY(baseX+BORDER, BORDER)
+                    # button = tkinter.Label(canvas, text="Tile " + str(tile.ID), fg="black", bg="grey", relief="raised",
+                    #                        bd=BORDER, highlightbackground="black",
+                    #                        highlightthickness=HIGHLIGHT_THICKNESS)
+                    button = customtkinter.CTkButton(canvas, text="Tile " + str(tile.ID), state='disabled', text_color_disabled='white')
+                posX, posY = tile.getPosXY(baseX + BORDER, BORDER)
                 canvas.create_window(posX, posY, window=button, height=tileHeight, width=tileWidth, anchor="nw")
 
         # draw links
         for link in paramCGRA.updatedLinks:
             if not link.disabled:
-                srcX, srcY = link.getSrcXY(baseX+BORDER, BORDER)
-                dstX, dstY = link.getDstXY(baseX+BORDER, BORDER)
+                srcX, srcY = link.getSrcXY(baseX + BORDER, BORDER)
+                dstX, dstY = link.getDstXY(baseX + BORDER, BORDER)
                 if ii in link.mapping:
-                    canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST, fill="red")
+                    canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST, width=3, fill=mapped_tile_color)
                 else:
-                    canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST, fill="black")
- 
-        cycleLabel = tkinter.Label(canvas, text="Cycle "+str(ii))
-        canvas.create_window(baseX+280, GRID_HEIGHT+10+BORDER, window=cycleLabel, height=20, width=80)
+                    canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST, fill=CANVAS_LINE_COLOR)
+
+        # cycleLabel = tkinter.Label(canvas, text="Cycle " + str(ii))
+        cycleLabel = customtkinter.CTkLabel(canvas, text="Cycle " + str(ii) + " ",
+                                            font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
+        canvas.create_window(baseX + (cgraWidth)/2, GRID_HEIGHT + 30 + BORDER, window=cycleLabel, height=20, width=80)
 
         baseX += GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + 20
-        canvas.create_line(baseX-5, INTERVAL, baseX-5, GRID_HEIGHT, width=2, dash=(10,2))
+        canvas.create_line(baseX - 5, INTERVAL, baseX - 5, GRID_HEIGHT, width=2, dash=(10, 2), fill="grey")
+
 
 def clickTerminateMapping():
     global mappingProc
@@ -1392,27 +1513,27 @@ def clickMapDFG():
         return
 
     mappingJson = {
-            "kernel"                : paramCGRA.targetKernelName,
-            "targetFunction"        : False,
-            "targetNested"          : True,
-            "targetLoopsID"         : [0],
-            "doCGRAMapping"         : True,
-            "row"                   : paramCGRA.rows,
-            "column"                : paramCGRA.columns,
-            "precisionAware"        : False,
-            "heterogeneity"         : False,
-            "isTrimmedDemo"         : True,
-            "heuristicMapping"      : heuristic,
-            "parameterizableCGRA"   : True,
-            "diagonalVectorization" : False,
-            "bypassConstraint"      : 8,
-            "isStaticElasticCGRA"   : False,
-            "ctrlMemConstraint"     : paramCGRA.configMemSize,
-            "regConstraint"         : 12,
-        }
-     
+        "kernel": paramCGRA.targetKernelName,
+        "targetFunction": False,
+        "targetNested": True,
+        "targetLoopsID": [0],
+        "doCGRAMapping": True,
+        "row": paramCGRA.rows,
+        "column": paramCGRA.columns,
+        "precisionAware": False,
+        "heterogeneity": False,
+        "isTrimmedDemo": True,
+        "heuristicMapping": heuristic,
+        "parameterizableCGRA": True,
+        "diagonalVectorization": False,
+        "bypassConstraint": 8,
+        "isStaticElasticCGRA": False,
+        "ctrlMemConstraint": paramCGRA.configMemSize,
+        "regConstraint": 12,
+    }
+
     mappingJsonObject = json.dumps(mappingJson, indent=4)
-     
+
     with open("param.json", "w") as outfile:
         outfile.write(mappingJsonObject)
 
@@ -1429,14 +1550,41 @@ def clickMapDFG():
     timer.start()
 
 
-def create_cgra_pannel(master, rows, columns):
+def _on_mousewheel(canvas, event):
+    platformSystem = platform.system()
+    logging.info("Current platform.system: %s", platformSystem)
+    if platformSystem == "Windows":
+        canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+    elif platformSystem == "Linux":
+        canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+    else:
+        canvas.yview_scroll(int(-1*event.delta), "units")
 
+def create_cgra_pannel(master, rows, columns):
     ROWS = rows
     COLS = columns
+    widgets["ROWS"] = ROWS
+    widgets["COLS"] = COLS
+    print(f"create_cgra_pannel - ROWS: {ROWS}, COLS: {COLS}")
+    # master.grid_propagate(0)
     # Use solid black board to let the pannel look better
-    cgraPannel = tkinter.LabelFrame(master, text='CGRA', bd=BORDER, relief='groove')
-    cgraPannel.grid(row=0, column=0, rowspan=1, columnspan=1, sticky="nsew")
-    canvas = tkinter.Canvas(cgraPannel)
+    cgraPannel = customtkinter.CTkFrame(master)
+    # cgraPannel = tkinter.LabelFrame(master, text='CGRA', bd=BORDER, relief='groove')
+    cgraPannel.grid(row=0, column=0, rowspan=1, columnspan=1, padx=(5, 5), pady=(5, 0), sticky="nsew")
+    # cgraPannel.pack()
+    # cgraPannel.grid_propagate(0)
+    # create label for cgraPannel
+    cgraLabel = customtkinter.CTkLabel(cgraPannel, text='CGRA', font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
+    # cgraLabel.grid(row=0, column=0, sticky="nsew")
+    cgraLabel.pack(anchor="w", ipadx=5)
+
+    canvas = customtkinter.CTkCanvas(cgraPannel, bg=CANVAS_BG_COLOR, bd=0, highlightthickness=0)
+    # with Windows OS
+    # canvas.bind_all("<MouseWheel>", partial(_on_mousewheel, canvas))
+    # with Linux OS
+    # canvas.bind_all("<Button-4>", partial(_on_mousewheel, canvas))
+    # canvas.bind_all("<Button-5>", partial(_on_mousewheel, canvas))
+
     widgets["canvas"] = canvas
     baseX = 0
 
@@ -1450,19 +1598,25 @@ def create_cgra_pannel(master, rows, columns):
     padHeight = TILE_HEIGHT + LINK_LENGTH
     padWidth = TILE_WIDTH + LINK_LENGTH
 
-
+    GRID_HEIGHT = (TILE_HEIGHT + LINK_LENGTH) * ROWS - LINK_LENGTH
     # draw data memory
     memHeight = GRID_HEIGHT
-    spmLabel = tkinter.Button(canvas, text = "Data\nSPM", fg = 'black', bg = 'gray', relief = 'raised', bd = BORDER, command = clickSPM, highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
+    # spmLabel = tkinter.Button(canvas, text="Data\nSPM", fg='black', bg='gray', relief='raised', bd=BORDER,
+    #                           command=clickSPM, highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS)
+    spmLabel = customtkinter.CTkButton(canvas, text="Data\nSPM",
+                                       #fg='black', bg='gray', relief='raised', bd=BORDER,
+                                       command=clickSPM#,
+                                       #highlightbackground="black",
+                                       #highlightthickness=HIGHLIGHT_THICKNESS
+                                       )
     # Data memory will be placed in the upper left corner
-    canvas.create_window(baseX+BORDER, BORDER, window=spmLabel, height=GRID_HEIGHT, width=MEM_WIDTH, anchor="nw")
-
+    canvas.create_window(baseX + BORDER, BORDER, window=spmLabel, height=GRID_HEIGHT, width=MEM_WIDTH, anchor="nw")
 
     # construct tiles
     if len(paramCGRA.tiles) == 0:
         for i in range(ROWS):
             for j in range(COLS):
-                ID = i*COLS+j
+                ID = i * COLS + j
                 posX = padWidth * j + MEM_WIDTH + LINK_LENGTH
                 posY = GRID_HEIGHT - padHeight * i - TILE_HEIGHT
 
@@ -1472,47 +1626,54 @@ def create_cgra_pannel(master, rows, columns):
     # draw tiles
     for tile in paramCGRA.tiles:
         if not tile.disabled:
-            button = tkinter.Button(canvas, text = "Tile "+str(tile.ID), fg='black', bg='gray', relief='raised', bd=BORDER, command=partial(clickTile, tile.ID), highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
+            # button = tkinter.Button(canvas, text="Tile " + str(tile.ID), fg='black', bg='gray', relief='raised',
+            #                         bd=BORDER, command=partial(clickTile, tile.ID), highlightbackground="black",
+            #                         highlightthickness=HIGHLIGHT_THICKNESS)
+            button = customtkinter.CTkButton(canvas, text="Tile " + str(tile.ID),
+                                    # fg='black', bg='gray', relief='raised', bd=BORDER,
+                                    command=partial(clickTile, tile.ID)#,
+                                    # highlightbackground="black",
+                                    # highlightthickness=HIGHLIGHT_THICKNESS
+                                    )
             posX, posY = tile.getPosXY()
             # Tiles will be placed near the Data memory
-            canvas.create_window(posX, posY, window=button, height=TILE_HEIGHT, width=TILE_WIDTH, anchor="nw") 
+            canvas.create_window(posX, posY, window=button, height=TILE_HEIGHT, width=TILE_WIDTH, anchor="nw")
 
-
-    # construct links
+            # construct links
     if len(paramCGRA.templateLinks) == 0:
         for i in range(ROWS):
             for j in range(COLS):
-                if j < COLS-1:
+                if j < COLS - 1:
                     # horizontal
                     tile0 = paramCGRA.getTileOfDim(j, i)
-                    tile1 = paramCGRA.getTileOfDim(j+1, i)
+                    tile1 = paramCGRA.getTileOfDim(j + 1, i)
                     link0 = ParamLink(tile0, tile1, PORT_EAST, PORT_WEST)
                     link1 = ParamLink(tile1, tile0, PORT_WEST, PORT_EAST)
                     paramCGRA.addTemplateLink(link0)
                     paramCGRA.addTemplateLink(link1)
 
-                if i < ROWS-1 and j < COLS-1:
+                if i < ROWS - 1 and j < COLS - 1:
                     # diagonal left bottom to right top
                     tile0 = paramCGRA.getTileOfDim(j, i)
-                    tile1 = paramCGRA.getTileOfDim(j+1, i+1)
+                    tile1 = paramCGRA.getTileOfDim(j + 1, i + 1)
                     link0 = ParamLink(tile0, tile1, PORT_NORTHEAST, PORT_SOUTHWEST)
                     link1 = ParamLink(tile1, tile0, PORT_SOUTHWEST, PORT_NORTHEAST)
                     paramCGRA.addTemplateLink(link0)
                     paramCGRA.addTemplateLink(link1)
 
-                if i < ROWS-1 and j > 0:
+                if i < ROWS - 1 and j > 0:
                     # diagonal left top to right bottom
                     tile0 = paramCGRA.getTileOfDim(j, i)
-                    tile1 = paramCGRA.getTileOfDim(j-1, i+1)
+                    tile1 = paramCGRA.getTileOfDim(j - 1, i + 1)
                     link0 = ParamLink(tile0, tile1, PORT_NORTHWEST, PORT_SOUTHEAST)
                     link1 = ParamLink(tile1, tile0, PORT_SOUTHEAST, PORT_NORTHWEST)
                     paramCGRA.addTemplateLink(link0)
                     paramCGRA.addTemplateLink(link1)
 
-                if i < ROWS-1:
+                if i < ROWS - 1:
                     # vertical
                     tile0 = paramCGRA.getTileOfDim(j, i)
-                    tile1 = paramCGRA.getTileOfDim(j, i+1)
+                    tile1 = paramCGRA.getTileOfDim(j, i + 1)
                     link0 = ParamLink(tile0, tile1, PORT_NORTH, PORT_SOUTH)
                     link1 = ParamLink(tile1, tile0, PORT_SOUTH, PORT_NORTH)
                     paramCGRA.addTemplateLink(link0)
@@ -1526,7 +1687,6 @@ def create_cgra_pannel(master, rows, columns):
                     paramCGRA.addTemplateLink(link0)
                     paramCGRA.addTemplateLink(link1)
 
-
     paramCGRA.updateLinks()
     paramCGRA.updateFuXbarPannel()
 
@@ -1537,14 +1697,14 @@ def create_cgra_pannel(master, rows, columns):
         else:
             srcX, srcY = link.getSrcXY()
             dstX, dstY = link.getDstXY()
-            canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST)
-    
-    vbar = tkinter.Scrollbar(cgraPannel, orient="vertical", command=canvas.yview)
+            canvas.create_line(srcX, srcY, dstX, dstY, arrow=tkinter.LAST, fill=CANVAS_LINE_COLOR)
+
+    vbar = customtkinter.CTkScrollbar(cgraPannel, orientation="vertical", command=canvas.yview)
     vbar.pack(side=tkinter.RIGHT, fill="y")
     canvas.config(yscrollcommand=vbar.set)
     canvas.config(scrollregion=canvas.bbox("all"))
     canvas.pack(side="top", fill="both", expand=True)
-    hbar = tkinter.Scrollbar(cgraPannel, orient="horizontal", command=canvas.xview)
+    hbar = customtkinter.CTkScrollbar(cgraPannel, orientation="horizontal", command=canvas.xview)
     hbar.pack(side="bottom", fill="x")
     canvas.config(xscrollcommand=hbar.set)
 
@@ -1554,19 +1714,22 @@ def place_fu_options(master):
     for i in range(len(fuTypeList)):
         fuVar = tkinter.IntVar()
         fuCheckVars[fuTypeList[i]] = fuVar
-        fuCheckbutton = tkinter.Checkbutton(master, variable=fuVar, text=fuTypeList[i], command=partial(clickFuCheckbutton, fuTypeList[i]))
+        fuCheckbutton = customtkinter.CTkCheckBox(master, variable=fuVar, text=fuTypeList[i],
+                                            command=partial(clickFuCheckbutton, fuTypeList[i]))
         fuCheckbuttons[fuTypeList[i]] = fuCheckbutton
         fuCheckbutton.select()
         paramCGRA.updateFuCheckbutton(fuTypeList[i], fuVar.get())
-        fuCheckbutton.grid(row=i//4, column=i%4, padx=15, pady=15, sticky="nsew")
-        
+        fuCheckbutton.grid(row=(i // 2), column=i % 2, pady=6)
+
+
 def place_xbar_options(master):
     for i in range(PORT_DIRECTION_COUNTS):
         portType = i
         xbarType = xbarPort2Type[i]
         xbarVar = tkinter.IntVar()
         xbarCheckVars[xbarType] = xbarVar
-        xbarCheckbutton = tkinter.Checkbutton(master, variable=xbarVar, text=xbarType, command=partial(clickXbarCheckbutton, xbarType))
+        xbarCheckbutton = customtkinter.CTkCheckBox(master, variable=xbarVar, text=xbarType,
+                                              command=partial(clickXbarCheckbutton, xbarType))
         xbarCheckbuttons[xbarType] = xbarCheckbutton
 
         if paramCGRA.getTileOfID(0).xbarDict[xbarType] == 1:
@@ -1577,382 +1740,563 @@ def place_xbar_options(master):
         if portType in paramCGRA.getTileOfID(0).neverUsedOutPorts:
             xbarCheckbutton.configure(state="disabled")
 
-        xbarCheckbutton.grid(row=i//4, column=i%4, padx=15, pady=15, sticky="nsew")
+        # xbarCheckbutton.grid(row=(i // 3)+1, column=i % 3, padx=15, pady=15, sticky="nsew")
+        if i== PORT_NORTH:
+            xbarCheckbutton.grid(row=0, column=1, padx=5, pady=(6, 25))
+        elif i== PORT_SOUTH:
+            xbarCheckbutton.grid(row=2, column=1, padx=5, pady=25)
+        elif i== PORT_WEST:
+            xbarCheckbutton.grid(row=1, column=0, padx=5, pady=25)
+        elif i== PORT_EAST:
+            xbarCheckbutton.grid(row=1, column=2, padx=5, pady=25)
+        elif i== PORT_NORTHWEST:
+            xbarCheckbutton.grid(row=0, column=0, padx=5, pady=(6, 25))
+        elif i== PORT_NORTHEAST:
+            xbarCheckbutton.grid(row=0, column=2, padx=5, pady=(6, 25))
+        elif i== PORT_SOUTHEAST:
+            xbarCheckbutton.grid(row=2, column=2, padx=5, pady=25)
+        elif i== PORT_SOUTHWEST:
+            xbarCheckbutton.grid(row=2, column=0, padx=5, pady=25)
 
-
+        # centralRadioButton = customtkinter.CTkRadioButton(master, text='Tile 0', variable=tkinter.IntVar(value=0))
+        # centralRadioButton.configure(state="disabled")
+        # centralRadioButton.grid(row=1, column=1, padx=5, pady=25)
+        # widgets["centralRadioButton"] = centralRadioButton
+        xbarCentralTilelabel = customtkinter.CTkLabel(master, text='Tile 0', font=customtkinter.CTkFont(weight="bold", underline=True))
+        xbarCentralTilelabel.grid(row=1, column=1, padx=(0, 5), pady=25)
+        widgets["xbarCentralTilelabel"] = xbarCentralTilelabel
 
 def create_param_pannel(master):
-    paramPannel = tkinter.LabelFrame(master, text='Configuration', bd=BORDER, relief='groove')
-    paramPannel.grid(row=0, column=1, rowspan=1, columnspan=1, sticky="nsew")
+    # paramPannel = tkinter.LabelFrame(master, text='Configuration', bd=BORDER, relief='groove')
+    paramPannel = customtkinter.CTkFrame(master, width=550, height=480)
+    paramPannel.grid(row=0, column=1, rowspan=1, columnspan=1, padx=(0, 5), sticky="nsew")
 
     # Use columnconfigure and rowconfigure to partition the columns, so that each column and row will fill the corresponding space
     # The 'weight' represents the weight of the corresponding row/column length
-    for i in range(10):
+    for i in range(9):
         paramPannel.rowconfigure(i, weight=1)
     for i in range(3):
         paramPannel.columnconfigure(i, weight=1)
-    rowsLabel = tkinter.Label(paramPannel, text='Rows  Columns:')
-    rowsLabel.grid(row=0, column=0)
-    rowsEntry = tkinter.Entry(paramPannel, justify=tkinter.CENTER, highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
-    rowsEntry.grid(row=0, column=1, padx=5, pady=5)
+    paramPannel.grid_propagate(0)
+    configurationLabel = customtkinter.CTkLabel(paramPannel, text='Configuration', font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
+    configurationLabel.grid(row=0, column=0, ipadx=5, pady=(5,0), sticky="w")
+
+    rowsLabel = customtkinter.CTkLabel(paramPannel, text='Rows  Columns:')
+    rowsLabel.grid(row=1, column=0)
+    rowsEntry = customtkinter.CTkEntry(paramPannel, justify=tkinter.CENTER#,
+                                       #highlightbackground="black",
+                                       #highlightthickness=HIGHLIGHT_THICKNESS
+                                       )
+    rowsEntry.grid(row=1, column=1, padx=5, pady=5)
     rowsEntry.insert(0, str(paramCGRA.rows))
     widgets["rowsEntry"] = rowsEntry
-    columnsEntry = tkinter.Entry(paramPannel, justify=tkinter.CENTER, highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
-    columnsEntry.grid(row=0, column=2, padx=2, pady=5)
+    columnsEntry = customtkinter.CTkEntry(paramPannel, justify=tkinter.CENTER#,
+                                          #highlightbackground="black",
+                                          #highlightthickness=HIGHLIGHT_THICKNESS
+                                          )
+    columnsEntry.grid(row=1, column=2, padx=2, pady=5)
     columnsEntry.insert(0, str(paramCGRA.columns))
     widgets["columnsEntry"] = columnsEntry
-    
-    configMemLabel = tkinter.Label(paramPannel, text='Config Memory \n (entries/tile):')
-    configMemLabel.grid(row=2, column=0)
-    configMemEntry = tkinter.Entry(paramPannel, justify=tkinter.CENTER, highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
-    configMemEntry.grid(row=2, column=1, pady=5)
+
+    dataMemLabel = customtkinter.CTkLabel(paramPannel, text='Data SPM (KBs):')
+    dataMemLabel.grid(row=2, column=0)
+    dataMemEntry = customtkinter.CTkEntry(paramPannel, justify=tkinter.CENTER#,
+                                          #highlightbackground="black",
+                                          #highlightthickness=HIGHLIGHT_THICKNESS
+                                          )
+    dataMemEntry.grid(row=2, column=1, padx=5, pady=5)
+    dataMemEntry.insert(0, str(paramCGRA.dataMemSize))
+    widgets["dataMemEntry"] = dataMemEntry
+    resetButton = customtkinter.CTkButton(paramPannel, text="Reset",
+                                          #relief='raised',
+                                          command=partial(clickReset, master)#,
+                                          #highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS
+                                          )
+    resetButton.grid(row=2, column=2, columnspan=2)
+
+
+    configMemLabel = customtkinter.CTkLabel(paramPannel, text='Config Memory \n (entries/tile):')
+    configMemLabel.grid(row=3, column=0)
+    configMemEntry = customtkinter.CTkEntry(paramPannel, justify=tkinter.CENTER#,
+                                            #highlightbackground="black",
+                                            #highlightthickness=HIGHLIGHT_THICKNESS
+                                            )
+    configMemEntry.grid(row=3, column=1, pady=5)
     configMemEntry.insert(0, paramCGRA.configMemSize)
     widgets["configMemEntry"] = configMemEntry
-    
-    dataMemLabel = tkinter.Label(paramPannel, text='Data SPM (KBs):')
-    dataMemLabel.grid(row=1, column=0)
-    dataMemEntry = tkinter.Entry(paramPannel, justify=tkinter.CENTER, highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
-    dataMemEntry.grid(row=1, column=1, padx=5, pady=5)
-    dataMemEntry.insert(0, str(paramCGRA.dataMemSize))
-    widgets["dataMemEntry"] = dataMemEntry   
-    updateButton = tkinter.Button(paramPannel, text = " Reset ", relief='raised', command = partial(clickReset, master), highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
-    updateButton.grid(row=1, column=2, columnspan=2)
+    updateButton = customtkinter.CTkButton(paramPannel, text="Update",
+                                           #relief='raised',
+                                           command=partial(clickUpdate, master)#,
+                                           #highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS
+                                           )
+    updateButton.grid(row=3, column=2, columnspan=2)
+
 
     entireTileCheckVar.set(0)
-    entireTileCheckbutton = tkinter.Checkbutton(paramPannel, variable=entireTileCheckVar, text="Disable entire Tile 0")
-    entireTileCheckbutton.grid(row=3, column=0)
+    entireTileCheckbutton = customtkinter.CTkCheckBox(paramPannel, variable=entireTileCheckVar, text="Disable entire Tile 0", command=clickEntireTileCheckbutton)
+    entireTileCheckbutton.grid(row=4, column=0, columnspan=2, padx=(5,0), sticky="w")
     widgets["entireTileCheckbutton"] = entireTileCheckbutton
-    resetButton = tkinter.Button(paramPannel, text = "Update", relief='raised', command = partial(clickUpdate, master), highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
-    resetButton.grid(row=2, column=2 ,columnspan=2)
 
-    fuConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 functional units', bd = BORDER, relief='groove')
-    fuConfigPannel.grid(columnspan=4, row=4, column=0, rowspan=3, sticky="nsew")
+
+    # Data SPM outgoing links
+    spmConfigPannel = customtkinter.CTkScrollableFrame(paramPannel, label_text="Data SPM\noutgoing links", width=80)
+    spmConfigPannel.grid(row=5, column=0, rowspan=3, pady=(5,0), sticky="nsew")
+    widgets["spmConfigPannel"] = spmConfigPannel
+    # spmConfigPannel.rowconfigure(0, weight=1)
+    # spmConfigPannel.rowconfigure(1, weight=3)
+    # for i in range(4):
+    #     spmConfigPannel.columnconfigure(i, weight=1)
+    # spmConfigPannel.grid_propagate(0)
+    # spmConfigPannelLabel = customtkinter.CTkLabel(spmConfigPannel, text='Data SPM\noutgoing links',
+    #                                               font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_1_FONT_SIZE,
+    #                                                                          weight="bold", slant='italic'))
+    # spmConfigPannelLabel.grid(row=0, column=0, sticky="nsew")
+    # spmConfigPannelLabel.pack()
+    # spmConfigPannelLabel.grid_propagate(0)
+    # spmConfigScrollablePannel = customtkinter.CTkScrollableFrame(spmConfigPannel, height=240)
+    # spmConfigScrollablePannel.grid(row=1, column=0, sticky="nsew")
+    # spmConfigScrollablePannel.pack()
+
+    spmOutlinksSwitches = []
+    # for i in range(10):
+    #     switch = customtkinter.CTkSwitch(spmConfigScrollablePannel, text=f"link {i}")
+    #     switch.select()
+    #     # switch.grid(row=i + 1, column=0, padx=5, pady=(0, 10))
+    #     switch.pack(pady=(5, 10))
+    #     scrollable_frame_switches.append(switch)
+    for port in paramCGRA.dataSPM.outLinks:
+        switch = customtkinter.CTkSwitch(spmConfigPannel, text=f"link {port}", command=switchDataSPMOutLinks)
+        if not paramCGRA.dataSPM.outLinks[port].disabled:
+            switch.select()
+        switch.pack(pady=(5, 10))
+        spmOutlinksSwitches.insert(0, switch)
+    widgets['spmOutlinksSwitches'] = spmOutlinksSwitches
+
+
+
+    # Tile x functional units
+    fuConfigPannel = customtkinter.CTkScrollableFrame(paramPannel, label_text="Tile 0\nfunctional units")
+    fuConfigPannel.grid(row=5, column=1, rowspan=3, padx=(5,5), pady=(5,0), sticky="nsew")
     widgets["fuConfigPannel"] = fuConfigPannel
 
     # Use columnconfigure to partition the columns, so that each column fills the corresponding space
-    for i in range(4):
-        fuConfigPannel.columnconfigure(i, weight=1)  
+    # for i in range(2):
+    #     fuConfigPannel.columnconfigure(i, weight=1)
+    # fuConfigPannel.grid_propagate(0)
+    # fuConfigPannelLabel = customtkinter.CTkLabel(fuConfigPannel, text='Tile 0\nfunctional units',
+    #                                              font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_1_FONT_SIZE,
+    #                                                                         weight="bold", slant='italic'))
+    # fuConfigPannelLabel.grid(row=0, column=0, sticky="nsew")
+    # fuConfigPannelLabel.pack()
+    # widgets["fuConfigPannelLabel"] = fuConfigPannelLabel
+    # fuConfigSubPannel = customtkinter.CTkFrame(fuConfigPannel)
+    for i in range(2):
+        fuConfigPannel.columnconfigure(i, weight=1)
     place_fu_options(fuConfigPannel)
+    # fuConfigSubPannel.pack()
 
-    xbarConfigPannel = tkinter.LabelFrame(paramPannel, text='Tile 0 crossbar outgoing links', bd=BORDER, relief='groove')
-    xbarConfigPannel.grid(columnspan=4, row=7, column=0, rowspan=2, sticky="nsew")
+
+    # Tile x crossbar outgoing links
+    xbarConfigPannel = customtkinter.CTkScrollableFrame(paramPannel, label_text="Tile 0\ncrossbar outgoing links")
+    xbarConfigPannel.grid(row=5, column=2, rowspan=3, pady=(5, 0), sticky="nsew")
     widgets["xbarConfigPannel"] = xbarConfigPannel
 
     # Use columnconfigure to partition the columns, so that each column fills the corresponding space
-    for i in range(4):
-        xbarConfigPannel.columnconfigure(i, weight=1)  
-    place_xbar_options(xbarConfigPannel)
-
-    spmConfigPannel = tkinter.LabelFrame(paramPannel, text='Data SPM outgoing links', bd=BORDER, relief='groove')
-    spmConfigPannel.grid(row=7, column=0, rowspan=2, columnspan=4, sticky="nsew")
-    widgets["spmConfigPannel"] = spmConfigPannel
-
-    # Use columnconfigure and rowconfigure to partition the columns, so that each column and row fills the corresponding space
+    # for i in range(3):
+    #     xbarConfigPannel.columnconfigure(i, weight=1)
+    # for i in range(4):
+    #     xbarConfigPannel.rowconfigure(i, weight=1)
+    # xbarConfigPannel.grid_propagate(0)
+    # xbarConfigPannelLabel = customtkinter.CTkLabel(xbarConfigPannel, text='Tile 0\ncrossbar outgoing links',
+    #                                                font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_1_FONT_SIZE,
+    #                                                                           weight="bold", slant='italic'))
+    # # xbarConfigPannelLabel.grid(row=0, column=0, sticky="nsew")
+    # xbarConfigPannelLabel.pack()
+    # widgets["xbarConfigPannelLabel"] = xbarConfigPannelLabel
+    # xbarConfigSubPannel = customtkinter.CTkFrame(xbarConfigPannel)
     for i in range(3):
-        spmConfigPannel.rowconfigure(i, weight=1)
-    for i in range(5):
-        spmConfigPannel.columnconfigure(i, weight=1)
-    
-    spmEnabledOutVar = tkinter.IntVar()
-    spmDisabledOutVar = tkinter.IntVar()
-
-    spmEnabledLabel = tkinter.Label(spmConfigPannel)
-    spmDisabledLabel = tkinter.Label(spmConfigPannel)
-
-    spmEnabledScrollbar = tkinter.Scrollbar(spmEnabledLabel)
-    spmDisabledScrollbar = tkinter.Scrollbar(spmDisabledLabel)
-
-    spmEnabledListbox = tkinter.Listbox(spmEnabledLabel, listvariable=spmEnabledOutVar)
-    spmDisabledListbox = tkinter.Listbox(spmDisabledLabel, listvariable=spmDisabledOutVar)
-
-    widgets["spmEnabledListbox"] = spmEnabledListbox
-    widgets["spmDisabledListbox"] = spmDisabledListbox
-
-    spmDisableButton = tkinter.Button(spmConfigPannel, text="Disable", relief='raised', command=clickSPMPortDisable, highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
-    spmEnableButton = tkinter.Button(spmConfigPannel, text="Enable", relief='raised', command=clickSPMPortEnable, highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
-    spmEnabledScrollbar.config(command=spmEnabledListbox.yview)
-    spmEnabledListbox.config(yscrollcommand=spmEnabledScrollbar.set)
-    spmDisabledScrollbar.config(command=spmDisabledListbox.yview)
-    spmDisabledListbox.config(yscrollcommand=spmDisabledScrollbar.set)
-    spmEnabledLabel.grid(row=0, column=0, rowspan=3, sticky="nsew")
-
-    spmEnabledScrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
-    spmEnabledListbox.pack()
-
-    spmDisableArrow0 = tkinter.Label(spmConfigPannel, text="=>")
-    spmDisableArrow1 = tkinter.Label(spmConfigPannel, text="=>")
-    spmEnableArrow0 = tkinter.Label(spmConfigPannel, text="<=")
-    spmEnableArrow1 = tkinter.Label(spmConfigPannel, text="<=")
-
-    spmDisableArrow0.grid(row=0, column=1, sticky="nsew")
-    spmDisableButton.grid(row=0, column=2, sticky="nsew")
-    spmDisableArrow1.grid(row=0, column=3, sticky="nsew")
-
-    spmEnableArrow0.grid(row=2, column=1, sticky="nsew")
-    spmEnableButton.grid(row=2, column=2, sticky="nsew")
-    spmEnableArrow1.grid(row=2, column=3, sticky="nsew")
-
-    spmDisabledLabel.grid(row=0, column=4, rowspan=3, sticky="new")
-
-    spmDisabledScrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
-    spmDisabledListbox.pack()
-
-    spmEnabledListbox.delete(0)
-    spmDisabledListbox.delete(0)
-    for port in paramCGRA.dataSPM.outLinks:
-        if not paramCGRA.dataSPM.outLinks[port].disabled:
-            spmEnabledListbox.insert(0, port)
+        xbarConfigPannel.columnconfigure(i, weight=1)
+    for i in range(3):
+        xbarConfigPannel.rowconfigure(i, weight=1)
+    place_xbar_options(xbarConfigPannel)
+    # xbarConfigSubPannel.pack()
 
 
 
- 
+
+    # spmConfigPannel = tkinter.LabelFrame(paramPannel, text='Data SPM outgoing links', bd=BORDER, relief='groove')
+    # spmConfigPannel.grid(row=9, column=0, rowspan=3, columnspan=4, sticky="nsew")
+    # widgets["spmConfigPannel"] = spmConfigPannel
+    #
+    # # Use columnconfigure and rowconfigure to partition the columns, so that each column and row fills the corresponding space
+    # for i in range(3):
+    #     spmConfigPannel.rowconfigure(i, weight=1)
+    # for i in range(5):
+    #     spmConfigPannel.columnconfigure(i, weight=1)
+    #
+    # spmEnabledOutVar = tkinter.IntVar()
+    # spmDisabledOutVar = tkinter.IntVar()
+    #
+    # spmEnabledLabel = tkinter.Label(spmConfigPannel)
+    # spmDisabledLabel = tkinter.Label(spmConfigPannel)
+    #
+    # spmEnabledScrollbar = tkinter.Scrollbar(spmEnabledLabel)
+    # spmDisabledScrollbar = tkinter.Scrollbar(spmDisabledLabel)
+    #
+    # spmEnabledListbox = tkinter.Listbox(spmEnabledLabel, listvariable=spmEnabledOutVar)
+    # spmDisabledListbox = tkinter.Listbox(spmDisabledLabel, listvariable=spmDisabledOutVar)
+    #
+    # widgets["spmEnabledListbox"] = spmEnabledListbox
+    # widgets["spmDisabledListbox"] = spmDisabledListbox
+    #
+    # spmDisableButton = tkinter.Button(spmConfigPannel, text="Disable", relief='raised', command=clickSPMPortDisable,
+    #                                   highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS)
+    # spmEnableButton = tkinter.Button(spmConfigPannel, text="Enable", relief='raised', command=clickSPMPortEnable,
+    #                                  highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS)
+    # spmEnabledScrollbar.config(command=spmEnabledListbox.yview)
+    # spmEnabledListbox.config(yscrollcommand=spmEnabledScrollbar.set)
+    # spmDisabledScrollbar.config(command=spmDisabledListbox.yview)
+    # spmDisabledListbox.config(yscrollcommand=spmDisabledScrollbar.set)
+    # spmEnabledLabel.grid(row=0, column=0, rowspan=3, sticky="nsew")
+    #
+    # spmEnabledScrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
+    # spmEnabledListbox.pack()
+    #
+    # spmDisableArrow0 = tkinter.Label(spmConfigPannel, text="=>")
+    # spmDisableArrow1 = tkinter.Label(spmConfigPannel, text="=>")
+    # spmEnableArrow0 = tkinter.Label(spmConfigPannel, text="<=")
+    # spmEnableArrow1 = tkinter.Label(spmConfigPannel, text="<=")
+    #
+    # spmDisableArrow0.grid(row=0, column=1, sticky="nsew")
+    # spmDisableButton.grid(row=0, column=2, sticky="nsew")
+    # spmDisableArrow1.grid(row=0, column=3, sticky="nsew")
+    #
+    # spmEnableArrow0.grid(row=2, column=1, sticky="nsew")
+    # spmEnableButton.grid(row=2, column=2, sticky="nsew")
+    # spmEnableArrow1.grid(row=2, column=3, sticky="nsew")
+    #
+    # spmDisabledLabel.grid(row=0, column=4, rowspan=3, sticky="new")
+    #
+    # spmDisabledScrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
+    # spmDisabledListbox.pack()
+    #
+    # spmEnabledListbox.delete(0)
+    # spmDisabledListbox.delete(0)
+    # for port in paramCGRA.dataSPM.outLinks:
+    #     if not paramCGRA.dataSPM.outLinks[port].disabled:
+    #         spmEnabledListbox.insert(0, port)
+
 
 def create_test_pannel(master):
-    dataPannel =tkinter.LabelFrame(master)
-    dataPannel.grid(row=0, column=2, rowspan=1, columnspan=1, sticky="nsew")
+    dataPannel = customtkinter.CTkFrame(master, width=280, height=480)
+    dataPannel.grid(row=0, column=2, rowspan=1, columnspan=1, pady=(5,0), sticky="nsew")
     # Increase the size of the 'SVerilog' panel
     dataPannel.grid_rowconfigure(1, weight=2)
 
     dataPannel.grid_columnconfigure(0, weight=1)
     dataPannel.grid_columnconfigure(1, weight=1)
     dataPannel.grid_columnconfigure(2, weight=1)
-    testPannel = tkinter.LabelFrame(dataPannel, text='Verification', bd=BORDER, relief='groove')
+    dataPannel.grid_propagate(0)
+    # testPannel = tkinter.LabelFrame(dataPannel, text='Verification', bd=BORDER, relief='groove')
+    testPannel = customtkinter.CTkFrame(dataPannel)
     testPannel.grid(row=0, column=0, rowspan=1, columnspan=3, sticky="nsew")
     testPannel.columnconfigure(0, weight=1)
     testPannel.columnconfigure(1, weight=1)
-    testPannel.columnconfigure(2, weight=1) 
-    testButton = tkinter.Button(testPannel, text = "Run tests", relief='raised', command = clickTest, highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
-    testButton.grid(row=0, column=0, rowspan=1, columnspan=1)
-    testProgress = ttk.Progressbar(testPannel, orient='horizontal', mode='determinate')
-    testProgress['value'] = 0
+    testPannel.columnconfigure(2, weight=1)
+    testPannelLabel = customtkinter.CTkLabel(testPannel, text='Verification ',
+                                             # width=100,
+                                             font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
+    testPannelLabel.grid(row=0, column=0, columnspan=3, ipadx=5, sticky="w")
+    testButton = customtkinter.CTkButton(testPannel, text="Run tests", # relief='raised',
+                                         command=clickTest,
+                                         width=50
+                                         # highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS
+                                         )
+    testButton.grid(row=1, column=0, ipadx=5)
+    # testProgress = ttk.Progressbar(testPannel, orient='horizontal', mode='determinate')
+    testProgress = customtkinter.CTkProgressBar(testPannel, orientation='horizontal', mode='determinate', width=160)
+    testProgress.set(0)
     widgets["testProgress"] = testProgress
-    testProgress.grid(row=0, column=1, rowspan=1, columnspan=1, sticky="nsew")
-    testShow = tkinter.Label(testPannel, text = "  IDLE ", fg='gray')
+    testProgress.grid(row=1, column=1, rowspan=1, columnspan=1, padx=5, sticky="ew")
+    testShow = customtkinter.CTkLabel(testPannel, text="IDLE ")
     widgets["testShow"] = testShow
-    testShow.grid(row=0, column=2, sticky=tkinter.E)
+    testShow.grid(row=1, column=2, sticky=tkinter.E, padx=(5, 5))
 
-    verilogPannel = tkinter.LabelFrame(dataPannel,text="SVerilog",bd=BORDER,relief="groove")
-    verilogPannel.grid(row=1, column=0, rowspan=1, columnspan=3, sticky="nsew")
-    CreateToolTip(verilogPannel, text = "The code might be too big to be copied,\nthe generated verilog can be found in\nthe 'verilog' folder.")
-    generateVerilogButton = tkinter.Button(verilogPannel, text="Generate", relief='raised', command=clickGenerateVerilog, highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
+    # verilogPannel = tkinter.LabelFrame(dataPannel, text="SVerilog", bd=BORDER, relief="groove")
+    verilogPannel = customtkinter.CTkFrame(dataPannel)
+    verilogPannel.grid(row=1, column=0, rowspan=1, columnspan=3, pady=(5,5), sticky="nsew")
+    verilogPannelLabel = customtkinter.CTkLabel(verilogPannel, text='SVerilog ',
+                                             # width=100,
+                                             font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE,
+                                                                        weight="bold"))
+    verilogPannelLabel.pack(anchor="w", padx=(5,0))
+    CreateToolTip(verilogPannel,
+                  text="The code might be too big to be copied,\nthe generated verilog can be found in\nthe 'verilog' folder.")
+    generateVerilogButton = customtkinter.CTkButton(verilogPannel, text="Generate", width=50,
+                                           command=clickGenerateVerilog)
     generateVerilogButton.pack(side=tkinter.BOTTOM, anchor="sw", padx=BORDER, pady=BORDER)
-    verilogScroll = tkinter.Scrollbar(verilogPannel, orient="vertical")
-    verilogScroll.pack(side=tkinter.RIGHT, fill="y")
-    verilogText = tkinter.Text(verilogPannel, yscrollcommand=verilogScroll.set,width=10,height=5)
+    # verilogScroll = tkinter.Scrollbar(verilogPannel, orient="vertical")
+    # verilogScroll.pack(side=tkinter.RIGHT, fill="y")
+    # verilogText = tkinter.Text(verilogPannel, yscrollcommand=verilogScroll.set, width=10, height=5)
+    # verilogText.pack(side=tkinter.LEFT, fill="both", expand=True)
+    # verilogScroll.config(command=verilogText.yview)
+    verilogText = customtkinter.CTkTextbox(verilogPannel, width=10, height=5)
     verilogText.pack(side=tkinter.LEFT, fill="both", expand=True)
-    verilogScroll.config(command=verilogText.yview)
     widgets["verilogText"] = verilogText
-    
-    reportPannel = tkinter.LabelFrame(dataPannel,text='Report area/power', bd = BORDER, relief='groove')
+
+    # reportPannel = tkinter.LabelFrame(dataPannel, text='Report area/power', bd=BORDER, relief='groove')
+    reportPannel = customtkinter.CTkFrame(dataPannel)
     reportPannel.grid(row=2, column=0, rowspan=1, columnspan=3, sticky='nesw')
     reportPannel.columnconfigure(0, weight=1)
     reportPannel.columnconfigure(1, weight=1)
-    reportButton = tkinter.Button(reportPannel, text="Synthesize", relief="raised", command=clickSynthesize, highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
+    reportPannelLabel = customtkinter.CTkLabel(reportPannel, text='Report Area/Power ',
+                                             # width=100,
+                                             font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE,
+                                                                        weight="bold"))
 
-    reportProgress = ttk.Progressbar(reportPannel, orient="horizontal", mode="determinate")
-    reportProgress['value'] = 0
+    reportButton = customtkinter.CTkButton(reportPannel, text="Synthesize", command=clickSynthesize, width=60)
+
+    reportProgress = customtkinter.CTkProgressBar(reportPannel, orientation="horizontal", mode="determinate", width=140)
+    reportProgress.set(0)
     widgets["reportProgress"] = reportProgress
 
-    synthesisTimeEntry = tkinter.Entry(reportPannel, fg="black", justify=tkinter.CENTER, highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
+    synthesisTimeEntry = customtkinter.CTkEntry(reportPannel, justify=tkinter.CENTER)
     widgets["synthesisTimeEntry"] = synthesisTimeEntry
 
-    reportTimecostLabel = tkinter.Label(reportPannel, text = " Time cost:")
-    CreateToolTip(reportTimecostLabel, text = "Time is in s.")
-    
-    reportTileAreaLabel = tkinter.Label(reportPannel, text = " Tiles area:")
-    CreateToolTip(reportTileAreaLabel, text = "Area is in mm^2.")
+    reportTimecostLabel = customtkinter.CTkLabel(reportPannel, text=" Time cost:")
+    CreateToolTip(reportTimecostLabel, text="Time is in s.")
 
-    reportTileAreaData = tkinter.Entry(reportPannel, justify=tkinter.CENTER, highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
+    reportTileAreaLabel = customtkinter.CTkLabel(reportPannel, text=" Tiles area:")
+    CreateToolTip(reportTileAreaLabel, text="Area is in mm^2.")
+
+    reportTileAreaData = customtkinter.CTkEntry(reportPannel, justify=tkinter.CENTER)
     widgets["reportTileAreaData"] = reportTileAreaData
 
-    reportTilePowerLabel = tkinter.Label(reportPannel, text = "Tiles power:")
-    CreateToolTip(reportTilePowerLabel, text = "Yosys is not able to provide\npower estimation.")
+    reportTilePowerLabel = customtkinter.CTkLabel(reportPannel, text="Tiles power:")
+    CreateToolTip(reportTilePowerLabel, text="Yosys is not able to provide\npower estimation.")
 
-    reportTilePowerData = tkinter.Entry(reportPannel, justify=tkinter.CENTER, highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
+    reportTilePowerData = customtkinter.CTkEntry(reportPannel, justify=tkinter.CENTER)
     widgets["reportTilePowerData"] = reportTilePowerData
 
-    reportSPMAreaLabel = tkinter.Label(reportPannel, text = " SPM area:")
-    CreateToolTip(reportSPMAreaLabel, text = "Area is in mm^2.")
+    reportSPMAreaLabel = customtkinter.CTkLabel(reportPannel, text=" SPM area:")
+    CreateToolTip(reportSPMAreaLabel, text="Area is in mm^2.")
 
-    reportSPMAreaData = tkinter.Entry(reportPannel, justify=tkinter.CENTER, highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
+    reportSPMAreaData = customtkinter.CTkEntry(reportPannel, justify=tkinter.CENTER)
     widgets["reportSPMAreaData"] = reportSPMAreaData
 
-    reportSPMPowerLabel = tkinter.Label(reportPannel, text = "SPM power:")
-    CreateToolTip(reportSPMPowerLabel, text = "Power is in mW.")
+    reportSPMPowerLabel = customtkinter.CTkLabel(reportPannel, text="SPM power:")
+    CreateToolTip(reportSPMPowerLabel, text="Power is in mW.")
 
-    reportSPMPowerData = tkinter.Entry(reportPannel, justify=tkinter.CENTER, highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
+    reportSPMPowerData = customtkinter.CTkEntry(reportPannel, justify=tkinter.CENTER)
     widgets["reportSPMPowerData"] = reportSPMPowerData
 
-    reportButton.grid(row=0, column=0)
-    reportProgress.grid(row=0, column=1)
+    reportPannelLabel.grid(row=0, column=0, columnspan=2, padx=(5,0), sticky="w")
+    reportButton.grid(row=1, column=0)
+    reportProgress.grid(row=1, column=1)
 
-    synthesisTimeEntry.grid(row=1, column=1, pady=10, sticky="w")
-    reportTimecostLabel.grid(row=1, column=0, pady=10)
+    synthesisTimeEntry.grid(row=2, column=1, pady=5)
+    reportTimecostLabel.grid(row=2, column=0, pady=5)
 
-    reportTileAreaLabel.grid(row=2, column=0, pady=10)
-    reportTileAreaData.grid(row=2, column=1, pady=10, sticky="w")
-    reportTilePowerLabel.grid(row=3, column=0, pady=10)
-    reportTilePowerData.grid(row=3, column=1, pady=10, sticky="w")
+    reportTileAreaLabel.grid(row=3, column=0, pady=5)
+    reportTileAreaData.grid(row=3, column=1, pady=5)
+    reportTilePowerLabel.grid(row=4, column=0, pady=5)
+    reportTilePowerData.grid(row=4, column=1, pady=5)
 
-    reportSPMAreaLabel.grid(row=4, column=0, pady=10)
-    reportSPMAreaData.grid(row=4, column=1, pady=10, sticky="w")
-    reportSPMPowerLabel.grid(row=5, column=0, pady=10)
-    reportSPMPowerData.grid(row=5, column=1, pady=10, sticky="w")
-
+    reportSPMAreaLabel.grid(row=5, column=0, pady=5)
+    reportSPMAreaData.grid(row=5, column=1, pady=5)
+    reportSPMPowerLabel.grid(row=6, column=0, pady=5)
+    reportSPMPowerData.grid(row=6, column=1, pady=5)
 
 
 def create_layout_pannel(master):
-    layoutPannel = tkinter.LabelFrame(master, text='Layout', bd=BORDER, relief='groove')
-    layoutPannel.grid(row=0, column=3, rowspan=1, columnspan=1, sticky="nsew")
-    canvas = tkinter.Canvas(layoutPannel, bd=0)
-    scrollbar = tkinter.Scrollbar(layoutPannel, orient="horizontal", command=canvas.xview)
+    # layoutPannel = tkinter.LabelFrame(master, text='Layout', bd=BORDER, relief='groove')
+    layoutPannel = customtkinter.CTkFrame(master)
+    layoutPannel.grid(row=0, column=3, rowspan=1, columnspan=1, padx=(5,0), pady=(5,0), sticky="nsew")
+    layoutPannelLabel = customtkinter.CTkLabel(layoutPannel, text='Layout ',
+                                               # width=100,
+                                               font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
+    layoutPannelLabel.pack(anchor="w", padx=(5,0))
+    canvas = customtkinter.CTkCanvas(layoutPannel, bg=CANVAS_BG_COLOR, bd=0, highlightthickness=0)
+    scrollbar = customtkinter.CTkScrollbar(layoutPannel, orientation="horizontal", command=canvas.xview)
     scrollbar.pack(side="bottom", fill="x")
     canvas.config(xscrollcommand=scrollbar.set)
     canvas.pack(side="top", fill="both", expand=True)
-    layout_frame = tkinter.Frame(canvas)
+    layout_frame = customtkinter.CTkFrame(canvas)
     canvas.create_window((0, 0), window=layout_frame, anchor="nw")
-    showButton = tkinter.Button(layoutPannel, text = "Display layout", relief='raised', highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
-    CreateToolTip(showButton, text = "The layout demonstration is\nunder development.")
-    showButton.place(relx=0.5, rely=0.05, anchor="center")
-    X = tkinter.Label(layout_frame, fg="black")
-    X.pack()
+    showButton = customtkinter.CTkButton(layoutPannel, text="Display layout")
+    CreateToolTip(showButton, text="The layout demonstration is\nunder development.")
+    showButton.place(relx=0.5, rely=0.1, anchor="center")
+    # X = customtkinter.CTkLabel(layout_frame)
+    # X.pack()
+
 
 def create_mapping_pannel(master):
-    mappingPannel = tkinter.LabelFrame(master, text='Mapping', bd=BORDER, relief='groove')
-    mappingPannel.grid(row=1, column=1, rowspan=1, columnspan=3, sticky="nsew")
-    mappingCanvas = tkinter.Canvas(mappingPannel, bd=0)
+    # mappingPannel = tkinter.LabelFrame(master, text='Mapping', bd=BORDER, relief='groove')
+    mappingPannel = customtkinter.CTkFrame(master)
+    mappingPannel.grid(row=1, column=1, rowspan=1, columnspan=3, pady=(5, 0), sticky="nsew")
+    mappingPannelLabel = customtkinter.CTkLabel(mappingPannel, text='Mapping ',
+                                               # width=100,
+                                               font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE,
+                                                                          weight="bold"))
+    mappingPannelLabel.pack(anchor="w", padx=(5, 0))
+    mappingCanvas = customtkinter.CTkCanvas(mappingPannel, bg=CANVAS_BG_COLOR, bd=0, highlightthickness=0)
     widgets["mappingCanvas"] = mappingCanvas
-    hbar = tkinter.Scrollbar(mappingPannel, orient="horizontal", command=mappingCanvas.xview)
+    hbar = customtkinter.CTkScrollbar(mappingPannel, orientation="horizontal", command=mappingCanvas.xview)
     hbar.pack(side="bottom", fill="x")
     mappingCanvas.config(xscrollcommand=hbar.set)
-    vbar = tkinter.Scrollbar(mappingPannel, orient="vertical", command=mappingCanvas.yview)
+    vbar = customtkinter.CTkScrollbar(mappingPannel, orientation="vertical", command=mappingCanvas.yview)
     vbar.pack(side=tkinter.RIGHT, fill="y")
     mappingCanvas.config(yscrollcommand=vbar.set)
     mappingCanvas.pack(side="top", fill="both", expand=True)
 
+
 def create_kernel_pannel(master):
-    kernelPannel = tkinter.LabelFrame(master, text="Kernel", bd=BORDER, relief='groove')
-    kernelPannel.grid(row=1, column=0, rowspan=1, columnspan=1, sticky="nsew")
-    for row in range(12):
+    # kernelPannel = tkinter.LabelFrame(master, text="Kernel", bd=BORDER, relief='groove')
+    kernelPannel = customtkinter.CTkFrame(master)
+    kernelPannel.grid(row=1, column=0, rowspan=1, columnspan=1, padx=(0, 5), pady=(5, 0), sticky="nsew")
+    for row in range(13):
         kernelPannel.grid_rowconfigure(row, weight=1)
     kernelPannel.grid_columnconfigure(0, weight=3)
     kernelPannel.grid_columnconfigure(1, weight=2)
     kernelPannel.grid_columnconfigure(2, weight=2)
     kernelPannel.grid_columnconfigure(3, weight=1)
 
-    selectAppLabel = tkinter.Label(kernelPannel, text=" Application:", fg='black')
-    selectAppLabel.grid(row=0, column=0, sticky="nsew")
+    kernelPannellLabel = customtkinter.CTkLabel(kernelPannel, text='Kernel ',
+                                                # width=100,
+                                                font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE,
+                                                                           weight="bold"))
+    kernelPannellLabel.grid(row=0, column=0, padx=(5, 0), sticky="wn")
 
-    appPathEntry = tkinter.Entry(kernelPannel, fg="black")
+    selectAppLabel = customtkinter.CTkLabel(kernelPannel, text=" Application:")
+    selectAppLabel.grid(row=1, column=0, sticky="nsew")
+
+    appPathEntry = customtkinter.CTkEntry(kernelPannel)
     widgets["appPathEntry"] = appPathEntry
-    appPathEntry.grid(row=0, column=1, sticky="nsew")
+    appPathEntry.grid(row=1, column=1)
     appPathEntry.bind("<Button-1>", clickSelectApp)
 
-    compileAppButton = tkinter.Button(kernelPannel, text=" Compile app  ", fg="black", command=clickCompileApp, highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
-    compileAppButton.grid(row=0, column=2, sticky="nse")
+    compileAppButton = customtkinter.CTkButton(kernelPannel, text=" Compile app  ", command=clickCompileApp)
+    compileAppButton.grid(row=1, column=2)
 
-    compileAppShow = tkinter.Label(kernelPannel, text=" IDLE", fg='gray')
-    compileAppShow.grid(row=0, column=3, sticky="ew")
+    compileAppShow = customtkinter.CTkLabel(kernelPannel, text=" IDLE")
+    compileAppShow.grid(row=1, column=3)
     widgets["compileAppShow"] = compileAppShow
 
-    kernelNameLabel = tkinter.Label(kernelPannel, text=" Kernel name:", fg='black')
-    kernelNameLabel.grid(row=1, column=0, sticky="nsew")
+    kernelNameLabel = customtkinter.CTkLabel(kernelPannel, text=" Kernel name:")
+    kernelNameLabel.grid(row=2, column=0)
 
-    tempOptions = [ "Not selected yet" ]
-    kernelNameMenu = tkinter.OptionMenu(kernelPannel, kernelOptions, *tempOptions)
+    tempOptions = ["Not selected yet"]
+    # kernelNameMenu = tkinter.OptionMenu(kernelPannel, kernelOptions, *tempOptions)
+    kernelNameMenu = customtkinter.CTkOptionMenu(kernelPannel, variable=kernelOptions, values=tempOptions)
     kernelOptions.trace("w", clickKernelMenu)
     widgets["kernelNameMenu"] = kernelNameMenu
-    kernelNameMenu.grid(row=1, column=1, sticky="nsew")
+    widgets["kernelPannel"] = kernelPannel
+    kernelNameMenu.grid(row=2, column=1)
 
-    generateDFGButton = tkinter.Button(kernelPannel, text = "Generate DFG", fg="black", command=clickShowDFG, highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
-    generateDFGButton.grid(row=1, column=2, sticky="nse")
+    generateDFGButton = customtkinter.CTkButton(kernelPannel, text="Generate DFG", command=clickShowDFG)
+    generateDFGButton.grid(row=2, column=2)
 
-    generateDFGShow = tkinter.Label(kernelPannel, text=" IDLE", fg='gray')
-    generateDFGShow.grid(row=1, column=3, sticky="ew")
+    generateDFGShow = customtkinter.CTkLabel(kernelPannel, text=" IDLE")
+    generateDFGShow.grid(row=2, column=3, sticky="ew")
     widgets["generateDFGShow"] = generateDFGShow
 
-    dfgPannel = tkinter.LabelFrame(kernelPannel, text='Data-Flow Graph', fg="black", bd=BORDER, relief='groove', highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
-    dfgPannel.grid(row=2, column=0, rowspan=10, columnspan=2, sticky="nsew")
-    dfgLabel = tkinter.Label(dfgPannel)
+    dfgPannel = customtkinter.CTkFrame(kernelPannel)
+    dfgPannel.grid(row=3, column=0, rowspan=10, columnspan=2, padx=(0,5), pady=(5,0), sticky="nsew")
+    dfgPannelLabel = customtkinter.CTkLabel(dfgPannel, text='Data-Flow Graph ',
+                                             font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE,
+                                                                        weight="bold"))
+    dfgPannelLabel.pack(anchor="w", padx=(5, 0))
+    dfgLabel = customtkinter.CTkLabel(dfgPannel, text="")
     widgets["dfgLabel"] = dfgLabel
     dfgLabel.pack()
 
-    recMIILabel = tkinter.Label(kernelPannel, text=" RecMII: ", fg='black')
-    recMIILabel.grid(row=2, column=2, sticky="nsew")
-    recMIIEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER, highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
+    recMIILabel = customtkinter.CTkLabel(kernelPannel, text=" RecMII: ")
+    recMIILabel.grid(row=3, column=2, sticky="nsew")
+    recMIIEntry = customtkinter.CTkEntry(kernelPannel, justify=tkinter.CENTER)
     widgets["recMIIEntry"] = recMIIEntry
     recMIIEntry.insert(0, "0")
-    recMIIEntry.grid(row=2, column=3)
-    resMIILabel = tkinter.Label(kernelPannel, text=" ResMII: ", fg='black')
-    resMIILabel.grid(row=3, column=2, sticky="nsew")
-    resMIIEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER, highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
+    recMIIEntry.grid(row=3, column=3)
+    resMIILabel = customtkinter.CTkLabel(kernelPannel, text=" ResMII: ")
+    resMIILabel.grid(row=4, column=2, sticky="nsew")
+    resMIIEntry = customtkinter.CTkEntry(kernelPannel, justify=tkinter.CENTER)
     widgets["resMIIEntry"] = resMIIEntry
     resMIIEntry.insert(0, "0")
-    resMIIEntry.grid(row=3, column=3)
+    resMIIEntry.grid(row=4, column=3)
 
-    mappingOptionLabel = tkinter.Label(kernelPannel, text="Mapping algo:", fg='black')
-    mappingOptionLabel.grid(row=4, column=2, columnspan=2, sticky="nsew")
-    heuristicRatiobutton = tkinter.Radiobutton(kernelPannel, text="Heuristic", variable=mappingAlgoCheckVar, value=1)
+    mappingAlgoPannel = customtkinter.CTkFrame(kernelPannel)
+    mappingAlgoPannel.grid(row=5, column=2, rowspan=3, columnspan=2, pady=(5,10), sticky="nsew")
+    for row in range(2):
+        mappingAlgoPannel.grid_rowconfigure(row, weight=1)
+    mappingAlgoPannel.grid_columnconfigure(0, weight=1)
+    mappingAlgoPannel.grid_columnconfigure(1, weight=1)
+    # mappingOptionLabel = customtkinter.CTkLabel(mappingAlgoPannel, text="Mapping algo:")
+    mappingOptionLabel = customtkinter.CTkLabel(mappingAlgoPannel, text='Mapping Algorithm',
+                                            font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE,
+                                                                       weight="bold"))
+    mappingOptionLabel.grid(row=0, column=0, columnspan=2)
+    heuristicRatiobutton = customtkinter.CTkRadioButton(mappingAlgoPannel, text="Heuristic", variable=mappingAlgoCheckVar, value=0)
     widgets["heuristicRatiobutton"] = heuristicRatiobutton
-    heuristicRatiobutton.grid(row=5, column=2, columnspan=2, sticky="nsew")
-    exhaustiveRatiobutton = tkinter.Radiobutton(kernelPannel, text="Exhaustive", variable=mappingAlgoCheckVar, value=0)
+    heuristicRatiobutton.grid(row=1, column=0, pady=(0, 5), sticky="nsew")
+    exhaustiveRatiobutton = customtkinter.CTkRadioButton(mappingAlgoPannel, text="Exhaustive", variable=mappingAlgoCheckVar, value=1)
     widgets["exhaustiveRatiobutton"] = exhaustiveRatiobutton
-    exhaustiveRatiobutton.grid(row=6, column=2, columnspan=2, sticky="nsew")
+    exhaustiveRatiobutton.grid(row=1, column=1, pady=(0, 5), sticky="nsew")
 
-    mapDFGButton = tkinter.Button(kernelPannel, text="Map DFG", fg="black", command=clickMapDFG, highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
-    mapDFGButton.grid(row=7, column=2, columnspan=2, sticky="new")
-    terminateMapButton = tkinter.Button(kernelPannel, text="Terminate", fg="black", command=clickTerminateMapping, highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
-    terminateMapButton.grid(row=8, column=2, columnspan=2, sticky="new")
+    mapDFGButton = customtkinter.CTkButton(kernelPannel, text="Map DFG", command=clickMapDFG,)
+    mapDFGButton.grid(row=8, column=2, columnspan=2, sticky="new")
+    terminateMapButton = customtkinter.CTkButton(kernelPannel, text="Terminate", command=clickTerminateMapping)
+    terminateMapButton.grid(row=9, column=2, columnspan=2, sticky="new")
 
-    mapSecLabel = tkinter.Label(kernelPannel, text="Time (s): ", fg='black')
-    mapSecLabel.grid(row=9, column=2, sticky="nsew")
-    mapTimeEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER, highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
+    mapSecLabel = customtkinter.CTkLabel(kernelPannel, text="Time (s): ")
+    mapSecLabel.grid(row=10, column=2, sticky="nsew")
+    mapTimeEntry = customtkinter.CTkEntry(kernelPannel, justify=tkinter.CENTER)
     widgets["mapTimeEntry"] = mapTimeEntry
     mapTimeEntry.insert(0, "0")
-    mapTimeEntry.grid(row=9, column=3)
-    mapIILabel = tkinter.Label(kernelPannel, text=" Map II: ", fg='black')
-    mapIILabel.grid(row=10, column=2, sticky="nsew")
-    mapIIEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER, highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
+    mapTimeEntry.grid(row=10, column=3)
+    mapIILabel = customtkinter.CTkLabel(kernelPannel, text=" Map II: ")
+    mapIILabel.grid(row=11, column=2, sticky="nsew")
+    mapIIEntry = customtkinter.CTkEntry(kernelPannel, justify=tkinter.CENTER)
     widgets["mapIIEntry"] = mapIIEntry
     mapIIEntry.insert(0, "0")
-    mapIIEntry.grid(row=10, column=3)
+    mapIIEntry.grid(row=11, column=3)
 
-    speedupLabel = tkinter.Label(kernelPannel, text="Speedup: ", fg='black')
-    speedupLabel.grid(row=11, column=2, sticky="nsew")
-    CreateToolTip(speedupLabel, text = "The speedup is the improvement of\nthe execution cycles with respect to\na single-issue in-order CPU.")
-    mapSpeedupEntry = tkinter.Entry(kernelPannel, fg="black", justify=tkinter.CENTER, highlightbackground="black", highlightthickness = HIGHLIGHT_THICKNESS)
+    speedupLabel = customtkinter.CTkLabel(kernelPannel, text="Speedup: ")
+    speedupLabel.grid(row=12, column=2, sticky="nsew")
+    CreateToolTip(speedupLabel,
+                  text="The speedup is the improvement of\nthe execution cycles with respect to\na single-issue in-order CPU.")
+    mapSpeedupEntry = customtkinter.CTkEntry(kernelPannel, justify=tkinter.CENTER)
     widgets["mapSpeedupEntry"] = mapSpeedupEntry
     mapSpeedupEntry.insert(0, "0")
-    mapSpeedupEntry.grid(row=11, column=3)
+    mapSpeedupEntry.grid(row=12, column=3)
 
-#paramPadPosX = GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + INTERVAL * 3
-#paramPadWidth = 270
-#scriptPadPosX = paramPadPosX + paramPadWidth + INTERVAL
-#scriptPadWidth = 300
-#layoutPadPosX = scriptPadPosX + scriptPadWidth + INTERVAL
-#layoutPadWidth = 300
-#layoutPadHeight = GRID_HEIGHT
+
+# paramPadPosX = GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + INTERVAL * 3
+# paramPadWidth = 270
+# scriptPadPosX = paramPadPosX + paramPadWidth + INTERVAL
+# scriptPadWidth = 300
+# layoutPadPosX = scriptPadPosX + scriptPadWidth + INTERVAL
+# layoutPadWidth = 300
+# layoutPadHeight = GRID_HEIGHT
 TILE_HEIGHT = 70
 TILE_WIDTH = 70
 LINK_LENGTH = 40
-GRID_WIDTH = (TILE_WIDTH+LINK_LENGTH) * COLS - LINK_LENGTH
-GRID_HEIGHT = (TILE_HEIGHT+LINK_LENGTH) * ROWS - LINK_LENGTH
+GRID_WIDTH = (TILE_WIDTH + LINK_LENGTH) * COLS - LINK_LENGTH
+GRID_HEIGHT = (TILE_HEIGHT + LINK_LENGTH) * ROWS - LINK_LENGTH
 create_kernel_pannel(master)
 create_mapping_pannel(master)
 create_cgra_pannel(master, ROWS, COLS)
 create_param_pannel(master)
 create_test_pannel(master)
-create_layout_pannel(master)  
+create_layout_pannel(master)
 # The width and height of the entire window
 default_width = 1650
 default_height = 1000
-window_size(master, default_width, default_height) 
-#master.grid_rowconfigure(0, weight=1)
+window_size(master, default_width, default_height)
+# master.grid_rowconfigure(0, weight=1)
 master.grid_rowconfigure(1, weight=2)
-master.grid_columnconfigure(0, weight=1)
+master.grid_columnconfigure(0, weight=2)
 master.grid_columnconfigure(1, weight=1)
 master.grid_columnconfigure(2, weight=1)
 master.grid_columnconfigure(3, weight=1)
-#print(master.winfo_width())
-#print(master.winfo_height())
+# print(master.winfo_width())
+# print(master.winfo_height())
 master.mainloop()

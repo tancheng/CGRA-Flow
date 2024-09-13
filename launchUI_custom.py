@@ -18,15 +18,16 @@ parser=argparse.ArgumentParser()
 parser.add_argument("--theme")
 args=parser.parse_args()
 customtkinter.set_appearance_mode("dark")  # Modes: system (default), light, dark
-customtkinter.set_default_color_theme("blue")  # Themes: blue (default), dark-blue, green
-CANVAS_BG_COLOR = "#2B2B2B"
+customtkinter.set_default_color_theme("dark-blue")  # Themes: blue (default), dark-blue, green
+# CANVAS_BG_COLOR = "#2B2B2B"
+CANVAS_BG_COLOR = "#212121"
 CANVAS_LINE_COLOR = "white"
 
 if args.theme:
    # print(f'Input theme argument: {args.theme}')
    if args.theme == 'light':
        customtkinter.set_appearance_mode("light")  # Modes: system (default), light, dark
-       customtkinter.set_default_color_theme("blue")  # Themes: blue (default), dark-blue, green
+       customtkinter.set_default_color_theme("dark-blue")  # Themes: blue (default), dark-blue, green
        CANVAS_BG_COLOR = "#DBDBDB"
        CANVAS_LINE_COLOR = "black"
 
@@ -57,8 +58,8 @@ CONFIG_MEM_SIZE = 8
 DATA_MEM_SIZE = 4
 HIGHLIGHT_THICKNESS = 1
 
-FRAME_LABEL_LEVEL_1_FONT_SIZE = 15
-FRAME_LABEL_LEVEL_2_FONT_SIZE = FRAME_LABEL_LEVEL_1_FONT_SIZE - 3
+FRAME_LABEL_FONT_SIZE = 15
+# FRAME_LABEL_LEVEL_1_FONT_SIZE = FRAME_LABEL_LEVEL_1_FONT_SIZE - 3
 
 
 def window_size(window, width, height):
@@ -1188,6 +1189,7 @@ def clickCompileApp():
     kernelNameOptions = [kernelName for kernelName in paramCGRA.targetKernels]
     kernelNameMenu = customtkinter.CTkOptionMenu(kernelPannel, variable=kernelOptions, values=kernelNameOptions)
     kernelNameMenu.grid(row=2, column=1)
+    widgets["kernelNameMenu"] = kernelNameMenu
     # for kernelName in paramCGRA.targetKernels:
     #     # kernelNameMenu["menu"].add_command(label=kernelName, command=tkinter._setit(kernelOptions, kernelName))
     #     print(f'kernelName: {kernelName}')
@@ -1469,7 +1471,7 @@ def drawSchedule():
 
         # cycleLabel = tkinter.Label(canvas, text="Cycle " + str(ii))
         cycleLabel = customtkinter.CTkLabel(canvas, text="Cycle " + str(ii) + " ",
-                                            font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE, weight="bold", slant='italic'))
+                                            font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
         canvas.create_window(baseX + (cgraWidth)/2, GRID_HEIGHT + 30 + BORDER, window=cycleLabel, height=20, width=80)
 
         baseX += GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + 20
@@ -1572,7 +1574,7 @@ def create_cgra_pannel(master, rows, columns):
     # cgraPannel.pack()
     # cgraPannel.grid_propagate(0)
     # create label for cgraPannel
-    cgraLabel = customtkinter.CTkLabel(cgraPannel, text='CGRA', font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_1_FONT_SIZE, weight="bold"))
+    cgraLabel = customtkinter.CTkLabel(cgraPannel, text='CGRA', font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
     # cgraLabel.grid(row=0, column=0, sticky="nsew")
     cgraLabel.pack(anchor="w", ipadx=5)
 
@@ -1776,7 +1778,7 @@ def create_param_pannel(master):
     for i in range(3):
         paramPannel.columnconfigure(i, weight=1)
     paramPannel.grid_propagate(0)
-    configurationLabel = customtkinter.CTkLabel(paramPannel, text='Configuration', font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_1_FONT_SIZE, weight="bold"))
+    configurationLabel = customtkinter.CTkLabel(paramPannel, text='Configuration', font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
     configurationLabel.grid(row=0, column=0, ipadx=5, pady=(5,0), sticky="w")
 
     rowsLabel = customtkinter.CTkLabel(paramPannel, text='Rows  Columns:')
@@ -1846,7 +1848,7 @@ def create_param_pannel(master):
     #     spmConfigPannel.columnconfigure(i, weight=1)
     # spmConfigPannel.grid_propagate(0)
     # spmConfigPannelLabel = customtkinter.CTkLabel(spmConfigPannel, text='Data SPM\noutgoing links',
-    #                                               font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE,
+    #                                               font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_1_FONT_SIZE,
     #                                                                          weight="bold", slant='italic'))
     # spmConfigPannelLabel.grid(row=0, column=0, sticky="nsew")
     # spmConfigPannelLabel.pack()
@@ -1882,7 +1884,7 @@ def create_param_pannel(master):
     #     fuConfigPannel.columnconfigure(i, weight=1)
     # fuConfigPannel.grid_propagate(0)
     # fuConfigPannelLabel = customtkinter.CTkLabel(fuConfigPannel, text='Tile 0\nfunctional units',
-    #                                              font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE,
+    #                                              font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_1_FONT_SIZE,
     #                                                                         weight="bold", slant='italic'))
     # fuConfigPannelLabel.grid(row=0, column=0, sticky="nsew")
     # fuConfigPannelLabel.pack()
@@ -1906,7 +1908,7 @@ def create_param_pannel(master):
     #     xbarConfigPannel.rowconfigure(i, weight=1)
     # xbarConfigPannel.grid_propagate(0)
     # xbarConfigPannelLabel = customtkinter.CTkLabel(xbarConfigPannel, text='Tile 0\ncrossbar outgoing links',
-    #                                                font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE,
+    #                                                font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_1_FONT_SIZE,
     #                                                                           weight="bold", slant='italic'))
     # # xbarConfigPannelLabel.grid(row=0, column=0, sticky="nsew")
     # xbarConfigPannelLabel.pack()
@@ -2003,7 +2005,7 @@ def create_test_pannel(master):
     testPannel.columnconfigure(2, weight=1)
     testPannelLabel = customtkinter.CTkLabel(testPannel, text='Verification ',
                                              # width=100,
-                                             font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE, weight="bold", slant='italic'))
+                                             font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
     testPannelLabel.grid(row=0, column=0, columnspan=3, ipadx=5, sticky="w")
     testButton = customtkinter.CTkButton(testPannel, text="Run tests", # relief='raised',
                                          command=clickTest,
@@ -2025,8 +2027,8 @@ def create_test_pannel(master):
     verilogPannel.grid(row=1, column=0, rowspan=1, columnspan=3, pady=(5,5), sticky="nsew")
     verilogPannelLabel = customtkinter.CTkLabel(verilogPannel, text='SVerilog ',
                                              # width=100,
-                                             font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE,
-                                             weight="bold", slant='italic'))
+                                             font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE,
+                                                                        weight="bold"))
     verilogPannelLabel.pack(anchor="w", padx=(5,0))
     CreateToolTip(verilogPannel,
                   text="The code might be too big to be copied,\nthe generated verilog can be found in\nthe 'verilog' folder.")
@@ -2047,10 +2049,10 @@ def create_test_pannel(master):
     reportPannel.grid(row=2, column=0, rowspan=1, columnspan=3, sticky='nesw')
     reportPannel.columnconfigure(0, weight=1)
     reportPannel.columnconfigure(1, weight=1)
-    reportPannelLabel = customtkinter.CTkLabel(reportPannel, text='Report area/power ',
+    reportPannelLabel = customtkinter.CTkLabel(reportPannel, text='Report Area/Power ',
                                              # width=100,
-                                             font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE,
-                                             weight="bold", slant='italic'))
+                                             font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE,
+                                                                        weight="bold"))
 
     reportButton = customtkinter.CTkButton(reportPannel, text="Synthesize", command=clickSynthesize, width=60)
 
@@ -2111,8 +2113,8 @@ def create_layout_pannel(master):
     layoutPannel = customtkinter.CTkFrame(master)
     layoutPannel.grid(row=0, column=3, rowspan=1, columnspan=1, padx=(5,0), pady=(5,0), sticky="nsew")
     layoutPannelLabel = customtkinter.CTkLabel(layoutPannel, text='Layout ',
-                                             # width=100,
-                                             font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_1_FONT_SIZE, weight="bold"))
+                                               # width=100,
+                                               font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
     layoutPannelLabel.pack(anchor="w", padx=(5,0))
     canvas = customtkinter.CTkCanvas(layoutPannel, bg=CANVAS_BG_COLOR, bd=0, highlightthickness=0)
     scrollbar = customtkinter.CTkScrollbar(layoutPannel, orientation="horizontal", command=canvas.xview)
@@ -2134,7 +2136,7 @@ def create_mapping_pannel(master):
     mappingPannel.grid(row=1, column=1, rowspan=1, columnspan=3, pady=(5, 0), sticky="nsew")
     mappingPannelLabel = customtkinter.CTkLabel(mappingPannel, text='Mapping ',
                                                # width=100,
-                                               font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_1_FONT_SIZE,
+                                               font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE,
                                                                           weight="bold"))
     mappingPannelLabel.pack(anchor="w", padx=(5, 0))
     mappingCanvas = customtkinter.CTkCanvas(mappingPannel, bg=CANVAS_BG_COLOR, bd=0, highlightthickness=0)
@@ -2161,7 +2163,7 @@ def create_kernel_pannel(master):
 
     kernelPannellLabel = customtkinter.CTkLabel(kernelPannel, text='Kernel ',
                                                 # width=100,
-                                                font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_1_FONT_SIZE,
+                                                font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE,
                                                                            weight="bold"))
     kernelPannellLabel.grid(row=0, column=0, padx=(5, 0), sticky="wn")
 
@@ -2201,8 +2203,8 @@ def create_kernel_pannel(master):
     dfgPannel = customtkinter.CTkFrame(kernelPannel)
     dfgPannel.grid(row=3, column=0, rowspan=10, columnspan=2, padx=(0,5), pady=(5,0), sticky="nsew")
     dfgPannelLabel = customtkinter.CTkLabel(dfgPannel, text='Data-Flow Graph ',
-                                             font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE,
-                                                                        weight="bold", slant='italic'))
+                                             font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE,
+                                                                        weight="bold"))
     dfgPannelLabel.pack(anchor="w", padx=(5, 0))
     dfgLabel = customtkinter.CTkLabel(dfgPannel, text="")
     widgets["dfgLabel"] = dfgLabel
@@ -2228,14 +2230,14 @@ def create_kernel_pannel(master):
     mappingAlgoPannel.grid_columnconfigure(0, weight=1)
     mappingAlgoPannel.grid_columnconfigure(1, weight=1)
     # mappingOptionLabel = customtkinter.CTkLabel(mappingAlgoPannel, text="Mapping algo:")
-    mappingOptionLabel = customtkinter.CTkLabel(mappingAlgoPannel, text='Mapping algo: ',
-                                            font=customtkinter.CTkFont(size=FRAME_LABEL_LEVEL_2_FONT_SIZE,
-                                                                       weight="bold", slant='italic'))
-    mappingOptionLabel.grid(row=0, column=0, sticky="wn")
-    heuristicRatiobutton = customtkinter.CTkRadioButton(mappingAlgoPannel, text="Heuristic", variable=mappingAlgoCheckVar, value=1)
+    mappingOptionLabel = customtkinter.CTkLabel(mappingAlgoPannel, text='Mapping Algorithm',
+                                            font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE,
+                                                                       weight="bold"))
+    mappingOptionLabel.grid(row=0, column=0, columnspan=2)
+    heuristicRatiobutton = customtkinter.CTkRadioButton(mappingAlgoPannel, text="Heuristic", variable=mappingAlgoCheckVar, value=0)
     widgets["heuristicRatiobutton"] = heuristicRatiobutton
     heuristicRatiobutton.grid(row=1, column=0, pady=(0, 5), sticky="nsew")
-    exhaustiveRatiobutton = customtkinter.CTkRadioButton(mappingAlgoPannel, text="Exhaustive", variable=mappingAlgoCheckVar, value=0)
+    exhaustiveRatiobutton = customtkinter.CTkRadioButton(mappingAlgoPannel, text="Exhaustive", variable=mappingAlgoCheckVar, value=1)
     widgets["exhaustiveRatiobutton"] = exhaustiveRatiobutton
     exhaustiveRatiobutton.grid(row=1, column=1, pady=(0, 5), sticky="nsew")
 

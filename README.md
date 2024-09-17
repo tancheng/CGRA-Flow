@@ -59,7 +59,7 @@ root@2cd33efd97b3 WORK_REPO# source venv/bin/activate
 (venv) root@2cd33efd97b3 CGRA-Flow# python startup.py
 # Three themes are available: dark, light, and classic
 ```
-![theme_selector](https://raw.github.com/yuqisun/CGRA-Flow/master/theme_selector.png)
+![theme_selector_UI](https://raw.github.com/yuqisun/CGRA-Flow/master/theme_selector_UI.png)
 
 Otherwise, if you don't need the GUI, development can be performed in the container with the environment well set up:
 ```sh

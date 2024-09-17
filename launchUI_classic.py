@@ -1955,4 +1955,7 @@ master.grid_columnconfigure(2, weight=1)
 master.grid_columnconfigure(3, weight=1)
 #print(master.winfo_width())
 #print(master.winfo_height())
+def maxsize_window():
+    master.state('zoomed')
+master.after(1, maxsize_window)
 master.mainloop()

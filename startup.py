@@ -22,6 +22,28 @@ def launchUI(theme_radio_var):
         os.system("./launchUI.bash &")
     master.destroy()
 
+
+def switchUI(theme_radio_var, radiobutton_frame, launch_button):
+    if theme_radio_var.get() == 1:
+        print('light mode.')
+        customtkinter.set_appearance_mode("light")
+        customtkinter.set_default_color_theme("dark-blue")
+        radiobutton_frame.configure(fg_color='#D9D9D9')
+        launch_button.configure(fg_color='#3A7EBF')
+    elif theme_radio_var.get() == 2:
+        print('classic mode.')
+        customtkinter.set_appearance_mode("light")
+        # customtkinter.set_default_color_theme("green")
+        radiobutton_frame.configure(fg_color='#F0F0F0')
+        launch_button.configure(fg_color='#808080')
+    else:
+        print('dark mode.')
+        customtkinter.set_appearance_mode("dark")
+        customtkinter.set_default_color_theme("dark-blue")
+        radiobutton_frame.configure(fg_color='#292929')
+        launch_button.configure(fg_color='#1F538D')
+
+
 # configure window
 master.title("Startup theme selector")
 master.geometry(f"{1078}x{580}")
@@ -50,11 +72,11 @@ launch_button = customtkinter.CTkButton(master=radiobutton_frame, text='LaunchUI
 launch_button.grid(row=0, column=1, pady=(10, 10), sticky="w")
 
 # create radiobutton frame
-light_theme_button = customtkinter.CTkRadioButton(master=radiobutton_frame, text='Light', variable=theme_radio_var, value=1)
+light_theme_button = customtkinter.CTkRadioButton(master=radiobutton_frame, text='Light', variable=theme_radio_var, value=1, command=lambda: switchUI(theme_radio_var, radiobutton_frame, launch_button))
 light_theme_button.grid(row=1, column=0, pady=(10, 30), padx=(10,0), sticky="w")
-dark_theme_button = customtkinter.CTkRadioButton(master=radiobutton_frame, text='Dark', variable=theme_radio_var, value=0)
+dark_theme_button = customtkinter.CTkRadioButton(master=radiobutton_frame, text='Dark', variable=theme_radio_var, value=0, command=lambda: switchUI(theme_radio_var, radiobutton_frame, launch_button))
 dark_theme_button.grid(row=1, column=1, pady=(10, 30), padx=(10,0), sticky="w")
-classic_theme_button = customtkinter.CTkRadioButton(master=radiobutton_frame, text='Classic', variable=theme_radio_var, value=2)
+classic_theme_button = customtkinter.CTkRadioButton(master=radiobutton_frame, text='Classic', variable=theme_radio_var, value=2, command=lambda: switchUI(theme_radio_var, radiobutton_frame, launch_button))
 classic_theme_button.grid(row=1, column=2, pady=(10, 30), padx=(10,0), sticky="w")
 
 image_path = './'

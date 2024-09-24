@@ -2143,7 +2143,7 @@ def create_layout_pannel(master, x, width, height):
 
 def clickDisplayLayout():
     # Hardcodes the related path, will fix later.
-    flow_basePath = "/WORK_REPO/CGRA-Flow/tools/OpenROAD-flow-scripts/flow/"
+    flow_basePath = os.path.dirname(os.path.abspath(__file__)) + "/tools/OpenROAD-flow-scripts/flow/"
     layout_path = flow_basePath + "layout.png"
     odb_path = flow_basePath + "results/nangate45/gcd/base/6_final.odb"
     cmd_path = flow_basePath + "cmd.tcl"

@@ -2107,7 +2107,7 @@ def create_test_pannel(master):
     reportSPMPowerLabel.grid(row=6, column=0, pady=5)
     reportSPMPowerData.grid(row=6, column=1, pady=5)
 
-
+"""
 def create_layout_pannel(master):
     # layoutPannel = tkinter.LabelFrame(master, text='Layout', bd=BORDER, relief='groove')
     layoutPannel = customtkinter.CTkFrame(master)
@@ -2128,6 +2128,76 @@ def create_layout_pannel(master):
     showButton.place(relx=0.5, rely=0.1, anchor="center")
     # X = customtkinter.CTkLabel(layout_frame)
     # X.pack()
+"""
+    
+def create_layout_pannel(master, x, width, height):
+    layoutPannel = tkinter.LabelFrame(master, text='Layout', bd=BORDER, relief='groove')
+    layoutPannel.place(height=height, width=width, x=x, y=INTERVAL)
+    # Adds the showButton for the layout display
+    showButton = tkinter.Button(layoutPannel, text="Display layout", relief='raised',
+                                command=clickDisplayLayout, highlightbackground="black", highlightthickness=1)
+    showButton.pack()
+    global layout_label
+    layout_label = tkinter.Label(layoutPannel, fg="black")
+    layout_label.pack()
+
+def clickDisplayLayout():
+    # Hardcodes the related path, will fix later.
+    flow_basePath = "/WORK_REPO/CGRA-Flow/tools/OpenROAD-flow-scripts/flow/"
+    layout_path = flow_basePath + "layout.png"
+    odb_path = flow_basePath + "results/nangate45/gcd/base/6_final.odb"
+    cmd_path = flow_basePath + "cmd.tcl"
+
+    # Checks if layout.png of default gcd example already exists.
+    # If yes, directly show.
+    if os.path.exists(layout_path):
+        display_layout_image(layout_path)
+        return
+    # If not, make the default gcd example and save layout.png then show.
+    else:
+        os.chdir(flow_basePath)
+        # Runs default gcd example from RTL to GDSII.
+        subprocess.run(["make"], shell=True, encoding="utf-8")
+        # Generates a cmd.tcl file for openroad
+        if os.path.exists(cmd_path):
+            os.remove(cmd_path)
+        with open(cmd_path, mode="w", encoding="utf-8") as file:
+            # Load default gcd example layout file.
+            file.write("read_db " + odb_path + "\n")
+            # Saves layout to image.
+            file.write("save_image " + layout_path + "\n")
+            file.write("exit")
+        # Runs openroad.
+        subprocess.run(["openroad", cmd_path], shell=False, encoding="utf-8")
+        # Shows the layout image on CGRA-Flow GUI.
+        display_layout_image(layout_path)
+
+def display_layout_image(image_path):
+    try:
+        # Opens the image and resize it to fit the display.
+        img = Image.open(image_path)
+
+        # Logs the original image size before resizing.
+        print(f"Original image size: {img.size}")
+
+        # Resizes the image to fit within a 300x300 display area.
+        # Uses LANCZOS for high-quality downsampling.
+        img = img.resize((300, 300), Image.LANCZOS)
+        img = ImageTk.PhotoImage(img)
+
+        # Displays the image in the layout label.
+        if layout_label is not None:
+            layout_label.config(image=img)
+            layout_label.image = img
+            print(f"Displayed image from {image_path} successfully.")
+        else:
+            print("Error: layout_label is None. Ensure layout_label is initialized properly.")
+            tkinter.messagebox.showerror("Error", "Layout label is not initialized.")
+
+    except FileNotFoundError:
+        tkinter.messagebox.showerror("Error", f"Image file not found: {image_path}")
+    except Exception as e:
+        tkinter.messagebox.showerror("Error", f"Error displaying layout image: {str(e)}")
 
 
 def create_mapping_pannel(master):

@@ -2161,7 +2161,7 @@ def clickDisplayLayout():
         # Generates a cmd.tcl file for openroad
         if os.path.exists(cmd_path):
             os.remove(cmd_path)
-        with open(cmd_path, mode="w", encoding="utf-8") as file:
+        with open(cmd_path, mode="a", encoding="utf-8") as file:
             # Load default gcd example layout file.
             file.write("read_db " + odb_path + "\n")
             # Saves layout to image.

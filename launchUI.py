@@ -2143,10 +2143,15 @@ def create_layout_pannel(master, x, width, height):
 
 def clickDisplayLayout():
     # Hardcodes the related path, will fix later.
-    flow_basePath = os.path.dirname(os.path.abspath(__file__)) + "/tools/OpenROAD-flow-scripts/flow/"
-    layout_path = flow_basePath + "layout.png"
-    odb_path = flow_basePath + "results/nangate45/gcd/base/6_final.odb"
-    cmd_path = flow_basePath + "cmd.tcl"
+    test_module_name = "TileRTL__f6add65c4dde1319"
+    test_platform_name = "asap7"
+    cgraflow_basepath = os.path.dirname(os.path.abspath(__file__))
+    orfs_basePath = cgraflow_basepath + "/tools/OpenROAD-flow-scripts/flow/"
+    layout_path = orfs_basePath + "layout.png"
+    odb_path = orfs_basePath + "results/" + test_platform_name + "/" + test_module_name + "/base/6_final.odb"
+    cmd_path = orfs_basePath + "cmd.tcl"
+    verilog_srcfile_path = "designs/src/" + test_module_name + "/"
+    mk_sdc_file_path = "designs/" + test_platform_name + "/" + test_module_name  + "/"
 
     # Checks if layout.png of default gcd example already exists.
     # If yes, directly show.
@@ -2155,14 +2160,23 @@ def clickDisplayLayout():
         return
     # If not, make the default gcd example and save layout.png then show.
     else:
-        os.chdir(flow_basePath)
-        # Runs default gcd example from RTL to GDSII.
-        subprocess.run(["make"], shell=True, encoding="utf-8")
+        os.chdir(orfs_basePath)
+        # Converts system verilog to verilg.
+        subprocess.run(["../../sv2v/bin/sv2v --write=adjacent " + cgraflow_basepath + "/build/verilog/" + test_module_name + ".sv"], shell=True, encoding="utf-8")
+        # Makes directories and copies the verilog file .v, the pre-defined config.mk, and constraint.sdc to their respective directories.
+        subprocess.run(["mkdir " + verilog_srcfile_path], shell=True, encoding="utf-8")
+        subprocess.run(["cp " + cgraflow_basepath + "/build/verilog/" + test_module_name + ".v " + verilog_srcfile_path], shell=True, encoding="utf-8")
+        subprocess.run(["mkdir " + mk_sdc_file_path], shell=True, encoding="utf-8")
+        subprocess.run(["cp " + cgraflow_basepath + "/build/config.mk " + mk_sdc_file_path], shell=True, encoding="utf-8")
+        subprocess.run(["cp " + cgraflow_basepath + "/build/constraint.sdc " + mk_sdc_file_path], shell=True, encoding="utf-8")
+        # Runs the test module from RTL to GDSII.
+        subprocess.run(["make DESIGN_CONFIG=./" + mk_sdc_file_path + "config.mk"], shell=True, encoding="utf-8")
+
         # Generates a cmd.tcl file for openroad
         if os.path.exists(cmd_path):
             os.remove(cmd_path)
         with open(cmd_path, mode="a", encoding="utf-8") as file:
-            # Load default gcd example layout file.
+            # Load the test module layout file.
             file.write("read_db " + odb_path + "\n")
             # Saves layout to image.
             file.write("save_image " + layout_path + "\n")

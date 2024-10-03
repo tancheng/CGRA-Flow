@@ -2110,7 +2110,6 @@ def create_test_pannel(master):
     reportSPMPowerLabel.grid(row=6, column=0, pady=5)
     reportSPMPowerData.grid(row=6, column=1, pady=5)
 
-"""
 def create_layout_pannel(master):
     # layoutPannel = tkinter.LabelFrame(master, text='Layout', bd=BORDER, relief='groove')
     layoutPannel = customtkinter.CTkFrame(master)
@@ -2118,7 +2117,25 @@ def create_layout_pannel(master):
     layoutPannelLabel = customtkinter.CTkLabel(layoutPannel, text='Layout ',
                                                # width=100,
                                                font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
-    layoutPannelLabel.pack(anchor="w", padx=(5,0))
+    layoutPannelLabel.grid(row=0, column=0, sticky="w")
+
+    # Adds the option menu to select process technology.
+    processNameLabel = customtkinter.CTkLabel(layoutPannel, text="Process:")
+    processNameLabel.grid(row=1, column=0, pady=(10,10))
+    tempOptions = [ "asap7", "nangate45", "sky130hd"]
+    processNameMenu = customtkinter.CTkOptionMenu(layoutPannel, variable=processOptions, values=tempOptions)
+    processNameMenu.grid(row=1, column=1, padx=(0,10), pady=(10,10))
+
+    # Adds the button to trigger RTL->GDSII flow.
+    openRoadButton = customtkinter.CTkButton(layoutPannel, text="RTL->GDSII", command=clickRTL2GDSII)
+    openRoadButton.grid(row=1, column=2, padx=(0,20), pady=(10,10))
+
+    # Adds a placeholder to show the layout image saved from OpenRoad.
+    global layoutLabel
+    layoutLabel = customtkinter.CTkLabel(layoutPannel, text='')
+    layoutLabel.grid(row=2, column=0, padx=(0,10), pady=(10,10), columnspan=3)
+
+"""
     canvas = customtkinter.CTkCanvas(layoutPannel, bg=CANVAS_BG_COLOR, bd=0, highlightthickness=0)
     scrollbar = customtkinter.CTkScrollbar(layoutPannel, orientation="horizontal", command=canvas.xview)
     scrollbar.pack(side="bottom", fill="x")
@@ -2129,30 +2146,7 @@ def create_layout_pannel(master):
     showButton = customtkinter.CTkButton(layoutPannel, text="Display layout")
     CreateToolTip(showButton, text="The layout demonstration is\nunder development.")
     showButton.place(relx=0.5, rely=0.1, anchor="center")
-    # X = customtkinter.CTkLabel(layout_frame)
-    # X.pack()
 """
-    
-def create_layout_pannel(master, x, width, height):
-    layoutPannel = tkinter.LabelFrame(master, text='Layout', bd=BORDER, relief='groove')
-    layoutPannel.place(height=height, width=width, x=x, y=INTERVAL)
-    # Adds the showButton for the layout display.
-    showButton = tkinter.Button(layoutPannel, text="RTL->GDSII", command=clickRTL2GDSII, fg="black")
-    showButton.configure(width=10)
-    showButton.grid(row=0, column=4, padx=BORDER, pady=BORDER//2)
-
-    # Adds the placeholder to show layout image.
-    global layout_label
-    layout_label = tkinter.Label(layoutPannel, fg="black")
-    layout_label.grid(row=1, column=1, columnspan=10, padx=BORDER, pady=BORDER//2)
-
-    # Adds the option menu for process technology.
-    processNameLabel = tkinter.Label(layoutPannel, text="Process:", fg="black")
-    processNameLabel.grid(row=0, column=1, padx=BORDER, pady=BORDER//2)
-    tempOptions = [ "asap7", "nangate45", "sky130hd"]
-    processNameMenu = tkinter.OptionMenu(layoutPannel, processOptions, *tempOptions)
-    processNameMenu.configure(width=5)
-    processNameMenu.grid(row=0, column=2, padx=BORDER, pady=BORDER//2)
 
 def constructDependencyFiles(cgraflow_basepath, standard_module_name, test_platform_name, verilog_srcfile_path, mk_sdc_file_path, orfs_basePath):
     # Finds the target RTL design and transforms the format.
@@ -2239,31 +2233,10 @@ def clickRTL2GDSII():
         display_layout_image(layout_path)
 
 def display_layout_image(image_path):
-    try:
-        # Opens the image and resize it to fit the display.
-        img = Image.open(image_path)
-
-        # Logs the original image size before resizing.
-        print(f"Original image size: {img.size}")
-
-        # Resizes the image to fit within a 300x300 display area.
-        # Uses LANCZOS for high-quality downsampling.
-        img = img.resize((280,280), Image.LANCZOS)
-        img = ImageTk.PhotoImage(img)
-
-        # Displays the image in the layout label.
-        if layout_label is not None:
-            layout_label.config(image=img)
-            layout_label.image = img
-            print(f"Displayed image from {image_path} successfully.")
-        else:
-            print("Error: layout_label is None. Ensure layout_label is initialized properly.")
-            tkinter.messagebox.showerror("Error", "Layout label is not initialized.")
-
-    except FileNotFoundError:
-        tkinter.messagebox.showerror("Error", f"Image file not found: {image_path}")
-    except Exception as e:
-        tkinter.messagebox.showerror("Error", f"Error displaying layout image: {str(e)}")
+    layoutImage = customtkinter.CTkImage(light_image=Image.open(image_path),
+                                  dark_image=Image.open(image_path),
+                                  size=(320, 320))
+    layoutLabel.configure(image=layoutImage)
 
 def create_mapping_pannel(master):
     # mappingPannel = tkinter.LabelFrame(master, text='Mapping', bd=BORDER, relief='groove')
@@ -2408,9 +2381,9 @@ def create_kernel_pannel(master):
 # paramPadWidth = 270
 # scriptPadPosX = paramPadPosX + paramPadWidth + INTERVAL
 # scriptPadWidth = 300
-layoutPadPosX = scriptPadPosX + scriptPadWidth + INTERVAL
-layoutPadWidth = 300
-layoutPadHeight = GRID_HEIGHT
+# layoutPadPosX = scriptPadPosX + scriptPadWidth + INTERVAL
+# layoutPadWidth = 300
+# layoutPadHeight = GRID_HEIGHT
 TILE_HEIGHT = 70
 TILE_WIDTH = 70
 LINK_LENGTH = 40
@@ -2421,8 +2394,7 @@ create_mapping_pannel(master)
 create_cgra_pannel(master, ROWS, COLS)
 create_param_pannel(master)
 create_test_pannel(master)
-#create_layout_pannel(master)
-create_layout_pannel(master, layoutPadPosX, layoutPadWidth, GRID_HEIGHT)
+create_layout_pannel(master)
 # The width and height of the entire window
 default_width = 1650
 default_height = 1000

@@ -19,3 +19,6 @@
 [submodule "tools/cacti"]
 	path = tools/cacti
 	url = https://github.com/tancheng/cacti.git
+[submodule "tools/OpenROAD-flow-scripts"]
+	path = tools/OpenROAD-flow-scripts
+	url = https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts.git

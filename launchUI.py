@@ -28,7 +28,7 @@ if args.theme:
    if args.theme == 'light':
        customtkinter.set_appearance_mode("light")  # Modes: system (default), light, dark
        customtkinter.set_default_color_theme("dark-blue")  # Themes: blue (default), dark-blue, green
-       CANVAS_BG_COLOR = "#DBDBDB"
+       CANVAS_BG_COLOR = "#E5E5E5"
        CANVAS_LINE_COLOR = "black"
 
 from VectorCGRA.cgra.translate.CGRATemplateRTL_test import *

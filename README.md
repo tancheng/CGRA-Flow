@@ -46,7 +46,7 @@ As CGRA-Flow requires GUI, a script is provided for setting up the display:
 ```shell
 # Windows Docker customtkinter style UI (Please setup GUI (X-11) first)
 # In WSL, execute below script, it will enter container and config x11 DISPLAY automatically
-machine@DESKTOP-VG9BSQR:~$ ./run_linux_docker.sh
+DESKTOP-VG9BSQR:~$ sh ./run_linux_docker.sh
 
 # In container
 root@1627139489b9 WORK_REPO# source venv/bin/activate

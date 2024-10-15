@@ -45,18 +45,15 @@ As CGRA-Flow requires GUI, a script is provided for setting up the display:
 
 ```shell
 # Windows Docker customtkinter style UI (Please setup GUI (X-11) first)
-# In WSL
-docker pull yuqisun/cgra-flow-win:latest
-docker run -it yuqisun/cgra-flow-win bash
-docker run -it --name cgra-flow-win yuqisun/cgra-flow-win bash
+# In WSL, execute below script, it will enter container and config x11 DISPLAY automatically
+sh ./run_linux_docker.sh
 
 # In container
-root@2cd33efd97b3 WORK_REPO# export DISPLAY=192.168.3.38:0.0 # change to your own ipv4 address with 0.0
-root@2cd33efd97b3 WORK_REPO# source venv/bin/activate
-(venv) root@2cd33efd97b3 WORK_REPO# cd /WORK_REPO/CGRA-Flow
+root@1627139489b9 WORK_REPO# source venv/bin/activate
+(venv) root@1627139489b9 WORK_REPO# cd /WORK_REPO/CGRA-Flow
 
 # Startup theme mode selector UI
-(venv) root@2cd33efd97b3 CGRA-Flow# python startup.py
+(venv) root@1627139489b9 CGRA-Flow# python launch.py
 # Three themes are available: dark, light, and classic
 ```
 
@@ -71,7 +68,7 @@ Execution
 --------------------------------------------------------
 ```sh
  mkdir build && cd build
- python ../launchUI.py
+ python ../mode_dark_light.py
 ```
 
 Installation

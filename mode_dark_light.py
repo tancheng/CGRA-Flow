@@ -31,7 +31,8 @@ if args.theme:
        CANVAS_BG_COLOR = "#E5E5E5"
        CANVAS_LINE_COLOR = "black"
 
-from VectorCGRA.cgra.translate.CGRATemplateRTL_test import *
+#from VectorCGRA.cgra.translate.CGRATemplateRTL_test import *
+from VectorCGRA.cgra.translate.CGRARTL_test import *
 
 # importing module
 import logging
@@ -964,7 +965,8 @@ def clickGenerateVerilog():
     os.chdir("verilog")
 
     # pymtl function that is used to generate synthesizable verilog
-    test_cgra_universal(paramCGRA)
+    #test_cgra_universal(paramCGRA)
+    test_cgra_universal()
 
     widgets["verilogText"].delete("1.0", tkinter.END)
     found = False
@@ -982,7 +984,8 @@ def clickGenerateVerilog():
         paramCGRA.verilogDone = False
         widgets["verilogText"].insert(tkinter.END, "Error exists during Verilog generation")
 
-    os.system("mv CGRATemplateRTL__*.v design.v")
+    #os.system("mv CGRATemplateRTL__*.v design.v")
+    os.system("mv CGRARTL__*.v design.v")
     # os.system("rename s/\.v/\.log/g *")
 
     os.chdir("..")
@@ -2227,7 +2230,7 @@ def runOpenRoad(mk_sdc_file_path, cmd_path, odb_path, layout_path):
 
 def clickRTL2Layout():
     global constraintFilePath, configFilePath
-    standard_module_name = "CGRATemplateRTL"
+    standard_module_name = "CGRARTL"
     cgraflow_basepath = os.path.dirname(os.path.abspath(__file__))
     test_platform_name = processOptions.get()
     print("Test platform is %s" % (test_platform_name))

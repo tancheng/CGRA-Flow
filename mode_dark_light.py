@@ -112,6 +112,8 @@ xbarCheckbuttons = {}
 kernelOptions = tkinter.StringVar()
 kernelOptions.set("Not selected yet")
 synthesisRunning = False
+constraintFilePath = ""
+configFilePath = ""
 
 mapped_tile_color_list = ['#FFF113', '#75D561', '#F2CB67', '#FFAC73', '#F3993A', '#B3FF04', '#C2FFFF']
 
@@ -2119,21 +2121,37 @@ def create_layout_pannel(master):
                                                font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
     layoutPannelLabel.grid(row=0, column=0, sticky="w")
 
+    # Adds the entry for user to select constraint.sdc
+    constraintLabel = customtkinter.CTkLabel(layoutPannel, text="Constraint.sdc")
+    constraintLabel.grid(row=1, column=0, pady=(10,10), sticky="nsew")
+    constraintPathEntry = customtkinter.CTkEntry(layoutPannel)
+    constraintPathEntry.grid(row=1, column=1, padx=(10,20), pady=(10,10), sticky="nsew")
+    constraintPathEntry.bind("<Button-1>", clickSelectConstraintFile)
+    widgets["constraintPathEntry"] = constraintPathEntry
+
+    # Adds the entry for user to select config.mk
+    configLabel = customtkinter.CTkLabel(layoutPannel, text="Config.mk")
+    configLabel.grid(row=1, column=2, padx=(0,10), pady=(10,10), sticky="nsew")
+    configPathEntry = customtkinter.CTkEntry(layoutPannel)
+    configPathEntry.grid(row=1, column=3, pady=(10,10), sticky="nsew")
+    configPathEntry.bind("<Button-1>", clickSelectConfigFile)
+    widgets["configPathEntry"] = configPathEntry
+
     # Adds the option menu to select process technology.
     processNameLabel = customtkinter.CTkLabel(layoutPannel, text="Process:")
-    processNameLabel.grid(row=1, column=0, pady=(10,10))
+    processNameLabel.grid(row=2, column=0, pady=(10,10), sticky="nsew")
     tempOptions = [ "asap7", "nangate45", "sky130hd"]
     processNameMenu = customtkinter.CTkOptionMenu(layoutPannel, variable=processOptions, values=tempOptions)
-    processNameMenu.grid(row=1, column=1, padx=(0,10), pady=(10,10))
+    processNameMenu.grid(row=2, column=1, padx=(10,20), pady=(10,10), sticky="nsew")
 
-    # Adds the button to trigger RTL->GDSII flow.
-    openRoadButton = customtkinter.CTkButton(layoutPannel, text="RTL -> Layout", command=clickRTL2GDSII)
-    openRoadButton.grid(row=1, column=2, padx=(0,20), pady=(10,10))
+    # Adds the button to trigger RTL->Layout flow.
+    openRoadButton = customtkinter.CTkButton(layoutPannel, text="RTL -> Layout", command=clickRTL2Layout)
+    openRoadButton.grid(row=2, column=2, pady=(10,10), sticky="nsew", columnspan=2)
 
     # Adds a placeholder to show the layout image saved from OpenRoad.
     global layoutLabel
     layoutLabel = customtkinter.CTkLabel(layoutPannel, text='')
-    layoutLabel.grid(row=2, column=0, padx=(0,10), pady=(10,10), columnspan=3)
+    layoutLabel.grid(row=3, column=0, padx=(0,10), pady=(10,10), columnspan=4)
 
 """
     canvas = customtkinter.CTkCanvas(layoutPannel, bg=CANVAS_BG_COLOR, bd=0, highlightthickness=0)
@@ -2174,12 +2192,13 @@ def constructDependencyFiles(cgraflow_basepath, standard_module_name, test_platf
             break
 
     # Makes directories and copies CGRATemplateRTL.v, the pre-defined config.mk, and constraint.sdc to their respective directories.
+    global constraintFilePath, configFilePath
     os.chdir(orfs_basePath)
     subprocess.run(["mkdir -p " + verilog_srcfile_path], shell=True, encoding="utf-8")
     subprocess.run(["cp " + cgraflow_basepath + "/build/verilog/" + standard_module_name + ".v " + verilog_srcfile_path], shell=True, encoding="utf-8")
     subprocess.run(["mkdir -p " + mk_sdc_file_path], shell=True, encoding="utf-8")
-    subprocess.run(["cp " + cgraflow_basepath + "/build/config.mk " + mk_sdc_file_path], shell=True, encoding="utf-8")
-    subprocess.run(["cp " + cgraflow_basepath + "/build/constraint.sdc " + mk_sdc_file_path], shell=True, encoding="utf-8")
+    subprocess.run(["cp " + constraintFilePath + " " + mk_sdc_file_path], shell=True, encoding="utf-8")
+    subprocess.run(["cp " + configFilePath + " " + mk_sdc_file_path], shell=True, encoding="utf-8")
 
     # Updates process within the config.mk to the user selected one.
     with open(mk_sdc_file_path + "config.mk", 'r') as file:
@@ -2206,7 +2225,8 @@ def runOpenRoad(mk_sdc_file_path, cmd_path, odb_path, layout_path):
     # Runs openroad.
     subprocess.run(["openroad", cmd_path], shell=False, encoding="utf-8")
 
-def clickRTL2GDSII():
+def clickRTL2Layout():
+    global constraintFilePath, configFilePath
     standard_module_name = "CGRATemplateRTL"
     cgraflow_basepath = os.path.dirname(os.path.abspath(__file__))
     test_platform_name = processOptions.get()
@@ -2217,6 +2237,11 @@ def clickRTL2GDSII():
     cmd_path = orfs_basePath + "cmd.tcl"
     verilog_srcfile_path = "designs/src/" + standard_module_name + "/"
     mk_sdc_file_path = "designs/" + test_platform_name + "/" + standard_module_name  + "/"
+
+    if constraintFilePath == ""  or configFilePath == "":
+         tkinter.messagebox.showerror(title="Missing files for RTL->Layout",
+                                     message="constraint.sdc and config.mk need to be selected first.")
+         return
 
     # Checks if layout.png of target design already exists.
     # If yes, directly shows.
@@ -2231,6 +2256,20 @@ def clickRTL2GDSII():
         runOpenRoad(mk_sdc_file_path, cmd_path, odb_path, layout_path)
         # Shows the layout image on CGRA-Flow GUI.
         display_layout_image(layout_path)
+
+def clickSelectConstraintFile(event):
+    global constraintFilePath
+    constraintFilePath = fd.askopenfilename(title="Chooses constraint.sdc for synthesis.", initialdir="./", filetypes=(("SDC file", "*.sdc"),))
+    widgets["constraintPathEntry"].delete(0, tkinter.END)
+    widgets["constraintPathEntry"].insert(0, constraintFilePath)
+    print(constraintFilePath)
+
+def clickSelectConfigFile(event):
+    global configFilePath
+    configFilePath = fd.askopenfilename(title="Chooses config.mk for OpenRoad.", initialdir="./", filetypes=(("MK file", "*.mk"),))
+    widgets["configPathEntry"].delete(0, tkinter.END)
+    widgets["configPathEntry"].insert(0, configFilePath)
+    print(configFilePath)
 
 def display_layout_image(image_path):
     layoutImage = customtkinter.CTkImage(light_image=Image.open(image_path),

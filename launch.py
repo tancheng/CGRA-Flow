@@ -17,13 +17,13 @@ def launchUI(theme_radio_var):
     print(f'Get theme radio var: {theme_radio_var.get()}')
     if theme_radio_var.get() == 1:
         print('Activate light mode.')
-        os.system("./launchUI.bash light &")
+        os.system("sh ./launchUI.bash light &")
     elif theme_radio_var.get() == 2:
         print('Activate classic mode.')
-        os.system("./launchUI.bash classic &")
+        os.system("sh ./launchUI.bash classic &")
     else:
         print('Activate dark mode.')
-        os.system("./launchUI.bash &")
+        os.system("sh ./launchUI.bash &")
     master.destroy()
 
 

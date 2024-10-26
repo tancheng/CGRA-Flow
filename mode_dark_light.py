@@ -947,7 +947,7 @@ def clickTest():
                 if ".py F" in outputLine:
                     failed += 1
 
-    widgets["testShow"].configure(text="PASSED" if failed == 0 else str(total - failed) + "/" + str(total))
+    widgets["testShow"].configure(text=" PASSED " if failed == 0 else str(total - failed) + "/" + str(total))
     # (out, err) = testProc.communicate()
     # print("check test output:", out)
 

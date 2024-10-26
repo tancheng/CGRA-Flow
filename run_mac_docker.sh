@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-CONTAINER=yuqisun/cgra-flow-openroad:latest # cgra/cgra-flow:demo
+CONTAINER=cgra/cgra-flow:20241025
 NIC=en0
 
 # Grab the ip address of this box

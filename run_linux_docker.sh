@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-IMAGE=yuqisun/cgra-flow-openroad:latest
+IMAGE=cgra/cgra-flow:20241025
 
 CONTAINER=CGRA-Flow-OpenRoad
 

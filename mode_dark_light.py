@@ -2022,7 +2022,7 @@ def create_test_pannel(master):
     testProgress = customtkinter.CTkProgressBar(testPannel, orientation='horizontal', mode='determinate', width=160)
     testProgress.set(0)
     widgets["testProgress"] = testProgress
-    testProgress.grid(row=1, column=1, rowspan=1, columnspan=1, padx=5, sticky="ew")
+    testProgress.grid(row=1, column=1, rowspan=1, columnspan=1, padx=5, sticky="w")
     testShow = customtkinter.CTkLabel(testPannel, text="IDLE ")
     widgets["testShow"] = testShow
     testShow.grid(row=1, column=2, sticky=tkinter.E, padx=(5, 5))

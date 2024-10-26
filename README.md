@@ -17,7 +17,7 @@ CGRA-Flow is an integrated framework for CGRA compilation, exploration, synthesi
 
 User Interface Snapshot/Demo
 --------------------------------------------------------------------------
-![Capture](https://user-images.githubusercontent.com/6756658/213010564-fa74b34e-218f-435e-9e8e-ef5a40f8899d.PNG)
+![1016](https://github.com/user-attachments/assets/b15313ba-3c46-4b5b-b333-bdff61990ced)
 
 A demo at repl.it (https://repl.it/@ChengTan/cgra-flow) shows some features of CGRA-Flow (the verilog generation and evaluation are not available due to *repl.it*'s limited support of python environment). To explore all the features, please setup CGRA-Flow locally or leverage the docker image.
 
@@ -30,31 +30,15 @@ As CGRA-Flow requires GUI, a script is provided for setting up the display:
 ```sh
  docker pull cgra/cgra-flow:20241025
 
- # For Mac users like me:
+ # For Mac users:
  sh ./run_mac_docker.sh
 
- # Otherwise, if this is your first time establishing a container for CGRA-Flow:
- # sh ./run_docker.sh
- # Else, use the following command to reopen the same container:
- # sh ./start_docker.sh
- # Or try to setup GUI (X-11) by yourself.
+ # Windows Docker customtkinter style UI (Please setup GUI (X-11) first)
+ # In WSL, execute below script, it will enter container and config x11 DISPLAY automatically
+ sh ./run_linux_docker.sh
 
  # Don't forget to activate the python virtual environment once you are in the container:
  source /WORK_REPO/venv/bin/activate
-```
-
-```shell
-# Windows Docker customtkinter style UI (Please setup GUI (X-11) first)
-# In WSL, execute below script, it will enter container and config x11 DISPLAY automatically
-sh ./run_linux_docker.sh
-
-# In container
-root@1627139489b9 WORK_REPO# source venv/bin/activate
-(venv) root@1627139489b9 WORK_REPO# cd /WORK_REPO/CGRA-Flow
-
-# Startup theme mode selector UI
-(venv) root@1627139489b9 CGRA-Flow# python launch.py
-# Three themes are available: dark, light, and classic
 ```
 
 Otherwise, if you don't need the GUI, development can be performed in the container with the environment well set up:
@@ -67,8 +51,8 @@ Otherwise, if you don't need the GUI, development can be performed in the contai
 Execution
 --------------------------------------------------------
 ```sh
- mkdir build && cd build
- python ../mode_dark_light.py
+ # Startup theme mode selector UI
+ python launch.py
 ```
 
 Installation
@@ -91,16 +75,6 @@ Citation
   organization={IEEE}
 }
 ```
-
-Publications leveraging (parts of) CGRA-Flow toolchain
---------------------------------------------------------------------------
-- _"MESA: Microarchitecture Extensions for Spatial Architecture Generation."_ ISCA'23.
-- _"An Architecture Interface and Offload Model for Low-Overhead, Near-Data, Distributed Accelerators."_ MICRO'22.
-- _"MATCHA: A Fast and Energy-Efficient Accelerator for Fully Homomorphic Encryption over the Torus."_ DAC'22.
-- _"DRIPS: Dynamic Rebalancing of Pipelined Streaming Applications on CGRAs."_ HPCA'22.
-- _"ARENA: Asynchronous Reconfigurable Accelerator Ring to Enable Data-Centric Parallel Computing."_ TPDS'21.
-- _"Ultra-Elastic CGRAs for Irregular Loop Specialization."_ HPCA'21.
-
 
 
 License

@@ -964,7 +964,7 @@ def clickGenerateVerilog():
     os.chdir("verilog")
 
     # pymtl function that is used to generate synthesizable verilog
-    test_cgra_universal(paramCGRA)
+    test_cgra_universal(paramCGRA = paramCGRA)
 
     widgets["verilogText"].delete("1.0", tkinter.END)
     found = False

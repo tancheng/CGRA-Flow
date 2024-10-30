@@ -17,9 +17,10 @@ CGRA-Flow is an integrated framework for CGRA compilation, exploration, synthesi
 
 User Interface Snapshot/Demo
 --------------------------------------------------------------------------
-![1016](https://github.com/user-attachments/assets/b15313ba-3c46-4b5b-b333-bdff61990ced)
+![20241028](https://github.com/user-attachments/assets/305fa79d-73b9-4512-ab85-0cecc6153986)
 
 A demo at repl.it (https://repl.it/@ChengTan/cgra-flow) shows some features of CGRA-Flow (the verilog generation and evaluation are not available due to *repl.it*'s limited support of python environment). To explore all the features, please setup CGRA-Flow locally or leverage the docker image.
+
 
 Docker
 --------------------------------------------------------
@@ -28,7 +29,7 @@ The docker image is available
 
 As CGRA-Flow requires GUI, a script is provided for setting up the display:
 ```sh
- docker pull cgra/cgra-flow:20241025
+ docker pull cgra/cgra-flow:20241028
 
  # For Mac users:
  sh ./run_mac_docker.sh
@@ -43,8 +44,8 @@ As CGRA-Flow requires GUI, a script is provided for setting up the display:
 
 Otherwise, if you don't need the GUI, development can be performed in the container with the environment well set up:
 ```sh
- docker pull cgra/cgra-flow:20241025
- docker run -it cgra/cgra-flow:20241025
+ docker pull cgra/cgra-flow:20241028
+ docker run -it cgra/cgra-flow:20241028
  source /WORK_REPO/venv/bin/activate
 ```
 

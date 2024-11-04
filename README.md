@@ -27,6 +27,12 @@ Docker
 The docker image is available
 [here](https://hub.docker.com/r/cgra/cgra-flow/tags).
 
+> **Recommended machine configuration**
+> * CPU: >= 6 cores
+> * Memory: 25~30G
+> 
+> **2x2 tiles run time**: ~ 40 hours (clk_period=1000)
+
 As CGRA-Flow requires GUI, a script is provided for setting up the display:
 ```sh
  docker pull cgra/cgra-flow:20241028

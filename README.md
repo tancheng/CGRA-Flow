@@ -27,6 +27,12 @@ Docker
 The docker image is available
 [here](https://hub.docker.com/r/cgra/cgra-flow/tags).
 
+> **Recommended machine configuration**
+> * CPU: >= 6 cores
+> * Memory: 25~30G
+> 
+> **2x2 tiles run time**: ~ 40 hours (clk_period=1000)
+
 As CGRA-Flow requires GUI, a script is provided for setting up the display:
 ```sh
  docker pull cgra/cgra-flow:20241028
@@ -36,7 +42,7 @@ As CGRA-Flow requires GUI, a script is provided for setting up the display:
 
  # Windows Docker customtkinter style UI (Please setup GUI (X-11) first)
  # In WSL, execute below script, it will enter container and config x11 DISPLAY automatically
- sh ./run_linux_docker.sh
+ sh ./run_windows_docker.sh
 
  # Don't forget to activate the python virtual environment once you are in the container:
  source /WORK_REPO/venv/bin/activate

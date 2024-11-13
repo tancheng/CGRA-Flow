@@ -35,8 +35,8 @@ The docker image is available
 > | clk_period (ps) | frequency (Hz) | time (hour) |  
 > |-------|-------|-------|  
 > | 1000            | 1G             | ~40         |
-> | 10_000          | 100M           | ~7          |  
-> | 100_000         | 10M            | ~7          |
+> | 10,000          | 100M           | ~7          |  
+> | 100,000         | 10M            | ~7          |
 
 As CGRA-Flow requires GUI, a script is provided for setting up the display:
 ```sh

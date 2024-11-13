@@ -31,7 +31,12 @@ The docker image is available
 > * CPU: >= 6 cores
 > * Memory: 25~30G
 > 
-> **2x2 tiles run time**: ~ 40 hours (clk_period=1000)
+> **2x2 tiles run time**:  
+> | clk_period (ps) | frequency (Hz) | time (hour) |  
+> |-------|-------|-------|  
+> | 1000            | 1G             | ~40         |
+> | 10_000          | 100M           | ~7          |  
+> | 100_000         | 10M            | ~7          |
 
 As CGRA-Flow requires GUI, a script is provided for setting up the display:
 ```sh

@@ -81,10 +81,12 @@ jobs:
         pip install hypothesis
         pip install pytest
         pip list
-        
-    - name: Test with pytest for VectorCGRA
+    - name: VectorCGRA Git Sumbodule Update
       run: |
         cd VectorCGRA
+        git submodule update --init
+    - name: Test with pytest for VectorCGRA
+      run: |
         mkdir -p build && cd build
         source ${HOME}/venv/bin/activate
         pytest .. -v --tb=short

@@ -19,10 +19,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.7.13"]
+        python-version: ["3.7.13", "3.9.20", "3.12.8"]
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
     
     # Update references
     - name: Git Sumbodule Update
@@ -51,8 +53,10 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
-  
-  
+    - name: VectorCGRA Git Sumbodule Update
+      run: |
+        cd VectorCGRA
+        git submodule update --init
     - name: Install Verilator for VectorCGRA
       run: |
         wget https://github.com/tancheng/pymtl-verilator/raw/master/verilator-travis-4.036.tar.gz
@@ -75,17 +79,16 @@ jobs:
         source ${HOME}/venv/bin/activate
         pip install py==1.11.0
         pip install wheel
-        pip install git+https://github.com/tancheng/pymtl3.git
+        pip install -U git+https://github.com/tancheng/pymtl3.1@yo-struct-list-fix
         pip install hypothesis
         pip install pytest
         pip list
-        
     - name: Test with pytest for VectorCGRA
       run: |
         cd VectorCGRA
         mkdir -p build && cd build
         source ${HOME}/venv/bin/activate
-        pytest ../cgra/ -v --tb=short
+        pytest .. -v --tb=short
         
         
     - name: Install dependencies for mflowgen

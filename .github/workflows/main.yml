@@ -23,6 +23,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
     
     # Update references
     - name: Git Sumbodule Update

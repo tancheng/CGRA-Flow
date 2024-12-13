@@ -75,7 +75,7 @@ jobs:
         source ${HOME}/venv/bin/activate
         pip install py==1.11.0
         pip install wheel
-        pip install git+https://github.com/tancheng/pymtl3.git
+        pip install -U git+https://github.com/tancheng/pymtl3.1@yo-struct-list-fix
         pip install hypothesis
         pip install pytest
         pip list

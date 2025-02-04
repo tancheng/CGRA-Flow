@@ -67,6 +67,30 @@ Execution
  python launch.py
 ```
 
+
+Mac user common issues
+--------------------------------------------------------
+> xauth command not found (XQuartz is missing on mac)
+```sh
+# install XQuartz
+brew install --cask xquartz
+# open XQuartz
+open -a XQuartz
+```
+> _tkinter.TclError: couldn't connect to display "10.0.0.204:xx (Display not setup correctly)
+```sh
+# try enable all access
+xhost+
+# check display is valid or not
+echo $DISPLAY
+# if above command shows nothing, it means display is not set properly by XQuartz. Try manually assign a display number, for example 0
+export DISPLAY=:0
+xhost +
+# modify run_mac_docker.sh line 8 
+DISP_NUM=0
+
+```
+
 Installation
 --------------------------------------------------------
 

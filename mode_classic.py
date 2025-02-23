@@ -1429,13 +1429,59 @@ def clickMapDFG():
     timer.start()
 
 
+def create_multi_cgra_panel(master):
+    multiCgraPanel = tkinter.LabelFrame(master, text='Multi-CGRA', bd=BORDER, relief='groove')
+    multiCgraPanel.grid(row=0, column=0, rowspan=1, columnspan=1, sticky="nsew")
+
+def create_multi_cgra_config_panel(master):
+    multiCgraConfigPanel = tkinter.LabelFrame(master, text='Multi-CGRA Config', bd=BORDER, relief='groove')
+    multiCgraConfigPanel.grid(row=0, column=1, rowspan=1, columnspan=1, sticky="nsew")
+    for i in range(5):
+        multiCgraConfigPanel.rowconfigure(i, weight=1)
+    multiCgraConfigPanel.rowconfigure(5, weight=5)
+    for i in range(2):
+        multiCgraConfigPanel.columnconfigure(i, weight=1)
+
+    numOfCgraLabel = tkinter.Label(multiCgraConfigPanel, text='Num of CGRA(s):')
+    numOfCgraLabel.grid(row=0, column=0, sticky="w")
+    numOfCgraLabelEntry = tkinter.Entry(multiCgraConfigPanel, justify=tkinter.CENTER, highlightbackground="black",
+                              highlightthickness=HIGHLIGHT_THICKNESS)
+    numOfCgraLabelEntry.grid(row=0, column=1, padx=5)
+
+    totalSRAMSizeLabel = tkinter.Label(multiCgraConfigPanel, text='Total SRAM size:')
+    totalSRAMSizeLabel.grid(row=1, column=0, sticky="w")
+    totalSRAMSizeLabelEntry = tkinter.Entry(multiCgraConfigPanel, justify=tkinter.CENTER, highlightbackground="black",
+                                        highlightthickness=HIGHLIGHT_THICKNESS)
+    totalSRAMSizeLabelEntry.grid(row=1, column=1, padx=5)
+
+    interCgraTopologyLabel = tkinter.Label(multiCgraConfigPanel, text='Inter-CGRA topology:')
+    interCgraTopologyLabel.grid(row=2, column=0, sticky="w")
+    interCgraTopologyLabelEntry = tkinter.Entry(multiCgraConfigPanel, justify=tkinter.CENTER, highlightbackground="black",
+                                            highlightthickness=HIGHLIGHT_THICKNESS)
+    interCgraTopologyLabelEntry.grid(row=2, column=1, padx=5)
+
+    multiCgraRowsLabel = tkinter.Label(multiCgraConfigPanel, text='Multi-CGRA Rows:')
+    multiCgraRowsLabel.grid(row=3, column=0, sticky="w")
+    multiCgraRowsLabelEntry = tkinter.Entry(multiCgraConfigPanel, justify=tkinter.CENTER, highlightbackground="black",
+                              highlightthickness=HIGHLIGHT_THICKNESS)
+    multiCgraRowsLabelEntry.grid(row=3, column=1, padx=5)
+    multiCgraRowsLabelEntry.insert(0, str(4))
+
+    multiCgraColumnsLabel = tkinter.Label(multiCgraConfigPanel, text='Multi-CGRA Columns:')
+    multiCgraColumnsLabel.grid(row=4, column=0, sticky="w")
+    multiCgraColumnsEntry = tkinter.Entry(multiCgraConfigPanel, justify=tkinter.CENTER, highlightbackground="black",
+                                 highlightthickness=HIGHLIGHT_THICKNESS)
+    multiCgraColumnsEntry.grid(row=4, column=1, padx=5)
+    multiCgraColumnsEntry.insert(0, str(4))
+
+
 def create_cgra_pannel(master, rows, columns):
 
     ROWS = rows
     COLS = columns
     # Use solid black board to let the pannel look better
     cgraPannel = tkinter.LabelFrame(master, text='CGRA', bd=BORDER, relief='groove')
-    cgraPannel.grid(row=0, column=0, rowspan=1, columnspan=1, sticky="nsew")
+    cgraPannel.grid(row=0, column=2, rowspan=1, columnspan=2, sticky="nsew")
     canvas = tkinter.Canvas(cgraPannel)
     widgets["canvas"] = canvas
     baseX = 0
@@ -1583,7 +1629,7 @@ def place_xbar_options(master):
 
 def create_param_pannel(master):
     paramPannel = tkinter.LabelFrame(master, text='Configuration', bd=BORDER, relief='groove')
-    paramPannel.grid(row=0, column=1, rowspan=1, columnspan=1, sticky="nsew")
+    paramPannel.grid(row=0, column=4, rowspan=1, columnspan=1, sticky="nsew")
 
     # Use columnconfigure and rowconfigure to partition the columns, so that each column and row will fill the corresponding space
     # The 'weight' represents the weight of the corresponding row/column length
@@ -1709,7 +1755,7 @@ def create_param_pannel(master):
 
 def create_test_pannel(master):
     dataPannel =tkinter.LabelFrame(master)
-    dataPannel.grid(row=0, column=2, rowspan=1, columnspan=1, sticky="nsew")
+    dataPannel.grid(row=1, column=3, rowspan=1, columnspan=1, sticky="nsew")
     # Increase the size of the 'SVerilog' panel
     dataPannel.grid_rowconfigure(1, weight=2)
 
@@ -1803,7 +1849,7 @@ def create_test_pannel(master):
 
 def create_layout_pannel(master):
     layoutPannel = tkinter.LabelFrame(master, text='Layout', bd=BORDER, relief='groove')
-    layoutPannel.grid(row=0, column=3, rowspan=1, columnspan=1, sticky="nsew")
+    layoutPannel.grid(row=1, column=4, rowspan=1, columnspan=1, sticky="nsew")
     canvas = tkinter.Canvas(layoutPannel, bd=0)
     scrollbar = tkinter.Scrollbar(layoutPannel, orient="horizontal", command=canvas.xview)
     scrollbar.pack(side="bottom", fill="x")
@@ -1819,7 +1865,7 @@ def create_layout_pannel(master):
 
 def create_mapping_pannel(master):
     mappingPannel = tkinter.LabelFrame(master, text='Mapping', bd=BORDER, relief='groove')
-    mappingPannel.grid(row=1, column=1, rowspan=1, columnspan=3, sticky="nsew")
+    mappingPannel.grid(row=1, column=1, rowspan=1, columnspan=2, sticky="nsew")
     mappingCanvas = tkinter.Canvas(mappingPannel, bd=0)
     widgets["mappingCanvas"] = mappingCanvas
     hbar = tkinter.Scrollbar(mappingPannel, orient="horizontal", command=mappingCanvas.xview)
@@ -1937,11 +1983,21 @@ TILE_WIDTH = 70
 LINK_LENGTH = 40
 GRID_WIDTH = (TILE_WIDTH+LINK_LENGTH) * COLS - LINK_LENGTH
 GRID_HEIGHT = (TILE_HEIGHT+LINK_LENGTH) * ROWS - LINK_LENGTH
+# kernel
 create_kernel_pannel(master)
+# Mapping
 create_mapping_pannel(master)
+# multi cgra
+create_multi_cgra_panel(master)
+# multi cgra config
+create_multi_cgra_config_panel(master)
+# cgra
 create_cgra_pannel(master, ROWS, COLS)
+# Configuration
 create_param_pannel(master)
+# Verification
 create_test_pannel(master)
+# Layout
 create_layout_pannel(master)  
 # The width and height of the entire window
 default_width = 1650
@@ -1949,10 +2005,12 @@ default_height = 1000
 window_size(master, default_width, default_height) 
 #master.grid_rowconfigure(0, weight=1)
 master.grid_rowconfigure(1, weight=2)
-master.grid_columnconfigure(0, weight=1)
+master.grid_columnconfigure(0, weight=2)
 master.grid_columnconfigure(1, weight=1)
-master.grid_columnconfigure(2, weight=1)
+master.grid_columnconfigure(2, weight=2)
 master.grid_columnconfigure(3, weight=1)
+master.grid_columnconfigure(4, weight=1)
+# master.grid_columnconfigure(5, weight=1)
 #print(master.winfo_width())
 #print(master.winfo_height())
 master.mainloop()

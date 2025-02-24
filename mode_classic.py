@@ -1435,15 +1435,26 @@ def on_resize(event):
 def create_multi_cgra_panel(master):
     multiCgraPanel = tkinter.LabelFrame(master, text='Multi-CGRA', bd=BORDER, relief='groove')
     multiCgraPanel.grid(row=0, column=0, rowspan=1, columnspan=1, sticky="nsew")
-    multiCgraCanvas = tkinter.Canvas(multiCgraPanel)
-    multiCgraCanvas.bind("<Configure>", on_resize)
-    print(f"multiCgraCanvas: {multiCgraCanvas.winfo_reqheight()} x {multiCgraCanvas.winfo_reqwidth()}")
+    # multiCgraPanel.bind("<Configure>", on_resize)
+
+    multiCgraCanvas = tkinter.Canvas(multiCgraPanel, background='green')
 
     cgraButton = tkinter.Button(multiCgraCanvas, fg='black', bg='black', border=4)
-    multiCgraCanvas.create_window(50, 50, window = cgraButton, height = 100, width = 100, anchor = "nw")
-    multiCgraCanvas.create_line(150, 150, 180, 180, fill = "black")
-    multiCgraCanvas.create_oval(160, 160, 200, 200, fill="black")
-    multiCgraCanvas.pack()
+    multiCgraCanvas.create_window(20, 20, window=cgraButton, height=100, width=100, anchor="nw")
+    multiCgraCanvas.create_line(120, 120, 145, 145, fill="black")
+    multiCgraCanvas.create_oval(140, 140, 160, 160, fill="black")
+
+    cgraButton2 = tkinter.Button(multiCgraCanvas, fg='black', bg='black', border=4)
+    multiCgraCanvas.create_window(220, 20, window=cgraButton2, height=100, width=100, anchor="nw")
+    multiCgraCanvas.create_line(320, 120, 345, 145, fill="black")
+    multiCgraCanvas.create_oval(340, 140, 360, 160, fill="black")
+
+    multiCgraCanvas.create_line(150, 150, 340, 150, fill="black", arrow=tkinter.LAST)
+    multiCgraCanvas.create_line(340, 150, 160, 150, fill="black", arrow=tkinter.LAST)
+
+    multiCgraCanvas.pack(side="top", fill="both", expand=True)
+
+
 
 def create_multi_cgra_config_panel(master):
     multiCgraConfigPanel = tkinter.LabelFrame(master, text='Multi-CGRA Config', bd=BORDER, relief='groove')
@@ -2015,11 +2026,11 @@ create_layout_pannel(master)
 default_width = 1650
 default_height = 1000
 window_size(master, default_width, default_height) 
-master.grid_rowconfigure(0, weight=1)
+# master.grid_rowconfigure(0, weight=1)
 master.grid_rowconfigure(1, weight=2)
-master.grid_columnconfigure(0, weight=2)
+master.grid_columnconfigure(0, weight=5)
 master.grid_columnconfigure(1, weight=1)
-master.grid_columnconfigure(2, weight=2)
+master.grid_columnconfigure(2, weight=5)
 master.grid_columnconfigure(3, weight=1)
 master.grid_columnconfigure(4, weight=1)
 # master.grid_columnconfigure(5, weight=1)

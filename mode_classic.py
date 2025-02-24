@@ -1428,10 +1428,22 @@ def clickMapDFG():
     timer = threading.Thread(target=countMapTime)
     timer.start()
 
+def on_resize(event):
+    w, h = event.width, event.height
+    print(f"on_resize: {w} x {h}")
 
 def create_multi_cgra_panel(master):
     multiCgraPanel = tkinter.LabelFrame(master, text='Multi-CGRA', bd=BORDER, relief='groove')
     multiCgraPanel.grid(row=0, column=0, rowspan=1, columnspan=1, sticky="nsew")
+    multiCgraCanvas = tkinter.Canvas(multiCgraPanel)
+    multiCgraCanvas.bind("<Configure>", on_resize)
+    print(f"multiCgraCanvas: {multiCgraCanvas.winfo_reqheight()} x {multiCgraCanvas.winfo_reqwidth()}")
+
+    cgraButton = tkinter.Button(multiCgraCanvas, fg='black', bg='black', border=4)
+    multiCgraCanvas.create_window(50, 50, window = cgraButton, height = 100, width = 100, anchor = "nw")
+    multiCgraCanvas.create_line(150, 150, 180, 180, fill = "black")
+    multiCgraCanvas.create_oval(160, 160, 200, 200, fill="black")
+    multiCgraCanvas.pack()
 
 def create_multi_cgra_config_panel(master):
     multiCgraConfigPanel = tkinter.LabelFrame(master, text='Multi-CGRA Config', bd=BORDER, relief='groove')
@@ -1442,37 +1454,37 @@ def create_multi_cgra_config_panel(master):
     for i in range(2):
         multiCgraConfigPanel.columnconfigure(i, weight=1)
 
-    numOfCgraLabel = tkinter.Label(multiCgraConfigPanel, text='Num of CGRA(s):')
-    numOfCgraLabel.grid(row=0, column=0, sticky="w")
-    numOfCgraLabelEntry = tkinter.Entry(multiCgraConfigPanel, justify=tkinter.CENTER, highlightbackground="black",
-                              highlightthickness=HIGHLIGHT_THICKNESS)
-    numOfCgraLabelEntry.grid(row=0, column=1, padx=5)
+    # numOfCgraLabel = tkinter.Label(multiCgraConfigPanel, text='Num of CGRA(s):')
+    # numOfCgraLabel.grid(row=0, column=0, sticky="w")
+    # numOfCgraLabelEntry = tkinter.Entry(multiCgraConfigPanel, justify=tkinter.CENTER, highlightbackground="black",
+    #                           highlightthickness=HIGHLIGHT_THICKNESS)
+    # numOfCgraLabelEntry.grid(row=0, column=1, padx=5)
 
     totalSRAMSizeLabel = tkinter.Label(multiCgraConfigPanel, text='Total SRAM size:')
-    totalSRAMSizeLabel.grid(row=1, column=0, sticky="w")
+    totalSRAMSizeLabel.grid(row=0, column=0, sticky="w")
     totalSRAMSizeLabelEntry = tkinter.Entry(multiCgraConfigPanel, justify=tkinter.CENTER, highlightbackground="black",
                                         highlightthickness=HIGHLIGHT_THICKNESS)
-    totalSRAMSizeLabelEntry.grid(row=1, column=1, padx=5)
+    totalSRAMSizeLabelEntry.grid(row=0, column=1, padx=5)
 
     interCgraTopologyLabel = tkinter.Label(multiCgraConfigPanel, text='Inter-CGRA topology:')
-    interCgraTopologyLabel.grid(row=2, column=0, sticky="w")
+    interCgraTopologyLabel.grid(row=1, column=0, sticky="w")
     interCgraTopologyLabelEntry = tkinter.Entry(multiCgraConfigPanel, justify=tkinter.CENTER, highlightbackground="black",
                                             highlightthickness=HIGHLIGHT_THICKNESS)
-    interCgraTopologyLabelEntry.grid(row=2, column=1, padx=5)
+    interCgraTopologyLabelEntry.grid(row=1, column=1, padx=5)
 
     multiCgraRowsLabel = tkinter.Label(multiCgraConfigPanel, text='Multi-CGRA Rows:')
-    multiCgraRowsLabel.grid(row=3, column=0, sticky="w")
+    multiCgraRowsLabel.grid(row=2, column=0, sticky="w")
     multiCgraRowsLabelEntry = tkinter.Entry(multiCgraConfigPanel, justify=tkinter.CENTER, highlightbackground="black",
                               highlightthickness=HIGHLIGHT_THICKNESS)
-    multiCgraRowsLabelEntry.grid(row=3, column=1, padx=5)
-    multiCgraRowsLabelEntry.insert(0, str(4))
+    multiCgraRowsLabelEntry.grid(row=2, column=1, padx=5)
+    multiCgraRowsLabelEntry.insert(0, str(2))
 
     multiCgraColumnsLabel = tkinter.Label(multiCgraConfigPanel, text='Multi-CGRA Columns:')
-    multiCgraColumnsLabel.grid(row=4, column=0, sticky="w")
+    multiCgraColumnsLabel.grid(row=3, column=0, sticky="w")
     multiCgraColumnsEntry = tkinter.Entry(multiCgraConfigPanel, justify=tkinter.CENTER, highlightbackground="black",
                                  highlightthickness=HIGHLIGHT_THICKNESS)
-    multiCgraColumnsEntry.grid(row=4, column=1, padx=5)
-    multiCgraColumnsEntry.insert(0, str(4))
+    multiCgraColumnsEntry.grid(row=3, column=1, padx=5)
+    multiCgraColumnsEntry.insert(0, str(2))
 
 
 def create_cgra_pannel(master, rows, columns):
@@ -2003,7 +2015,7 @@ create_layout_pannel(master)
 default_width = 1650
 default_height = 1000
 window_size(master, default_width, default_height) 
-#master.grid_rowconfigure(0, weight=1)
+master.grid_rowconfigure(0, weight=1)
 master.grid_rowconfigure(1, weight=2)
 master.grid_columnconfigure(0, weight=2)
 master.grid_columnconfigure(1, weight=1)
@@ -2013,4 +2025,6 @@ master.grid_columnconfigure(4, weight=1)
 # master.grid_columnconfigure(5, weight=1)
 #print(master.winfo_width())
 #print(master.winfo_height())
+
+# master.bind('<Configure>', on_resize)
 master.mainloop()

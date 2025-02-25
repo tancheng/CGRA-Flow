@@ -1564,11 +1564,19 @@ def create_multi_cgra_config_panel(master):
                                         highlightthickness=HIGHLIGHT_THICKNESS)
     totalSRAMSizeLabelEntry.grid(row=0, column=1, padx=5)
 
+    interCgraTopologyOptions = [
+        "Mesh",
+        "Ring"
+    ]
+    topologyVariable = tkinter.StringVar(multiCgraConfigPanel)
+    topologyVariable.set(interCgraTopologyOptions[0])
+    topologyOptionMenu = tkinter.OptionMenu(multiCgraConfigPanel, topologyVariable, *interCgraTopologyOptions)
     interCgraTopologyLabel = tkinter.Label(multiCgraConfigPanel, text='Inter-CGRA topology:')
     interCgraTopologyLabel.grid(row=1, column=0, sticky="w")
-    interCgraTopologyLabelEntry = tkinter.Entry(multiCgraConfigPanel, justify=tkinter.CENTER, highlightbackground="black",
-                                            highlightthickness=HIGHLIGHT_THICKNESS)
-    interCgraTopologyLabelEntry.grid(row=1, column=1, padx=5)
+    # interCgraTopologyLabelEntry = tkinter.Entry(multiCgraConfigPanel, justify=tkinter.CENTER, highlightbackground="black",
+    #                                         highlightthickness=HIGHLIGHT_THICKNESS)
+    # interCgraTopologyLabelEntry.grid(row=1, column=1, padx=5)
+    topologyOptionMenu.grid(row=1, column=1, padx=5)
 
     multiCgraRowsLabel = tkinter.Label(multiCgraConfigPanel, text='Multi-CGRA Rows:')
     multiCgraRowsLabel.grid(row=2, column=0, sticky="w")
@@ -1583,6 +1591,10 @@ def create_multi_cgra_config_panel(master):
                                  highlightthickness=HIGHLIGHT_THICKNESS)
     multiCgraColumnsEntry.grid(row=3, column=1, padx=5)
     multiCgraColumnsEntry.insert(0, str(2))
+
+    multiCgraConfigUpdateButton = tkinter.Button(multiCgraConfigPanel, text="Update", relief='raised',
+                                 highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS)
+    multiCgraConfigUpdateButton.grid(row=4, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
 
 
 def create_cgra_pannel(master, rows, columns):

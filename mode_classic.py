@@ -1437,7 +1437,7 @@ def create_multi_cgra_panel(master):
     multiCgraPanel.grid(row=0, column=0, rowspan=1, columnspan=1, sticky="nsew")
     # multiCgraPanel.bind("<Configure>", on_resize)
 
-    multiCgraCanvas = tkinter.Canvas(multiCgraPanel, background='green')
+    multiCgraCanvas = tkinter.Canvas(multiCgraPanel)
     canvas_width = multiCgraCanvas.winfo_reqwidth()
     canvas_height = multiCgraCanvas.winfo_reqheight()
     print(f"multiCgraCanvas: {canvas_width} x {canvas_height}")
@@ -1452,9 +1452,15 @@ def create_multi_cgra_panel(master):
     cgraCircleMargin = 20
     cgraSquareLength = min((canvas_width / cols - cgraMargin), (canvas_height / rows - cgraMargin))
     circleDiameter = cgraSquareLength / 2
+    intraCgraTileMargin = 10
+
+    # mork cgra nxn
+    intraCgraTileRows1 = 2
+    intraCgraTileCols1 = 2
+    intraCgraTileRows2 = 3
+    intraCgraTileCols2 = 3
 
     x, y = borderMargin, borderMargin
-
     for row in range(rows):
         for col in range(cols):
             # draw
@@ -1462,6 +1468,33 @@ def create_multi_cgra_panel(master):
             cgraFrame = tkinter.Frame(multiCgraCanvas, bg='black', border=4)
             multiCgraCanvas.create_window(x, y, window=cgraFrame, height=cgraSquareLength, width=cgraSquareLength,
                                           anchor="nw")
+
+            # todo
+            # mock the last col's tile to 3x3, need make it configurable
+            if(col != cols - 1):
+                intraCgraSquareLength = cgraSquareLength/intraCgraTileRows1 - 20
+                tileX, tileY = x + intraCgraTileMargin, y + intraCgraTileMargin
+                for cgraRow in range(intraCgraTileRows1):
+                    for cgraCol in range(intraCgraTileCols1):
+                        tileCanvas = tkinter.Canvas(multiCgraPanel, width=intraCgraSquareLength, height=intraCgraSquareLength, bg="grey", bd=0, highlightthickness=0, relief='ridge')
+                        tileCanvas.place(x=tileX, y=tileY)
+                        tkinter.Misc.lift(tileCanvas)
+                        tileX = tileX + (cgraSquareLength / cols)
+                    tileX = x + intraCgraTileMargin
+                    tileY = tileY + (cgraSquareLength / rows)
+            else:
+                intraCgraSquareLength = cgraSquareLength / intraCgraTileRows2 - 15
+                tileX, tileY = x + intraCgraTileMargin, y + intraCgraTileMargin - 5
+                for cgraRow in range(intraCgraTileRows2):
+                    for cgraCol in range(intraCgraTileCols2):
+                        tileCanvas = tkinter.Canvas(multiCgraPanel, width=intraCgraSquareLength,
+                                                    height=intraCgraSquareLength, bg="grey", bd=0, highlightthickness=0, relief='ridge')
+                        tileCanvas.place(x=tileX, y=tileY)
+                        tkinter.Misc.lift(tileCanvas)
+                        tileX = tileX + (cgraSquareLength / cols) - 20
+                    tileX = x + intraCgraTileMargin
+                    tileY = tileY + (cgraSquareLength / rows - 10) - 5
+
             multiCgraCanvas.create_oval(x + cgraSquareLength + cgraCircleMargin,
                                         y + cgraSquareLength + cgraCircleMargin,
                                         x + cgraSquareLength + cgraCircleMargin + circleDiameter,

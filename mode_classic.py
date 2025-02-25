@@ -1438,19 +1438,52 @@ def create_multi_cgra_panel(master):
     # multiCgraPanel.bind("<Configure>", on_resize)
 
     multiCgraCanvas = tkinter.Canvas(multiCgraPanel, background='green')
+    canvas_width = multiCgraCanvas.winfo_reqwidth()
+    canvas_height = multiCgraCanvas.winfo_reqheight()
+    print(f"multiCgraCanvas: {canvas_width} x {canvas_height}")
 
-    cgraButton = tkinter.Button(multiCgraCanvas, fg='black', bg='black', border=4)
-    multiCgraCanvas.create_window(20, 20, window=cgraButton, height=100, width=100, anchor="nw")
-    multiCgraCanvas.create_line(120, 120, 145, 145, fill="black")
-    multiCgraCanvas.create_oval(140, 140, 160, 160, fill="black")
+    # canvas base 0, 0
+    # suppose default rowsxcols 2x2, may extra operation to connect cgra frames when one row only
+    # suppose width 570, height 400
+    # margin 20
+    rows, cols = 2, 2
+    borderMargin = 20
+    cgraMargin = 100
+    cgraCircleMargin = 20
+    cgraSquareLength = min((canvas_width / cols - cgraMargin), (canvas_height / rows - cgraMargin))
+    circleDiameter = cgraSquareLength / 2
 
-    cgraButton2 = tkinter.Button(multiCgraCanvas, fg='black', bg='black', border=4)
-    multiCgraCanvas.create_window(220, 20, window=cgraButton2, height=100, width=100, anchor="nw")
-    multiCgraCanvas.create_line(320, 120, 345, 145, fill="black")
-    multiCgraCanvas.create_oval(340, 140, 360, 160, fill="black")
 
-    multiCgraCanvas.create_line(150, 150, 340, 150, fill="black", arrow=tkinter.LAST)
-    multiCgraCanvas.create_line(340, 150, 160, 150, fill="black", arrow=tkinter.LAST)
+    numOfCgras = rows * cols
+    x, y = borderMargin, borderMargin
+    for i in range(numOfCgras):
+        # draw
+        print(f"cgraFrame: {x} x {y}, cgraSquareLength: {cgraSquareLength}")
+        cgraFrame = tkinter.Frame(multiCgraCanvas, bg = 'black', border = 4)
+        multiCgraCanvas.create_window(x, y, window = cgraFrame, height = cgraSquareLength, width = cgraSquareLength, anchor = "nw")
+        multiCgraCanvas.create_oval(x+cgraSquareLength+cgraCircleMargin, y+cgraSquareLength+cgraCircleMargin, x+cgraSquareLength+cgraCircleMargin+circleDiameter, y+cgraSquareLength+cgraCircleMargin+circleDiameter, fill = "black")
+        multiCgraCanvas.create_line(x+cgraSquareLength, y+cgraSquareLength, x+cgraSquareLength+cgraCircleMargin+5, y+cgraSquareLength+cgraCircleMargin+5, fill="black")
+
+        leftCircleX, leftCircleY = x+cgraSquareLength+cgraCircleMargin + circleDiameter/2, y+cgraSquareLength+cgraCircleMargin + circleDiameter/2
+        # move x, y
+        x = x + canvas_width / cols - 80
+        if ((i + 1) % cols == 0):
+            x = borderMargin
+            y = y + (canvas_height / rows)
+
+
+    # cgraFrame = tkinter.Frame(multiCgraCanvas, bg='black', border=4)
+    # multiCgraCanvas.create_window(20, 20, window=cgraFrame, height=100, width=100, anchor="nw")
+    # multiCgraCanvas.create_line(120, 120, 145, 145, fill="black")
+    # multiCgraCanvas.create_oval(140, 140, 160, 160, fill="black")
+    #
+    # cgraFrame2 = tkinter.Frame(multiCgraCanvas, bg='black', border=4)
+    # multiCgraCanvas.create_window(220, 20, window=cgraFrame2, height=100, width=100, anchor="nw")
+    # multiCgraCanvas.create_line(320, 120, 345, 145, fill="black")
+    # multiCgraCanvas.create_oval(340, 140, 360, 160, fill="black")
+    #
+    # multiCgraCanvas.create_line(150, 150, 340, 150, fill="black", arrow=tkinter.LAST)
+    # multiCgraCanvas.create_line(340, 150, 160, 150, fill="black", arrow=tkinter.LAST)
 
     multiCgraCanvas.pack(side="top", fill="both", expand=True)
 

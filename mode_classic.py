@@ -1594,7 +1594,7 @@ def create_multi_cgra_config_panel(master):
 
     multiCgraConfigUpdateButton = tkinter.Button(multiCgraConfigPanel, text="Update", relief='raised',
                                  highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS)
-    multiCgraConfigUpdateButton.grid(row=4, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
+    multiCgraConfigUpdateButton.grid(row=4, column=1, sticky="ew", padx=5, pady=5)
 
 
 def create_cgra_pannel(master, rows, columns):

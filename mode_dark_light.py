@@ -1609,6 +1609,8 @@ def create_multi_cgra_panel(master):
             # draw
             print(f"cgraFrame: {x} x {y}, cgraSquareLength: {cgraSquareLength}")
             cgraFrame = tkinter.Frame(multiCgraCanvas, bg='grey', border=4)
+            # add command for frame
+            cgraFrame.bind('<Button-1>', lambda _ : print('clicked'))
             multiCgraCanvas.create_window(x, y, window=cgraFrame, height=cgraSquareLength, width=cgraSquareLength,
                                           anchor="nw")
 

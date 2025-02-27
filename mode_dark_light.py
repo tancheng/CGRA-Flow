@@ -2498,7 +2498,7 @@ def create_kernel_pannel(master):
     appPathEntry.bind("<Button-1>", clickSelectApp)
 
     compileAppButton = customtkinter.CTkButton(kernelPannel, text=" Compile app  ", command=clickCompileApp)
-    compileAppButton.grid(row=1, column=2)
+    compileAppButton.grid(row=1, column=2, padx=5)
 
     compileAppShow = customtkinter.CTkLabel(kernelPannel, text=" IDLE")
     compileAppShow.grid(row=1, column=3)
@@ -2516,7 +2516,7 @@ def create_kernel_pannel(master):
     kernelNameMenu.grid(row=2, column=1)
 
     generateDFGButton = customtkinter.CTkButton(kernelPannel, text="Generate DFG", command=clickShowDFG)
-    generateDFGButton.grid(row=2, column=2)
+    generateDFGButton.grid(row=2, column=2, padx=5)
 
     generateDFGShow = customtkinter.CTkLabel(kernelPannel, text=" IDLE")
     generateDFGShow.grid(row=2, column=3, sticky="ew")

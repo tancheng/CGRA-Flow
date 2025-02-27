@@ -1567,6 +1567,171 @@ def _on_mousewheel(canvas, event):
     else:
         canvas.yview_scroll(int(-1*event.delta), "units")
 
+
+def on_resize(event):
+    w, h = event.width, event.height
+    print(f"on_resize: {w} x {h}")
+
+def create_multi_cgra_panel(master):
+    multiCgraPanel = customtkinter.CTkFrame(master)
+    multiCgraPanel.grid(row=0, column=0, padx=(0, 5), sticky="nsew")
+    multiCgraLabel = customtkinter.CTkLabel(multiCgraPanel, text='Multi-CGRA',
+                                       font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
+    multiCgraLabel.pack(anchor="w", ipadx=5)
+    # multiCgraPanel.bind("<Configure>", on_resize)
+
+    multiCgraCanvas = customtkinter.CTkCanvas(multiCgraPanel, bg=CANVAS_BG_COLOR, bd=0, highlightthickness=0)
+    canvas_width = multiCgraCanvas.winfo_reqwidth()
+    canvas_height = multiCgraCanvas.winfo_reqheight()
+    print(f"multiCgraCanvas: {canvas_width} x {canvas_height}")
+
+    # canvas base 0, 0
+    # suppose default rowsxcols 2x2, may extra operation to connect cgra frames when one row only
+    # suppose width 570, height 400
+    # margin 20
+    rows, cols = 2, 2
+    borderMargin = 50
+    cgraMargin = 30
+    cgraCircleMargin = 20
+    cgraSquareLength = min((canvas_width / cols - cgraMargin), (canvas_height / rows - cgraMargin))
+    circleDiameter = cgraSquareLength / 4
+    intraCgraTileMargin = 10
+
+    # mork cgra nxn
+    intraCgraTileRows1 = 2
+    intraCgraTileCols1 = 2
+    intraCgraTileRows2 = 3
+    intraCgraTileCols2 = 3
+
+    x, y = borderMargin, borderMargin
+    for row in range(rows):
+        for col in range(cols):
+            # draw
+            print(f"cgraFrame: {x} x {y}, cgraSquareLength: {cgraSquareLength}")
+            cgraFrame = tkinter.Frame(multiCgraCanvas, bg='grey', border=4)
+            multiCgraCanvas.create_window(x, y, window=cgraFrame, height=cgraSquareLength, width=cgraSquareLength,
+                                          anchor="nw")
+
+            # todo
+            # mock the last col's tile to 3x3, need make it configurable
+            if(col != cols - 1):
+                intraCgraSquareLength = cgraSquareLength/intraCgraTileRows1 - 20
+                tileX, tileY = x + intraCgraTileMargin, y + intraCgraTileMargin
+                for cgraRow in range(intraCgraTileRows1):
+                    for cgraCol in range(intraCgraTileCols1):
+                        tileCanvas = tkinter.Canvas(multiCgraPanel, width=intraCgraSquareLength, height=intraCgraSquareLength, bg="#A9A9A9", bd=0, highlightthickness=0, relief='ridge')
+                        tileCanvas.place(x=tileX, y=tileY)
+                        tkinter.Misc.lift(tileCanvas)
+                        tileX = tileX + (cgraSquareLength / cols)
+                    tileX = x + intraCgraTileMargin
+                    tileY = tileY + (cgraSquareLength / rows)
+            else:
+                intraCgraSquareLength = cgraSquareLength / intraCgraTileRows2 - 15
+                tileX, tileY = x + intraCgraTileMargin, y + intraCgraTileMargin - 5
+                for cgraRow in range(intraCgraTileRows2):
+                    for cgraCol in range(intraCgraTileCols2):
+                        tileCanvas = tkinter.Canvas(multiCgraPanel, width=intraCgraSquareLength,
+                                                    height=intraCgraSquareLength, bg="#A9A9A9", bd=0, highlightthickness=0, relief='ridge')
+                        tileCanvas.place(x=tileX, y=tileY)
+                        tkinter.Misc.lift(tileCanvas)
+                        tileX = tileX + (cgraSquareLength / cols) - 20
+                    tileX = x + intraCgraTileMargin
+                    tileY = tileY + (cgraSquareLength / rows - 10) - 8
+
+            multiCgraCanvas.create_oval(x + cgraSquareLength + cgraCircleMargin,
+                                        y + cgraSquareLength + cgraCircleMargin,
+                                        x + cgraSquareLength + cgraCircleMargin + circleDiameter,
+                                        y + cgraSquareLength + cgraCircleMargin + circleDiameter, fill="grey")
+            multiCgraCanvas.create_line(x + cgraSquareLength, y + cgraSquareLength,
+                                        x + cgraSquareLength + cgraCircleMargin + 5,
+                                        y + cgraSquareLength + cgraCircleMargin + 5, fill="black")
+
+            circleCenterX, circleCenterY = x + cgraSquareLength + cgraCircleMargin + circleDiameter / 2, y + cgraSquareLength + cgraCircleMargin + circleDiameter / 2
+            # if not last col: draws horizontal line, connects to right route
+            # if not last row: draws a vertical line, connects to down route
+            if col != cols - 1:
+                targetCircleCenterX1 = x + cgraSquareLength + cgraCircleMargin + circleDiameter / 2 + (canvas_width / cols)
+                targetCircleCenterY1 = circleCenterY
+                multiCgraCanvas.create_line(circleCenterX + circleDiameter / 2, circleCenterY, targetCircleCenterX1 - circleDiameter / 2, targetCircleCenterY1, fill="black", arrow=tkinter.LAST)
+                multiCgraCanvas.create_line(targetCircleCenterX1 - circleDiameter / 2, targetCircleCenterY1, circleCenterX + circleDiameter / 2, circleCenterY, fill="black", arrow=tkinter.LAST)
+            if row != rows - 1:
+                targetCircleCenterX2 = circleCenterX
+                targetCircleCenterY2 = y + cgraSquareLength + cgraCircleMargin + circleDiameter / 2 + (canvas_height / rows + 100)
+                multiCgraCanvas.create_line(circleCenterX, circleCenterY + circleDiameter / 2, targetCircleCenterX2, targetCircleCenterY2 - circleDiameter / 2, fill="black",
+                                            arrow=tkinter.LAST)
+                multiCgraCanvas.create_line(targetCircleCenterX2, targetCircleCenterY2 - circleDiameter / 2, circleCenterX, circleCenterY + circleDiameter / 2, fill="black",
+                                            arrow=tkinter.LAST)
+
+            x = x + (canvas_width / cols)
+        # new row
+        x = borderMargin
+        y = y + (canvas_height / rows + 100)
+
+
+
+    # cgraFrame = tkinter.Frame(multiCgraCanvas, bg='black', border=4)
+    # multiCgraCanvas.create_window(20, 20, window=cgraFrame, height=100, width=100, anchor="nw")
+    # multiCgraCanvas.create_line(120, 120, 145, 145, fill="black")
+    # multiCgraCanvas.create_oval(140, 140, 160, 160, fill="black")
+    #
+    # cgraFrame2 = tkinter.Frame(multiCgraCanvas, bg='black', border=4)
+    # multiCgraCanvas.create_window(220, 20, window=cgraFrame2, height=100, width=100, anchor="nw")
+    # multiCgraCanvas.create_line(320, 120, 345, 145, fill="black")
+    # multiCgraCanvas.create_oval(340, 140, 360, 160, fill="black")
+    #
+    # multiCgraCanvas.create_line(150, 150, 340, 150, fill="black", arrow=tkinter.LAST)
+    # multiCgraCanvas.create_line(340, 150, 160, 150, fill="black", arrow=tkinter.LAST)
+
+    multiCgraCanvas.pack(side="top", fill="both", expand=True)
+
+
+
+def create_multi_cgra_config_panel(master):
+    multiCgraConfigPanel = customtkinter.CTkFrame(master, width=240)
+    multiCgraConfigPanel.grid_propagate(0)
+    multiCgraConfigPanel.grid(row=0, column=1, sticky="nsew")
+    for i in range(6):
+        multiCgraConfigPanel.rowconfigure(i, weight=1)
+    multiCgraConfigPanel.rowconfigure(6, weight=10)
+    for i in range(2):
+        multiCgraConfigPanel.columnconfigure(i, weight=1)
+
+    multiCgraConfigLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Multi-CGRA\nConfiguration',
+                                                font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
+    multiCgraConfigLabel.grid(row=0, column=0, ipadx=5, pady=(5, 0), sticky="nw")
+
+    totalSRAMSizeLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Total SRAM size:')
+    totalSRAMSizeLabel.grid(row=1, column=0, padx=5, sticky="w")
+    totalSRAMSizeLabelEntry = customtkinter.CTkEntry(multiCgraConfigPanel, justify=tkinter.CENTER)
+    totalSRAMSizeLabelEntry.grid(row=1, column=1, padx=5)
+
+    interCgraTopologyLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Inter-CGRA\ntopology:')
+    interCgraTopologyLabel.grid(row=2, column=0, padx=5, sticky="w")
+    interCgraTopologyOptions = [
+        "Mesh",
+        "Ring"
+    ]
+    topologyVariable = tkinter.StringVar(multiCgraConfigPanel)
+    topologyVariable.set(interCgraTopologyOptions[0])
+    topologyOptionMenu = customtkinter.CTkOptionMenu(multiCgraConfigPanel, variable=topologyVariable, values=interCgraTopologyOptions)
+    topologyOptionMenu.grid(row=2, column=1, padx=5)
+
+    multiCgraRowsLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Multi-CGRA\nRows:')
+    multiCgraRowsLabel.grid(row=3, column=0, padx=5, sticky="w")
+    multiCgraRowsLabelEntry = customtkinter.CTkEntry(multiCgraConfigPanel, justify=tkinter.CENTER)
+    multiCgraRowsLabelEntry.grid(row=3, column=1, padx=5)
+    multiCgraRowsLabelEntry.insert(0, str(2))
+
+    multiCgraColumnsLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Multi-CGRA\nColumns:')
+    multiCgraColumnsLabel.grid(row=4, column=0, padx=5, sticky="w")
+    multiCgraColumnsEntry = customtkinter.CTkEntry(multiCgraConfigPanel, justify=tkinter.CENTER)
+    multiCgraColumnsEntry.grid(row=4, column=1, padx=5)
+    multiCgraColumnsEntry.insert(0, str(2))
+
+    multiCgraConfigUpdateButton = customtkinter.CTkButton(multiCgraConfigPanel, text="Update")
+    multiCgraConfigUpdateButton.grid(row=5, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
+
+
 def create_cgra_pannel(master, rows, columns):
     ROWS = rows
     COLS = columns
@@ -1577,7 +1742,7 @@ def create_cgra_pannel(master, rows, columns):
     # Use solid black board to let the pannel look better
     cgraPannel = customtkinter.CTkFrame(master)
     # cgraPannel = tkinter.LabelFrame(master, text='CGRA', bd=BORDER, relief='groove')
-    cgraPannel.grid(row=0, column=0, rowspan=1, columnspan=1, padx=(5, 5), pady=(5, 0), sticky="nsew")
+    cgraPannel.grid(row=0, column=2, rowspan=1, columnspan=2, padx=(5, 5), sticky="nsew")
     # cgraPannel.pack()
     # cgraPannel.grid_propagate(0)
     # create label for cgraPannel
@@ -1776,7 +1941,7 @@ def place_xbar_options(master):
 def create_param_pannel(master):
     # paramPannel = tkinter.LabelFrame(master, text='Configuration', bd=BORDER, relief='groove')
     paramPannel = customtkinter.CTkFrame(master, width=550, height=480)
-    paramPannel.grid(row=0, column=1, rowspan=1, columnspan=1, padx=(0, 5), sticky="nsew")
+    paramPannel.grid(row=0, column=4, columnspan=2, padx=(0, 5), sticky="nsew")
 
     # Use columnconfigure and rowconfigure to partition the columns, so that each column and row will fill the corresponding space
     # The 'weight' represents the weight of the corresponding row/column length
@@ -1786,7 +1951,7 @@ def create_param_pannel(master):
         paramPannel.columnconfigure(i, weight=1)
     paramPannel.grid_propagate(0)
     configurationLabel = customtkinter.CTkLabel(paramPannel, text='Configuration', font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
-    configurationLabel.grid(row=0, column=0, ipadx=5, pady=(5,0), sticky="w")
+    configurationLabel.grid(row=0, column=0, ipadx=5, pady=(5,0), sticky="nw")
 
     rowsLabel = customtkinter.CTkLabel(paramPannel, text='Rows  Columns:')
     rowsLabel.grid(row=1, column=0)
@@ -1995,8 +2160,8 @@ def create_param_pannel(master):
 
 
 def create_test_pannel(master):
-    dataPannel = customtkinter.CTkFrame(master, width=280, height=480)
-    dataPannel.grid(row=0, column=2, rowspan=1, columnspan=1, pady=(5,0), sticky="nsew")
+    dataPannel = customtkinter.CTkFrame(master, width=80, height=480)
+    dataPannel.grid(row=1, column=4, pady=(5,0), sticky="nsew")
     # Increase the size of the 'SVerilog' panel
     dataPannel.grid_rowconfigure(1, weight=2)
 
@@ -2115,45 +2280,50 @@ def create_test_pannel(master):
     reportSPMPowerData.grid(row=6, column=1, pady=5)
 
 def create_layout_pannel(master):
-    # layoutPannel = tkinter.LabelFrame(master, text='Layout', bd=BORDER, relief='groove')
-    layoutPannel = customtkinter.CTkFrame(master)
-    layoutPannel.grid(row=0, column=3, rowspan=1, columnspan=1, padx=(5,0), pady=(5,0), sticky="nsew")
+    layoutPannel = customtkinter.CTkFrame(master, width=80)
+    layoutPannel.grid(row=1, column=5, padx=(5,0), pady=(5,0), sticky="nsew")
+    layoutPannel.grid_propagate(0)
+    for row in range(5):
+        layoutPannel.grid_rowconfigure(row, weight=1)
+    layoutPannel.grid_rowconfigure(5, weight=40)
+    layoutPannel.grid_columnconfigure(0, weight=1)
+    layoutPannel.grid_columnconfigure(1, weight=1)
     layoutPannelLabel = customtkinter.CTkLabel(layoutPannel, text='Layout ',
                                                # width=100,
                                                font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
-    layoutPannelLabel.grid(row=0, column=0, sticky="w")
+    layoutPannelLabel.grid(row=0, column=0, padx=(5,0), sticky="nw")
 
     # Adds the entry for user to select constraint.sdc
     constraintLabel = customtkinter.CTkLabel(layoutPannel, text="Constraint.sdc")
-    constraintLabel.grid(row=1, column=0, pady=(10,10), sticky="nsew")
+    constraintLabel.grid(row=1, column=0)
     constraintPathEntry = customtkinter.CTkEntry(layoutPannel)
-    constraintPathEntry.grid(row=1, column=1, padx=(10,20), pady=(10,10), sticky="nsew")
+    constraintPathEntry.grid(row=1, column=1)
     constraintPathEntry.bind("<Button-1>", clickSelectConstraintFile)
     widgets["constraintPathEntry"] = constraintPathEntry
 
     # Adds the entry for user to select config.mk
     configLabel = customtkinter.CTkLabel(layoutPannel, text="Config.mk")
-    configLabel.grid(row=1, column=2, padx=(0,10), pady=(10,10), sticky="nsew")
+    configLabel.grid(row=2, column=0, padx=(0, 5))
     configPathEntry = customtkinter.CTkEntry(layoutPannel)
-    configPathEntry.grid(row=1, column=3, pady=(10,10), sticky="nsew")
+    configPathEntry.grid(row=2, column=1)
     configPathEntry.bind("<Button-1>", clickSelectConfigFile)
     widgets["configPathEntry"] = configPathEntry
 
     # Adds the option menu to select process technology.
     processNameLabel = customtkinter.CTkLabel(layoutPannel, text="Process:")
-    processNameLabel.grid(row=2, column=0, pady=(10,10), sticky="nsew")
-    tempOptions = [ "asap7", "nangate45", "sky130hd"]
+    processNameLabel.grid(row=3, column=0)
+    tempOptions = ["asap7", "nangate45", "sky130hd"]
     processNameMenu = customtkinter.CTkOptionMenu(layoutPannel, variable=processOptions, values=tempOptions)
-    processNameMenu.grid(row=2, column=1, padx=(10,20), pady=(10,10), sticky="nsew")
+    processNameMenu.grid(row=3, column=1, padx=(5, 5))
 
     # Adds the button to trigger RTL->Layout flow.
     openRoadButton = customtkinter.CTkButton(layoutPannel, text="RTL -> Layout", command=clickRTL2Layout)
-    openRoadButton.grid(row=2, column=2, pady=(10,10), sticky="nsew", columnspan=2)
+    openRoadButton.grid(row=4, column=0, columnspan=2, sticky='we', padx=(10, 10))
 
     # Adds a placeholder to show the layout image saved from OpenRoad.
     global layoutLabel
     layoutLabel = customtkinter.CTkLabel(layoutPannel, text='')
-    layoutLabel.grid(row=3, column=0, padx=(0,10), pady=(10,10), columnspan=4)
+    layoutLabel.grid(row=5, column=0, padx=(0, 5), pady=(5, 5), columnspan=2)
 
 """
     canvas = customtkinter.CTkCanvas(layoutPannel, bg=CANVAS_BG_COLOR, bd=0, highlightthickness=0)
@@ -2301,8 +2471,9 @@ def create_mapping_pannel(master):
 
 def create_kernel_pannel(master):
     # kernelPannel = tkinter.LabelFrame(master, text="Kernel", bd=BORDER, relief='groove')
-    kernelPannel = customtkinter.CTkFrame(master)
-    kernelPannel.grid(row=1, column=0, rowspan=1, columnspan=1, padx=(0, 5), pady=(5, 0), sticky="nsew")
+    kernelPannel = customtkinter.CTkFrame(master, width=280)
+    kernelPannel.grid_propagate(0)
+    kernelPannel.grid(row=1, column=0, padx=(0, 5), pady=(5, 0), sticky="nsew")
     for row in range(13):
         kernelPannel.grid_rowconfigure(row, weight=1)
     kernelPannel.grid_columnconfigure(0, weight=3)
@@ -2317,7 +2488,7 @@ def create_kernel_pannel(master):
     kernelPannellLabel.grid(row=0, column=0, padx=(5, 0), sticky="wn")
 
     selectAppLabel = customtkinter.CTkLabel(kernelPannel, text=" Application:")
-    selectAppLabel.grid(row=1, column=0, sticky="nsew")
+    selectAppLabel.grid(row=1, column=0)
 
     appPathEntry = customtkinter.CTkEntry(kernelPannel)
     widgets["appPathEntry"] = appPathEntry
@@ -2430,11 +2601,21 @@ TILE_WIDTH = 70
 LINK_LENGTH = 40
 GRID_WIDTH = (TILE_WIDTH + LINK_LENGTH) * COLS - LINK_LENGTH
 GRID_HEIGHT = (TILE_HEIGHT + LINK_LENGTH) * ROWS - LINK_LENGTH
+# kernel
 create_kernel_pannel(master)
+# mapping
 create_mapping_pannel(master)
+# multi cgra
+create_multi_cgra_panel(master)
+# multi cgra config
+create_multi_cgra_config_panel(master)
+# cgra
 create_cgra_pannel(master, ROWS, COLS)
+# configuration
 create_param_pannel(master)
+# verification
 create_test_pannel(master)
+# layout
 create_layout_pannel(master)
 # The width and height of the entire window
 default_width = 1650
@@ -2442,10 +2623,12 @@ default_height = 1000
 window_size(master, default_width, default_height)
 # master.grid_rowconfigure(0, weight=1)
 master.grid_rowconfigure(1, weight=2)
-master.grid_columnconfigure(0, weight=2)
+master.grid_columnconfigure(0, weight=5)
 master.grid_columnconfigure(1, weight=1)
-master.grid_columnconfigure(2, weight=1)
+master.grid_columnconfigure(2, weight=5)
 master.grid_columnconfigure(3, weight=1)
+master.grid_columnconfigure(4, weight=1)
+master.grid_columnconfigure(5, weight=1)
 # print(master.winfo_width())
 # print(master.winfo_height())
 w, h = master.winfo_screenwidth(), master.winfo_screenheight()

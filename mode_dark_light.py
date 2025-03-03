@@ -70,7 +70,7 @@ def window_size(window, width, height):
     window.geometry(f"{width}x{height}")
 
 master = customtkinter.CTk()
-master.title("CGRA-Flow: An Integrated End-to-End Framework for CGRA Exploration, Compilation, and Development")
+master.title("Sora: An Integrated End-to-End Framework for Multi-CGRA Exploration, Compilation, Synthesis and Evaluation")
 
 fuTypeList = ["Phi", "Add", "Shift", "Ld", "Sel", "Cmp", "MAC", "St", "Ret", "Mul", "Logic", "Br"]
 xbarTypeList = ["W", "E", "N", "S", "NE", "NW", "SE", "SW"]
@@ -1659,15 +1659,17 @@ def create_multi_cgra_panel(master):
             if col != cols - 1:
                 targetCircleCenterX1 = x + cgraSquareLength + cgraCircleMargin + circleDiameter / 2 + (canvas_width / cols)
                 targetCircleCenterY1 = circleCenterY
-                multiCgraCanvas.create_line(circleCenterX + circleDiameter / 2, circleCenterY, targetCircleCenterX1 - circleDiameter / 2, targetCircleCenterY1, fill=CANVAS_LINE_COLOR, arrow=tkinter.LAST)
-                multiCgraCanvas.create_line(targetCircleCenterX1 - circleDiameter / 2, targetCircleCenterY1, circleCenterX + circleDiameter / 2, circleCenterY, fill=CANVAS_LINE_COLOR, arrow=tkinter.LAST)
+                multiCgraCanvas.create_line(circleCenterX + circleDiameter / 2, circleCenterY, targetCircleCenterX1 - circleDiameter / 2, targetCircleCenterY1, fill=CANVAS_LINE_COLOR,
+                                            arrow=tkinter.LAST, width=2)
+                multiCgraCanvas.create_line(targetCircleCenterX1 - circleDiameter / 2, targetCircleCenterY1, circleCenterX + circleDiameter / 2, circleCenterY, fill=CANVAS_LINE_COLOR,
+                                            arrow=tkinter.LAST, width=2)
             if row != rows - 1:
                 targetCircleCenterX2 = circleCenterX
                 targetCircleCenterY2 = y + cgraSquareLength + cgraCircleMargin + circleDiameter / 2 + (canvas_height / rows + 100)
                 multiCgraCanvas.create_line(circleCenterX, circleCenterY + circleDiameter / 2, targetCircleCenterX2, targetCircleCenterY2 - circleDiameter / 2, fill=CANVAS_LINE_COLOR,
-                                            arrow=tkinter.LAST)
+                                            arrow=tkinter.LAST, width=2)
                 multiCgraCanvas.create_line(targetCircleCenterX2, targetCircleCenterY2 - circleDiameter / 2, circleCenterX, circleCenterY + circleDiameter / 2, fill=CANVAS_LINE_COLOR,
-                                            arrow=tkinter.LAST)
+                                            arrow=tkinter.LAST, width=2)
 
             x = x + (canvas_width / cols)
         # new row
@@ -1688,8 +1690,15 @@ def create_multi_cgra_panel(master):
     #
     # multiCgraCanvas.create_line(150, 150, 340, 150, fill="black", arrow=tkinter.LAST)
     # multiCgraCanvas.create_line(340, 150, 160, 150, fill="black", arrow=tkinter.LAST)
-
+    # vbar = customtkinter.CTkScrollbar(multiCgraPanel, orientation="vertical", command=multiCgraCanvas.yview)
+    # vbar.pack(side=tkinter.RIGHT, fill="y")
+    # multiCgraCanvas.config(yscrollcommand=vbar.set)
+    # multiCgraCanvas.config(scrollregion=multiCgraCanvas.bbox("all"))
     multiCgraCanvas.pack(side="top", fill="both", expand=True)
+    # hbar = customtkinter.CTkScrollbar(multiCgraPanel, orientation="horizontal", command=multiCgraCanvas.xview)
+    # hbar.pack(side="bottom", fill="x")
+    # multiCgraCanvas.config(xscrollcommand=hbar.set)
+    # multiCgraCanvas.pack(side="top", fill="both", expand=True)
 
 
 
@@ -1703,11 +1712,11 @@ def create_multi_cgra_config_panel(master):
     for i in range(2):
         multiCgraConfigPanel.columnconfigure(i, weight=1)
 
-    multiCgraConfigLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Multi-CGRA\nConfiguration',
+    multiCgraConfigLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Multi-CGRA Modeling',
                                                 font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
-    multiCgraConfigLabel.grid(row=0, column=0, ipadx=5, pady=(5, 0), sticky="nw")
+    multiCgraConfigLabel.grid(row=0, column=0, columnspan=2, ipadx=5, pady=(5, 0), sticky="nw")
 
-    totalSRAMSizeLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Total SRAM size:')
+    totalSRAMSizeLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Total SRAM (KBs):')
     totalSRAMSizeLabel.grid(row=1, column=0, padx=5, sticky="w")
     totalSRAMSizeLabelEntry = customtkinter.CTkEntry(multiCgraConfigPanel, justify=tkinter.CENTER)
     totalSRAMSizeLabelEntry.grid(row=1, column=1, padx=5)
@@ -1957,7 +1966,7 @@ def create_param_pannel(master):
     for i in range(3):
         paramPannel.columnconfigure(i, weight=1)
     paramPannel.grid_propagate(0)
-    configurationLabel = customtkinter.CTkLabel(paramPannel, text='Configuration', font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
+    configurationLabel = customtkinter.CTkLabel(paramPannel, text='Per-CGRA Modeling', font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
     configurationLabel.grid(row=0, column=0, ipadx=5, pady=(5,0), sticky="nw")
 
     rowsLabel = customtkinter.CTkLabel(paramPannel, text='Rows  Columns:')
@@ -1977,7 +1986,7 @@ def create_param_pannel(master):
     columnsEntry.insert(0, str(paramCGRA.columns))
     widgets["columnsEntry"] = columnsEntry
 
-    dataMemLabel = customtkinter.CTkLabel(paramPannel, text='Data SPM (KBs):')
+    dataMemLabel = customtkinter.CTkLabel(paramPannel, text='Per-Bank SRAM (KBs):')
     dataMemLabel.grid(row=2, column=0)
     dataMemEntry = customtkinter.CTkEntry(paramPannel, justify=tkinter.CENTER#,
                                           #highlightbackground="black",

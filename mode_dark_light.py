@@ -2470,7 +2470,7 @@ def create_kernel_pannel(master):
     kernelPannel = customtkinter.CTkFrame(master, width=280)
     kernelPannel.grid_propagate(0)
     kernelPannel.grid(row=1, column=0, padx=(0, 5), pady=(5, 0), sticky="nsew")
-    for row in range(13):
+    for row in range(14):
         kernelPannel.grid_rowconfigure(row, weight=1)
     kernelPannel.grid_columnconfigure(0, weight=3)
     kernelPannel.grid_columnconfigure(1, weight=2)
@@ -2517,7 +2517,7 @@ def create_kernel_pannel(master):
     widgets["generateDFGShow"] = generateDFGShow
 
     dfgPannel = customtkinter.CTkFrame(kernelPannel)
-    dfgPannel.grid(row=3, column=0, rowspan=10, columnspan=2, padx=(0,5), pady=(5,0), sticky="nsew")
+    dfgPannel.grid(row=3, column=0, rowspan=11, columnspan=2, padx=(0,5), pady=(5,0), sticky="nsew")
     dfgPannelLabel = customtkinter.CTkLabel(dfgPannel, text='Data-Flow Graph ',
                                              font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE,
                                                                         weight="bold"))
@@ -2557,32 +2557,42 @@ def create_kernel_pannel(master):
     widgets["exhaustiveRatiobutton"] = exhaustiveRatiobutton
     exhaustiveRatiobutton.grid(row=1, column=1, pady=(0, 5), sticky="nsew")
 
+    tarCgraIdLabel = customtkinter.CTkLabel(kernelPannel, text=" Target CGRA id: ")
+    tarCgraIdLabel.grid(row=8, column=2, sticky="nsew")
+
+    targetCgraIdOptions = ["0", "1", "2", "3"]
+    targetCgraIdVariable = tkinter.StringVar(kernelPannel)
+    targetCgraIdVariable.set(targetCgraIdOptions[0])
+    targetCgraIdOptionMenu = customtkinter.CTkOptionMenu(kernelPannel, variable=targetCgraIdVariable,
+                                                     values=targetCgraIdOptions)
+    targetCgraIdOptionMenu.grid(row=8, column=3)
+
     mapDFGButton = customtkinter.CTkButton(kernelPannel, text="Map DFG", command=clickMapDFG,)
-    mapDFGButton.grid(row=8, column=2, columnspan=2, sticky="new")
+    mapDFGButton.grid(row=9, column=2, columnspan=2, sticky="new")
     terminateMapButton = customtkinter.CTkButton(kernelPannel, text="Terminate", command=clickTerminateMapping)
-    terminateMapButton.grid(row=9, column=2, columnspan=2, sticky="new")
+    terminateMapButton.grid(row=10, column=2, columnspan=2, sticky="new")
 
     mapSecLabel = customtkinter.CTkLabel(kernelPannel, text="Time (s): ")
-    mapSecLabel.grid(row=10, column=2, sticky="nsew")
+    mapSecLabel.grid(row=11, column=2, sticky="nsew")
     mapTimeEntry = customtkinter.CTkEntry(kernelPannel, justify=tkinter.CENTER)
     widgets["mapTimeEntry"] = mapTimeEntry
     mapTimeEntry.insert(0, "0")
-    mapTimeEntry.grid(row=10, column=3)
+    mapTimeEntry.grid(row=11, column=3)
     mapIILabel = customtkinter.CTkLabel(kernelPannel, text=" Map II: ")
-    mapIILabel.grid(row=11, column=2, sticky="nsew")
+    mapIILabel.grid(row=12, column=2, sticky="nsew")
     mapIIEntry = customtkinter.CTkEntry(kernelPannel, justify=tkinter.CENTER)
     widgets["mapIIEntry"] = mapIIEntry
     mapIIEntry.insert(0, "0")
-    mapIIEntry.grid(row=11, column=3)
+    mapIIEntry.grid(row=12, column=3)
 
     speedupLabel = customtkinter.CTkLabel(kernelPannel, text="Speedup: ")
-    speedupLabel.grid(row=12, column=2, sticky="nsew")
+    speedupLabel.grid(row=13, column=2, sticky="nsew")
     CreateToolTip(speedupLabel,
                   text="The speedup is the improvement of\nthe execution cycles with respect to\na single-issue in-order CPU.")
     mapSpeedupEntry = customtkinter.CTkEntry(kernelPannel, justify=tkinter.CENTER)
     widgets["mapSpeedupEntry"] = mapSpeedupEntry
     mapSpeedupEntry.insert(0, "0")
-    mapSpeedupEntry.grid(row=12, column=3)
+    mapSpeedupEntry.grid(row=13, column=3)
 
 
 # paramPadPosX = GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + INTERVAL * 3

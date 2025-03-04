@@ -1572,44 +1572,34 @@ def _on_mousewheel(canvas, event):
         canvas.yview_scroll(int(-1*event.delta), "units")
 
 
-def on_resize(event):
-    w, h = event.width, event.height
-    print(f"on_resize: {w} x {h}")
-
 def create_multi_cgra_panel(master):
     multiCgraPanel = customtkinter.CTkFrame(master)
     multiCgraPanel.grid(row=0, column=0, padx=(0, 5), sticky="nsew")
     multiCgraLabel = customtkinter.CTkLabel(multiCgraPanel, text='Multi-CGRA',
                                        font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
     multiCgraLabel.pack(anchor="w", ipadx=5)
-    # multiCgraPanel.bind("<Configure>", on_resize)
 
     multiCgraCanvas = customtkinter.CTkCanvas(multiCgraPanel, bg=CANVAS_BG_COLOR, bd=0, highlightthickness=0)
-    canvas_width = multiCgraCanvas.winfo_reqwidth()
-    canvas_height = multiCgraCanvas.winfo_reqheight()
-    print(f"multiCgraCanvas: {canvas_width} x {canvas_height}")
 
     # canvas base 0, 0
     # suppose default rowsxcols 2x2, may extra operation to connect cgra frames when one row only
-    # suppose width 570, height 400
-    # margin 20
-    rows, cols = 2, 2
-    borderMargin = 50
-    cgraMargin = 30
-    cgraCircleMargin = 20
-    cgraSquareLength = min((canvas_width / cols - cgraMargin), (canvas_height / rows - cgraMargin))
-    circleDiameter = cgraSquareLength / 4
-    intraCgraTileMargin = 10
+    cgraRows, cgraCols = 2, 2
+    xStartPos, yStartPos = 0, 0
+    distanceOfCgraAndRouter = 20
+    cgraSquareLength = 100
+    routerDiameter = cgraSquareLength / 4
+    distanceOfCgras = 200
 
     # mork cgra nxn
-    intraCgraTileRows1 = 2
-    intraCgraTileCols1 = 2
-    intraCgraTileRows2 = 3
-    intraCgraTileCols2 = 3
+    morkIntraCgraTileRows = 4
+    morkIntraCgraTileCols = 4
+    tileXMargin, tileYMargin = 10, 10
+    intraCgraTileMargin = 10
 
-    x, y = borderMargin, borderMargin - 20
-    for row in range(rows):
-        for col in range(cols):
+    x, y = xStartPos, yStartPos
+    cgraId = 0
+    for row in range(cgraRows):
+        for col in range(cgraCols):
             # draw
             print(f"cgraFrame: {x} x {y}, cgraSquareLength: {cgraSquareLength}")
             cgraFrame = tkinter.Frame(multiCgraCanvas, bg=MULTI_CGRA_FRAME_COLOR, border=4)
@@ -1617,89 +1607,79 @@ def create_multi_cgra_panel(master):
             cgraFrame.bind('<Button-1>', lambda _ : print('clicked'))
             multiCgraCanvas.create_window(x, y, window=cgraFrame, height=cgraSquareLength, width=cgraSquareLength,
                                           anchor="nw")
+            multiCgraCanvas.create_text(x + cgraSquareLength/2 + 5, y + cgraSquareLength + 10, font=customtkinter.CTkFont(weight="bold"),
+                         text=f"CGRA {cgraId}")
+            cgraId = cgraId + 1
 
             # todo
             # mock the last col's tile to 3x3, need make it configurable
             # if(col != cols - 1):
             if col == 0 and row == 0:
-                intraCgraSquareLength = cgraSquareLength/intraCgraTileRows1 - 20
+                # n*tileLen + (n-1)*tileMargin = (cgraSquareLength - intraCgraTileMargin*2)
+                tileXLength = ((cgraSquareLength - intraCgraTileMargin*2) - (morkIntraCgraTileCols - 1)*tileXMargin)/morkIntraCgraTileCols
+                tileYLength = ((cgraSquareLength - intraCgraTileMargin * 2) - (morkIntraCgraTileRows - 1) * tileYMargin) / morkIntraCgraTileRows
+
+                tileSquareLength = min(tileXLength, tileYLength)
+                # need adjust tileXMargin
+                if tileXLength > tileYLength:
+                    tileXMargin = ((cgraSquareLength - intraCgraTileMargin*2) - (tileSquareLength * morkIntraCgraTileCols))/(morkIntraCgraTileCols - 1)
+                else:
+                    tileYMargin = ((cgraSquareLength - intraCgraTileMargin*2) - (tileSquareLength * morkIntraCgraTileRows))/(morkIntraCgraTileRows - 1)
+
                 tileX, tileY = x + intraCgraTileMargin, y + intraCgraTileMargin
-                for cgraRow in range(intraCgraTileRows1):
-                    for cgraCol in range(intraCgraTileCols1):
-                        tileCanvas = tkinter.Canvas(multiCgraPanel, width=intraCgraSquareLength, height=intraCgraSquareLength, bg=MULTI_CGRA_TILE_COLOR, bd=0, highlightthickness=0, relief='ridge')
-                        tileCanvas.place(x=tileX, y=tileY + 28)
-                        tkinter.Misc.lift(tileCanvas)
-                        tileX = tileX + (cgraSquareLength / cols)
+                for cgraRow in range(morkIntraCgraTileRows):
+                    for cgraCol in range(morkIntraCgraTileCols):
+                        cgraTileFrame = tkinter.Frame(multiCgraCanvas, bg=MULTI_CGRA_TILE_COLOR, border=4)
+                        multiCgraCanvas.create_window(tileX, tileY, window=cgraTileFrame, height=tileSquareLength, width=tileSquareLength,
+                                                      anchor="nw")
+                        tileX = tileX + tileSquareLength + tileXMargin
                     tileX = x + intraCgraTileMargin
-                    tileY = tileY + (cgraSquareLength / rows)
-            # else:
-            #     intraCgraSquareLength = cgraSquareLength / intraCgraTileRows2 - 15
-            #     tileX, tileY = x + intraCgraTileMargin, y + intraCgraTileMargin - 5
-            #     for cgraRow in range(intraCgraTileRows2):
-            #         for cgraCol in range(intraCgraTileCols2):
-            #             tileCanvas = tkinter.Canvas(multiCgraPanel, width=intraCgraSquareLength,
-            #                                         height=intraCgraSquareLength, bg="#A9A9A9", bd=0, highlightthickness=0, relief='ridge')
-            #             tileCanvas.place(x=tileX, y=tileY)
-            #             tkinter.Misc.lift(tileCanvas)
-            #             tileX = tileX + (cgraSquareLength / cols) - 20
-            #         tileX = x + intraCgraTileMargin
-            #         tileY = tileY + (cgraSquareLength / rows - 10) - 8
+                    tileY = tileY + tileSquareLength + tileYMargin
 
-            multiCgraCanvas.create_oval(x + cgraSquareLength + cgraCircleMargin,
-                                        y + cgraSquareLength + cgraCircleMargin,
-                                        x + cgraSquareLength + cgraCircleMargin + circleDiameter,
-                                        y + cgraSquareLength + cgraCircleMargin + circleDiameter, fill=MULTI_CGRA_FRAME_COLOR)
+            # router for each cgra frame
+            multiCgraCanvas.create_oval(x + cgraSquareLength + distanceOfCgraAndRouter,
+                                        y + cgraSquareLength + distanceOfCgraAndRouter,
+                                        x + cgraSquareLength + distanceOfCgraAndRouter + routerDiameter,
+                                        y + cgraSquareLength + distanceOfCgraAndRouter + routerDiameter, fill=MULTI_CGRA_FRAME_COLOR)
+            # line between cgra and router
             multiCgraCanvas.create_line(x + cgraSquareLength, y + cgraSquareLength,
-                                        x + cgraSquareLength + cgraCircleMargin + 5,
-                                        y + cgraSquareLength + cgraCircleMargin + 5, fill=CANVAS_LINE_COLOR)
+                                        x + cgraSquareLength + distanceOfCgraAndRouter + 5,
+                                        y + cgraSquareLength + distanceOfCgraAndRouter + 5, fill=CANVAS_LINE_COLOR)
 
-            circleCenterX, circleCenterY = x + cgraSquareLength + cgraCircleMargin + circleDiameter / 2, y + cgraSquareLength + cgraCircleMargin + circleDiameter / 2
+            routerCenterX, routerCenterY = x + cgraSquareLength + distanceOfCgraAndRouter + routerDiameter / 2, y + cgraSquareLength + distanceOfCgraAndRouter + routerDiameter / 2
             # if not last col: draws horizontal line, connects to right route
+            if col != cgraCols - 1:
+                rightRouterLeftEdgeX = routerCenterX + distanceOfCgras - routerDiameter / 2
+                rightRouterCenterY = routerCenterY
+                multiCgraCanvas.create_line(routerCenterX + routerDiameter / 2, routerCenterY, rightRouterLeftEdgeX, rightRouterCenterY, fill=CANVAS_LINE_COLOR, arrow=tkinter.LAST, width=2)
+                multiCgraCanvas.create_line(rightRouterLeftEdgeX, rightRouterCenterY, routerCenterX + routerDiameter / 2, routerCenterY, fill=CANVAS_LINE_COLOR, arrow=tkinter.LAST, width=2)
             # if not last row: draws a vertical line, connects to down route
-            if col != cols - 1:
-                targetCircleCenterX1 = x + cgraSquareLength + cgraCircleMargin + circleDiameter / 2 + (canvas_width / cols)
-                targetCircleCenterY1 = circleCenterY
-                multiCgraCanvas.create_line(circleCenterX + circleDiameter / 2, circleCenterY, targetCircleCenterX1 - circleDiameter / 2, targetCircleCenterY1, fill=CANVAS_LINE_COLOR,
-                                            arrow=tkinter.LAST, width=2)
-                multiCgraCanvas.create_line(targetCircleCenterX1 - circleDiameter / 2, targetCircleCenterY1, circleCenterX + circleDiameter / 2, circleCenterY, fill=CANVAS_LINE_COLOR,
-                                            arrow=tkinter.LAST, width=2)
-            if row != rows - 1:
-                targetCircleCenterX2 = circleCenterX
-                targetCircleCenterY2 = y + cgraSquareLength + cgraCircleMargin + circleDiameter / 2 + (canvas_height / rows + 100)
-                multiCgraCanvas.create_line(circleCenterX, circleCenterY + circleDiameter / 2, targetCircleCenterX2, targetCircleCenterY2 - circleDiameter / 2, fill=CANVAS_LINE_COLOR,
-                                            arrow=tkinter.LAST, width=2)
-                multiCgraCanvas.create_line(targetCircleCenterX2, targetCircleCenterY2 - circleDiameter / 2, circleCenterX, circleCenterY + circleDiameter / 2, fill=CANVAS_LINE_COLOR,
-                                            arrow=tkinter.LAST, width=2)
+            if row != cgraRows - 1:
+                downRouterCenterX = routerCenterX
+                downRouterUpEdgeY = routerCenterY + distanceOfCgras - routerDiameter / 2
+                multiCgraCanvas.create_line(routerCenterX, routerCenterY + routerDiameter / 2, downRouterCenterX, downRouterUpEdgeY, fill=CANVAS_LINE_COLOR, arrow=tkinter.LAST, width=2)
+                multiCgraCanvas.create_line(downRouterCenterX, downRouterUpEdgeY, routerCenterX, routerCenterY + routerDiameter / 2, fill=CANVAS_LINE_COLOR, arrow=tkinter.LAST, width=2)
 
-            x = x + (canvas_width / cols)
+            x = x + distanceOfCgras
         # new row
-        x = borderMargin
-        y = y + (canvas_height / rows + 100)
+        x = xStartPos
+        y = y + distanceOfCgras
 
 
+    vbar = customtkinter.CTkScrollbar(multiCgraPanel, orientation="vertical", command=multiCgraCanvas.yview)
+    vbar.pack(side=tkinter.RIGHT, fill="y")
+    multiCgraCanvas.config(yscrollcommand=vbar.set)
 
-    # cgraFrame = tkinter.Frame(multiCgraCanvas, bg='black', border=4)
-    # multiCgraCanvas.create_window(20, 20, window=cgraFrame, height=100, width=100, anchor="nw")
-    # multiCgraCanvas.create_line(120, 120, 145, 145, fill="black")
-    # multiCgraCanvas.create_oval(140, 140, 160, 160, fill="black")
-    #
-    # cgraFrame2 = tkinter.Frame(multiCgraCanvas, bg='black', border=4)
-    # multiCgraCanvas.create_window(220, 20, window=cgraFrame2, height=100, width=100, anchor="nw")
-    # multiCgraCanvas.create_line(320, 120, 345, 145, fill="black")
-    # multiCgraCanvas.create_oval(340, 140, 360, 160, fill="black")
-    #
-    # multiCgraCanvas.create_line(150, 150, 340, 150, fill="black", arrow=tkinter.LAST)
-    # multiCgraCanvas.create_line(340, 150, 160, 150, fill="black", arrow=tkinter.LAST)
-    # vbar = customtkinter.CTkScrollbar(multiCgraPanel, orientation="vertical", command=multiCgraCanvas.yview)
-    # vbar.pack(side=tkinter.RIGHT, fill="y")
-    # multiCgraCanvas.config(yscrollcommand=vbar.set)
-    # multiCgraCanvas.config(scrollregion=multiCgraCanvas.bbox("all"))
+    scrollregionTuple = multiCgraCanvas.bbox("all")
+    adjustTuple = (30, 30, -30, -30)
+    adjustScrollregionTuple = tuple(x - y for x, y in zip(scrollregionTuple, adjustTuple))
+
+    multiCgraCanvas.config(scrollregion=adjustScrollregionTuple)
+    hbar = customtkinter.CTkScrollbar(multiCgraPanel, orientation="horizontal", command=multiCgraCanvas.xview)
+    hbar.pack(side="bottom", fill="x")
+    multiCgraCanvas.config(xscrollcommand=hbar.set)
+
     multiCgraCanvas.pack(side="top", fill="both", expand=True)
-    # hbar = customtkinter.CTkScrollbar(multiCgraPanel, orientation="horizontal", command=multiCgraCanvas.xview)
-    # hbar.pack(side="bottom", fill="x")
-    # multiCgraCanvas.config(xscrollcommand=hbar.set)
-    # multiCgraCanvas.pack(side="top", fill="both", expand=True)
-
 
 
 def create_multi_cgra_config_panel(master):
@@ -1762,7 +1742,7 @@ def create_cgra_pannel(master, rows, columns):
     # cgraPannel.pack()
     # cgraPannel.grid_propagate(0)
     # create label for cgraPannel
-    cgraLabel = customtkinter.CTkLabel(cgraPannel, text='CGRA', font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
+    cgraLabel = customtkinter.CTkLabel(cgraPannel, text='Per-CGRA (id: 0)', font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
     # cgraLabel.grid(row=0, column=0, sticky="nsew")
     cgraLabel.pack(anchor="w", ipadx=5)
 

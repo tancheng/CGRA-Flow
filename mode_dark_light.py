@@ -2472,6 +2472,7 @@ def create_kernel_pannel(master):
     kernelPannel.grid(row=1, column=0, padx=(0, 5), pady=(5, 0), sticky="nsew")
     for row in range(14):
         kernelPannel.grid_rowconfigure(row, weight=1)
+    kernelPannel.grid_rowconfigure(5, weight=2)
     kernelPannel.grid_columnconfigure(0, weight=3)
     kernelPannel.grid_columnconfigure(1, weight=2)
     kernelPannel.grid_columnconfigure(2, weight=2)
@@ -2558,7 +2559,7 @@ def create_kernel_pannel(master):
     exhaustiveRatiobutton.grid(row=1, column=1, pady=(0, 5), sticky="nsew")
 
     tarCgraIdLabel = customtkinter.CTkLabel(kernelPannel, text=" Target CGRA id: ")
-    tarCgraIdLabel.grid(row=8, column=2, sticky="nsew")
+    tarCgraIdLabel.grid(row=8, column=2)
 
     targetCgraIdOptions = ["0", "1", "2", "3"]
     targetCgraIdVariable = tkinter.StringVar(kernelPannel)
@@ -2573,20 +2574,20 @@ def create_kernel_pannel(master):
     terminateMapButton.grid(row=10, column=2, columnspan=2, sticky="new")
 
     mapSecLabel = customtkinter.CTkLabel(kernelPannel, text="Time (s): ")
-    mapSecLabel.grid(row=11, column=2, sticky="nsew")
+    mapSecLabel.grid(row=11, column=2)
     mapTimeEntry = customtkinter.CTkEntry(kernelPannel, justify=tkinter.CENTER)
     widgets["mapTimeEntry"] = mapTimeEntry
     mapTimeEntry.insert(0, "0")
     mapTimeEntry.grid(row=11, column=3)
     mapIILabel = customtkinter.CTkLabel(kernelPannel, text=" Map II: ")
-    mapIILabel.grid(row=12, column=2, sticky="nsew")
+    mapIILabel.grid(row=12, column=2)
     mapIIEntry = customtkinter.CTkEntry(kernelPannel, justify=tkinter.CENTER)
     widgets["mapIIEntry"] = mapIIEntry
     mapIIEntry.insert(0, "0")
     mapIIEntry.grid(row=12, column=3)
 
     speedupLabel = customtkinter.CTkLabel(kernelPannel, text="Speedup: ")
-    speedupLabel.grid(row=13, column=2, sticky="nsew")
+    speedupLabel.grid(row=13, column=2)
     CreateToolTip(speedupLabel,
                   text="The speedup is the improvement of\nthe execution cycles with respect to\na single-issue in-order CPU.")
     mapSpeedupEntry = customtkinter.CTkEntry(kernelPannel, justify=tkinter.CENTER)

@@ -70,7 +70,7 @@ def window_size(window, width, height):
     window.geometry(f"{width}x{height}")
 
 master = customtkinter.CTk()
-master.title("Sora: An Integrated End-to-End Framework for Multi-CGRA Exploration, Compilation, Synthesis and Evaluation")
+master.title("Neura: An Integrated End-to-End Framework for Multi-CGRA Exploration, Compilation, Synthesis and Evaluation")
 
 fuTypeList = ["Phi", "Add", "Shift", "Ld", "Sel", "Cmp", "MAC", "St", "Ret", "Mul", "Logic", "Br"]
 xbarTypeList = ["W", "E", "N", "S", "NE", "NW", "SE", "SW"]

@@ -53,6 +53,8 @@ PORT_NORTHEAST = 5
 PORT_SOUTHEAST = 6
 PORT_SOUTHWEST = 7
 PORT_DIRECTION_COUNTS = 8
+CGRA_ROWS = 2
+CGRA_COLS = 2
 ROWS = 4
 COLS = 4
 INTERVAL = 10
@@ -1572,29 +1574,21 @@ def _on_mousewheel(canvas, event):
         canvas.yview_scroll(int(-1*event.delta), "units")
 
 
-def create_multi_cgra_panel(master):
+def create_multi_cgra_panel(master, cgraRows=2, cgraCols=2):
     multiCgraPanel = customtkinter.CTkFrame(master)
     multiCgraPanel.grid(row=0, column=0, padx=(0, 5), sticky="nsew")
     multiCgraLabel = customtkinter.CTkLabel(multiCgraPanel, text='Multi-CGRA',
                                        font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
     multiCgraLabel.pack(anchor="w", ipadx=5)
-
     multiCgraCanvas = customtkinter.CTkCanvas(multiCgraPanel, bg=CANVAS_BG_COLOR, bd=0, highlightthickness=0)
 
     # canvas base 0, 0
     # suppose default rowsxcols 2x2, may extra operation to connect cgra frames when one row only
-    cgraRows, cgraCols = 2, 2
     xStartPos, yStartPos = 0, 0
     distanceOfCgraAndRouter = 20
     cgraSquareLength = 100
     routerDiameter = cgraSquareLength / 4
     distanceOfCgras = 200
-
-    # mork cgra nxn
-    morkIntraCgraTileRows = 4
-    morkIntraCgraTileCols = 4
-    tileXMargin, tileYMargin = 10, 10
-    intraCgraTileMargin = 10
 
     x, y = xStartPos, yStartPos
     cgraId = 0
@@ -1615,26 +1609,7 @@ def create_multi_cgra_panel(master):
             # mock the last col's tile to 3x3, need make it configurable
             # if(col != cols - 1):
             if col == 0 and row == 0:
-                # n*tileLen + (n-1)*tileMargin = (cgraSquareLength - intraCgraTileMargin*2)
-                tileXLength = ((cgraSquareLength - intraCgraTileMargin*2) - (morkIntraCgraTileCols - 1)*tileXMargin)/morkIntraCgraTileCols
-                tileYLength = ((cgraSquareLength - intraCgraTileMargin * 2) - (morkIntraCgraTileRows - 1) * tileYMargin) / morkIntraCgraTileRows
-
-                tileSquareLength = min(tileXLength, tileYLength)
-                # need adjust tileXMargin
-                if tileXLength > tileYLength:
-                    tileXMargin = ((cgraSquareLength - intraCgraTileMargin*2) - (tileSquareLength * morkIntraCgraTileCols))/(morkIntraCgraTileCols - 1)
-                else:
-                    tileYMargin = ((cgraSquareLength - intraCgraTileMargin*2) - (tileSquareLength * morkIntraCgraTileRows))/(morkIntraCgraTileRows - 1)
-
-                tileX, tileY = x + intraCgraTileMargin, y + intraCgraTileMargin
-                for cgraRow in range(morkIntraCgraTileRows):
-                    for cgraCol in range(morkIntraCgraTileCols):
-                        cgraTileFrame = tkinter.Frame(multiCgraCanvas, bg=MULTI_CGRA_TILE_COLOR, border=4)
-                        multiCgraCanvas.create_window(tileX, tileY, window=cgraTileFrame, height=tileSquareLength, width=tileSquareLength,
-                                                      anchor="nw")
-                        tileX = tileX + tileSquareLength + tileXMargin
-                    tileX = x + intraCgraTileMargin
-                    tileY = tileY + tileSquareLength + tileYMargin
+                create_cgra_tiles_on_multi_cgra_panel(multiCgraCanvas, x, y, 4, 4, cgraSquareLength)
 
             # router for each cgra frame
             multiCgraCanvas.create_oval(x + cgraSquareLength + distanceOfCgraAndRouter,
@@ -1682,6 +1657,40 @@ def create_multi_cgra_panel(master):
     multiCgraCanvas.pack(side="top", fill="both", expand=True)
 
 
+def create_cgra_tiles_on_multi_cgra_panel(parentCanvas, rootX, rootY, rows, cols, cgraSquareLength):
+    # mork cgra nxn
+    intraCgraTileRows = rows
+    intraCgraTileCols = cols
+    tileXMargin, tileYMargin = 10, 10
+    intraCgraTileMargin = 10
+
+    # n*tileLen + (n-1)*tileMargin = (cgraSquareLength - intraCgraTileMargin*2)
+    tileXLength = ((cgraSquareLength - intraCgraTileMargin * 2) - (
+                intraCgraTileCols - 1) * tileXMargin) / intraCgraTileCols
+    tileYLength = ((cgraSquareLength - intraCgraTileMargin * 2) - (
+                intraCgraTileRows - 1) * tileYMargin) / intraCgraTileRows
+
+    tileSquareLength = min(tileXLength, tileYLength)
+    # need adjust tileXMargin
+    if tileXLength > tileYLength:
+        tileXMargin = ((cgraSquareLength - intraCgraTileMargin * 2) - (tileSquareLength * intraCgraTileCols)) / (
+                    intraCgraTileCols - 1)
+    else:
+        tileYMargin = ((cgraSquareLength - intraCgraTileMargin * 2) - (tileSquareLength * intraCgraTileRows)) / (
+                    intraCgraTileRows - 1)
+
+    tileX, tileY = rootX + intraCgraTileMargin, rootY + intraCgraTileMargin
+    for cgraRow in range(intraCgraTileRows):
+        for cgraCol in range(intraCgraTileCols):
+            cgraTileFrame = tkinter.Frame(parentCanvas, bg=MULTI_CGRA_TILE_COLOR, border=4)
+            parentCanvas.create_window(tileX, tileY, window=cgraTileFrame, height=tileSquareLength,
+                                          width=tileSquareLength,
+                                          anchor="nw")
+            tileX = tileX + tileSquareLength + tileXMargin
+        tileX = rootX + intraCgraTileMargin
+        tileY = tileY + tileSquareLength + tileYMargin
+
+
 def create_multi_cgra_config_panel(master):
     multiCgraConfigPanel = customtkinter.CTkFrame(master, width=240)
     multiCgraConfigPanel.grid_propagate(0)
@@ -1700,6 +1709,7 @@ def create_multi_cgra_config_panel(master):
     totalSRAMSizeLabel.grid(row=1, column=0, padx=5, sticky="w")
     totalSRAMSizeLabelEntry = customtkinter.CTkEntry(multiCgraConfigPanel, justify=tkinter.CENTER)
     totalSRAMSizeLabelEntry.grid(row=1, column=1, padx=5)
+    totalSRAMSizeLabelEntry.insert(0, str(16))
 
     interCgraTopologyLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Inter-CGRA\ntopology:')
     interCgraTopologyLabel.grid(row=2, column=0, padx=5, sticky="w")
@@ -1717,15 +1727,23 @@ def create_multi_cgra_config_panel(master):
     multiCgraRowsLabelEntry = customtkinter.CTkEntry(multiCgraConfigPanel, justify=tkinter.CENTER)
     multiCgraRowsLabelEntry.grid(row=3, column=1, padx=5)
     multiCgraRowsLabelEntry.insert(0, str(2))
+    widgets["multiCgraRowsLabelEntry"] = multiCgraRowsLabelEntry
 
     multiCgraColumnsLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Multi-CGRA\nColumns:')
     multiCgraColumnsLabel.grid(row=4, column=0, padx=5, sticky="w")
     multiCgraColumnsEntry = customtkinter.CTkEntry(multiCgraConfigPanel, justify=tkinter.CENTER)
     multiCgraColumnsEntry.grid(row=4, column=1, padx=5)
     multiCgraColumnsEntry.insert(0, str(2))
+    widgets["multiCgraColumnsEntry"] = multiCgraColumnsEntry
 
-    multiCgraConfigUpdateButton = customtkinter.CTkButton(multiCgraConfigPanel, text="Update")
+    multiCgraConfigUpdateButton = customtkinter.CTkButton(multiCgraConfigPanel, text="Update", command=partial(clickMultiCgraUpdate, master))
     multiCgraConfigUpdateButton.grid(row=5, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
+
+
+def clickMultiCgraUpdate(root):
+    cgraRows = int(widgets["multiCgraRowsLabelEntry"].get())
+    cgraCols = int(widgets["multiCgraColumnsEntry"].get())
+    create_multi_cgra_panel(root, cgraRows, cgraCols)
 
 
 def create_cgra_pannel(master, rows, columns):
@@ -2613,7 +2631,7 @@ create_kernel_pannel(master)
 # mapping
 create_mapping_pannel(master)
 # multi cgra
-create_multi_cgra_panel(master)
+create_multi_cgra_panel(master, CGRA_ROWS, CGRA_COLS)
 # multi cgra config
 create_multi_cgra_config_panel(master)
 # cgra

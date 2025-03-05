@@ -126,6 +126,16 @@ mapped_tile_color_list = ['#FFF113', '#75D561', '#F2CB67', '#FFAC73', '#F3993A',
 processOptions = tkinter.StringVar()
 processOptions.set("asap7")
 
+
+class CgraOfMultiCgra:
+    def __init__(s, cgraId, xStartPos, yStartPos, tileRows, tileCols):
+        s.cgraId = cgraId
+        s.xStartPos = xStartPos
+        s.yStartPos = yStartPos
+        s.tileRows = tileRows
+        s.tileCols = tileCols
+
+
 class ParamTile:
     def __init__(s, ID, dimX, dimY, posX, posY, tileWidth, tileHeight):
         s.ID = ID
@@ -1574,6 +1584,10 @@ def _on_mousewheel(canvas, event):
         canvas.yview_scroll(int(-1*event.delta), "units")
 
 
+def cgra_frame_clicked(event, cgraId):
+    print(f"cgraId: {cgraId} clicked!")
+
+
 def create_multi_cgra_panel(master, cgraRows=2, cgraCols=2):
     multiCgraPanel = customtkinter.CTkFrame(master)
     multiCgraPanel.grid(row=0, column=0, padx=(0, 5), sticky="nsew")
@@ -1598,7 +1612,7 @@ def create_multi_cgra_panel(master, cgraRows=2, cgraCols=2):
             print(f"cgraFrame: {x} x {y}, cgraSquareLength: {cgraSquareLength}")
             cgraFrame = tkinter.Frame(multiCgraCanvas, bg=MULTI_CGRA_FRAME_COLOR, border=4)
             # add command for frame
-            cgraFrame.bind('<Button-1>', lambda _ : print('clicked'))
+            cgraFrame.bind('<Button-1>', partial(cgra_frame_clicked, cgraId=cgraId))
             multiCgraCanvas.create_window(x, y, window=cgraFrame, height=cgraSquareLength, width=cgraSquareLength,
                                           anchor="nw")
             multiCgraCanvas.create_text(x + cgraSquareLength/2 + 5, y + cgraSquareLength + 10, font=customtkinter.CTkFont(weight="bold"),

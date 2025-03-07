@@ -1600,9 +1600,9 @@ def create_multi_cgra_panel(master, cgraRows=2, cgraCols=2):
     # suppose default rowsxcols 2x2, may extra operation to connect cgra frames when one row only
     xStartPos, yStartPos = 0, 0
     distanceOfCgraAndRouter = 20
-    cgraSquareLength = 100
+    cgraSquareLength = 80 # 100
     routerDiameter = cgraSquareLength / 4
-    distanceOfCgras = 200
+    distanceOfCgras = 140 # 200
 
     x, y = xStartPos, yStartPos
     cgraId = 0
@@ -1622,8 +1622,8 @@ def create_multi_cgra_panel(master, cgraRows=2, cgraCols=2):
             # todo
             # mock the last col's tile to 3x3, need make it configurable
             # if(col != cols - 1):
-            if col == 0 and row == 0:
-                create_cgra_tiles_on_multi_cgra_panel(multiCgraCanvas, x, y, 4, 4, cgraSquareLength)
+            # if col == 0 and row == 0:
+            create_cgra_tiles_on_multi_cgra_panel(multiCgraCanvas, x, y, 4, 4, cgraSquareLength)
 
             # router for each cgra frame
             multiCgraCanvas.create_oval(x + cgraSquareLength + distanceOfCgraAndRouter,
@@ -1640,14 +1640,14 @@ def create_multi_cgra_panel(master, cgraRows=2, cgraCols=2):
             if col != cgraCols - 1:
                 rightRouterLeftEdgeX = routerCenterX + distanceOfCgras - routerDiameter / 2
                 rightRouterCenterY = routerCenterY
-                multiCgraCanvas.create_line(routerCenterX + routerDiameter / 2, routerCenterY, rightRouterLeftEdgeX, rightRouterCenterY, fill=CANVAS_LINE_COLOR, arrow=tkinter.LAST, width=2)
-                multiCgraCanvas.create_line(rightRouterLeftEdgeX, rightRouterCenterY, routerCenterX + routerDiameter / 2, routerCenterY, fill=CANVAS_LINE_COLOR, arrow=tkinter.LAST, width=2)
+                multiCgraCanvas.create_line(routerCenterX + routerDiameter / 2, routerCenterY, rightRouterLeftEdgeX, rightRouterCenterY, fill=CANVAS_LINE_COLOR, arrow=tkinter.BOTH, width=2)
+                # multiCgraCanvas.create_line(rightRouterLeftEdgeX, rightRouterCenterY, routerCenterX + routerDiameter / 2, routerCenterY, fill=CANVAS_LINE_COLOR, arrow=tkinter.LAST, width=2)
             # if not last row: draws a vertical line, connects to down route
             if row != cgraRows - 1:
                 downRouterCenterX = routerCenterX
                 downRouterUpEdgeY = routerCenterY + distanceOfCgras - routerDiameter / 2
-                multiCgraCanvas.create_line(routerCenterX, routerCenterY + routerDiameter / 2, downRouterCenterX, downRouterUpEdgeY, fill=CANVAS_LINE_COLOR, arrow=tkinter.LAST, width=2)
-                multiCgraCanvas.create_line(downRouterCenterX, downRouterUpEdgeY, routerCenterX, routerCenterY + routerDiameter / 2, fill=CANVAS_LINE_COLOR, arrow=tkinter.LAST, width=2)
+                multiCgraCanvas.create_line(routerCenterX, routerCenterY + routerDiameter / 2, downRouterCenterX, downRouterUpEdgeY, fill=CANVAS_LINE_COLOR, arrow=tkinter.BOTH, width=2)
+                # multiCgraCanvas.create_line(downRouterCenterX, downRouterUpEdgeY, routerCenterX, routerCenterY + routerDiameter / 2, fill=CANVAS_LINE_COLOR, arrow=tkinter.LAST, width=2)
 
             x = x + distanceOfCgras
         # new row
@@ -1723,7 +1723,7 @@ def create_multi_cgra_config_panel(master):
     totalSRAMSizeLabel.grid(row=1, column=0, padx=5, sticky="w")
     totalSRAMSizeLabelEntry = customtkinter.CTkEntry(multiCgraConfigPanel, justify=tkinter.CENTER)
     totalSRAMSizeLabelEntry.grid(row=1, column=1, padx=5)
-    totalSRAMSizeLabelEntry.insert(0, str(16))
+    totalSRAMSizeLabelEntry.insert(0, str(4))
 
     interCgraTopologyLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Inter-CGRA\ntopology:')
     interCgraTopologyLabel.grid(row=2, column=0, padx=5, sticky="w")

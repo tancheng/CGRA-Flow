@@ -1517,7 +1517,7 @@ def clickTerminateMapping():
 def clickMapDFG():
     global mappingProc
     mappingProc = None
-    heuristic = mappingAlgoCheckVar.get() == 1
+    heuristic = mappingAlgoCheckVar.get() == 0
 
     os.system("mkdir kernel")
     os.chdir("kernel")
@@ -2583,12 +2583,12 @@ def create_kernel_pannel(master):
                                             font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE,
                                                                        weight="bold"))
     mappingOptionLabel.grid(row=0, column=0, columnspan=2)
-    heuristicRatiobutton = customtkinter.CTkRadioButton(mappingAlgoPannel, text="Heuristic", variable=mappingAlgoCheckVar, value=0)
-    widgets["heuristicRatiobutton"] = heuristicRatiobutton
-    heuristicRatiobutton.grid(row=1, column=0, pady=(0, 5), sticky="nsew")
-    exhaustiveRatiobutton = customtkinter.CTkRadioButton(mappingAlgoPannel, text="Exhaustive", variable=mappingAlgoCheckVar, value=1)
-    widgets["exhaustiveRatiobutton"] = exhaustiveRatiobutton
-    exhaustiveRatiobutton.grid(row=1, column=1, pady=(0, 5), sticky="nsew")
+    heuristicRadioButton = customtkinter.CTkRadioButton(mappingAlgoPannel, text="Heuristic", variable=mappingAlgoCheckVar, value=0)
+    widgets["heuristicRadioButton"] = heuristicRadioButton
+    heuristicRadioButton.grid(row=1, column=0, pady=(0, 5), sticky="nsew")
+    exhaustiveRadioButton = customtkinter.CTkRadioButton(mappingAlgoPannel, text="Exhaustive", variable=mappingAlgoCheckVar, value=1)
+    widgets["exhaustiveRadioButton"] = exhaustiveRadioButton
+    exhaustiveRadioButton.grid(row=1, column=1, pady=(0, 5), sticky="nsew")
 
     tarCgraIdLabel = customtkinter.CTkLabel(kernelPannel, text=" Target CGRA id: ")
     tarCgraIdLabel.grid(row=8, column=2)

@@ -1709,9 +1709,9 @@ def create_multi_cgra_config_panel(master):
     multiCgraConfigPanel = customtkinter.CTkFrame(master, width=240)
     multiCgraConfigPanel.grid_propagate(0)
     multiCgraConfigPanel.grid(row=0, column=1, sticky="nsew")
-    for i in range(6):
+    for i in range(8):
         multiCgraConfigPanel.rowconfigure(i, weight=1)
-    multiCgraConfigPanel.rowconfigure(6, weight=10)
+    multiCgraConfigPanel.rowconfigure(8, weight=10)
     for i in range(2):
         multiCgraConfigPanel.columnconfigure(i, weight=1)
 
@@ -1719,11 +1719,11 @@ def create_multi_cgra_config_panel(master):
                                                 font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
     multiCgraConfigLabel.grid(row=0, column=0, columnspan=2, ipadx=5, pady=(5, 0), sticky="nw")
 
-    totalSRAMSizeLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Total SRAM (KBs):')
+    totalSRAMSizeLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Per-CGRA\nSRAM (KBs):')
     totalSRAMSizeLabel.grid(row=1, column=0, padx=5, sticky="w")
     totalSRAMSizeLabelEntry = customtkinter.CTkEntry(multiCgraConfigPanel, justify=tkinter.CENTER)
     totalSRAMSizeLabelEntry.grid(row=1, column=1, padx=5)
-    totalSRAMSizeLabelEntry.insert(0, str(4))
+    totalSRAMSizeLabelEntry.insert(0, str(32))
 
     interCgraTopologyLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Inter-CGRA\ntopology:')
     interCgraTopologyLabel.grid(row=2, column=0, padx=5, sticky="w")
@@ -1750,8 +1750,20 @@ def create_multi_cgra_config_panel(master):
     multiCgraColumnsEntry.insert(0, str(2))
     widgets["multiCgraColumnsEntry"] = multiCgraColumnsEntry
 
+    vectorLanesLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Vector Lanes:')
+    vectorLanesLabel.grid(row=5, column=0, padx=5, sticky="w")
+    vectorLanesEntry = customtkinter.CTkEntry(multiCgraConfigPanel, justify=tkinter.CENTER)
+    vectorLanesEntry.grid(row=5, column=1, padx=5)
+    vectorLanesEntry.insert(0, str(4))
+
+    dataBitwidthLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Data Bitwidth:')
+    dataBitwidthLabel.grid(row=6, column=0, padx=5, sticky="w")
+    dataBitwidthEntry = customtkinter.CTkEntry(multiCgraConfigPanel, justify=tkinter.CENTER)
+    dataBitwidthEntry.grid(row=6, column=1, padx=5)
+    dataBitwidthEntry.insert(0, str(32))
+
     multiCgraConfigUpdateButton = customtkinter.CTkButton(multiCgraConfigPanel, text="Update", command=partial(clickMultiCgraUpdate, master))
-    multiCgraConfigUpdateButton.grid(row=5, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
+    multiCgraConfigUpdateButton.grid(row=7, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
 
 
 def clickMultiCgraUpdate(root):
@@ -1969,7 +1981,7 @@ def place_xbar_options(master):
 def create_param_pannel(master):
     # paramPannel = tkinter.LabelFrame(master, text='Configuration', bd=BORDER, relief='groove')
     paramPannel = customtkinter.CTkFrame(master, width=550, height=480)
-    paramPannel.grid(row=0, column=4, columnspan=2, padx=(0, 5), sticky="nsew")
+    paramPannel.grid(row=0, column=4, columnspan=2, sticky="nsew")
 
     # Use columnconfigure and rowconfigure to partition the columns, so that each column and row will fill the corresponding space
     # The 'weight' represents the weight of the corresponding row/column length
@@ -1979,7 +1991,7 @@ def create_param_pannel(master):
         paramPannel.columnconfigure(i, weight=1)
     paramPannel.grid_propagate(0)
     configurationLabel = customtkinter.CTkLabel(paramPannel, text='Per-CGRA Modeling', font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
-    configurationLabel.grid(row=0, column=0, ipadx=5, pady=(5,0), sticky="nw")
+    configurationLabel.grid(row=0, column=0, columnspan=2, padx=(5,0), pady=(5,0), sticky="nw")
 
     rowsLabel = customtkinter.CTkLabel(paramPannel, text='Rows  Columns:')
     rowsLabel.grid(row=1, column=0)
@@ -2480,7 +2492,7 @@ def display_layout_image(image_path):
 def create_mapping_pannel(master):
     # mappingPannel = tkinter.LabelFrame(master, text='Mapping', bd=BORDER, relief='groove')
     mappingPannel = customtkinter.CTkFrame(master)
-    mappingPannel.grid(row=1, column=1, rowspan=1, columnspan=3, pady=(5, 0), sticky="nsew")
+    mappingPannel.grid(row=1, column=1, rowspan=1, columnspan=3, padx=(0, 5), pady=(5, 0), sticky="nsew")
     mappingPannelLabel = customtkinter.CTkLabel(mappingPannel, text='Mapping ',
                                                # width=100,
                                                font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE,

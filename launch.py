@@ -9,7 +9,7 @@ customtkinter.set_default_color_theme("dark-blue")
 
 master = customtkinter.CTk()
 script_dir = os.path.dirname(os.path.abspath(__file__))
-image_path = os.path.join(script_dir, "theme")
+image_path = os.path.join(script_dir, "doc/theme")
 theme_selector_dark_image = customtkinter.CTkImage(Image.open(os.path.join(image_path, "dark_theme.png")), size=(500, 410))
 theme_selector_light_image = customtkinter.CTkImage(Image.open(os.path.join(image_path, "light_theme.png")), size=(500, 410))
 theme_selector_classic_image = customtkinter.CTkImage(Image.open(os.path.join(image_path, "classic_theme.png")), size=(500, 410))

@@ -24,6 +24,7 @@ CANVAS_BG_COLOR = "#212121"
 CANVAS_LINE_COLOR = "white"
 MULTI_CGRA_FRAME_COLOR = "#14375E"
 MULTI_CGRA_TILE_COLOR = "#1F538D"
+MULTI_CGRA_TXT_COLOR = "white"
 
 if args.theme:
    # print(f'Input theme argument: {args.theme}')
@@ -34,6 +35,7 @@ if args.theme:
        CANVAS_LINE_COLOR = "black"
        MULTI_CGRA_FRAME_COLOR = "#325882"
        MULTI_CGRA_TILE_COLOR = "#3A7EBF"
+       MULTI_CGRA_TXT_COLOR = "black"
 
 from VectorCGRA.cgra.translate.CGRATemplateRTL_test import *
 
@@ -53,8 +55,8 @@ PORT_NORTHEAST = 5
 PORT_SOUTHEAST = 6
 PORT_SOUTHWEST = 7
 PORT_DIRECTION_COUNTS = 8
-CGRA_ROWS = 2
-CGRA_COLS = 2
+CGRA_ROWS = 3
+CGRA_COLS = 3
 ROWS = 4
 COLS = 4
 INTERVAL = 10
@@ -1616,7 +1618,7 @@ def create_multi_cgra_panel(master, cgraRows=2, cgraCols=2):
             multiCgraCanvas.create_window(x, y, window=cgraFrame, height=cgraSquareLength, width=cgraSquareLength,
                                           anchor="nw")
             multiCgraCanvas.create_text(x + cgraSquareLength/2 + 5, y + cgraSquareLength + 10, font=customtkinter.CTkFont(weight="bold"),
-                         text=f"CGRA {cgraId}")
+                         text=f"CGRA {cgraId}", fill=MULTI_CGRA_TXT_COLOR)
             cgraId = cgraId + 1
 
             # todo
@@ -1740,14 +1742,14 @@ def create_multi_cgra_config_panel(master):
     multiCgraRowsLabel.grid(row=3, column=0, padx=5, sticky="w")
     multiCgraRowsLabelEntry = customtkinter.CTkEntry(multiCgraConfigPanel, justify=tkinter.CENTER)
     multiCgraRowsLabelEntry.grid(row=3, column=1, padx=5)
-    multiCgraRowsLabelEntry.insert(0, str(2))
+    multiCgraRowsLabelEntry.insert(0, str(3))
     widgets["multiCgraRowsLabelEntry"] = multiCgraRowsLabelEntry
 
     multiCgraColumnsLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Multi-CGRA\nColumns:')
     multiCgraColumnsLabel.grid(row=4, column=0, padx=5, sticky="w")
     multiCgraColumnsEntry = customtkinter.CTkEntry(multiCgraConfigPanel, justify=tkinter.CENTER)
     multiCgraColumnsEntry.grid(row=4, column=1, padx=5)
-    multiCgraColumnsEntry.insert(0, str(2))
+    multiCgraColumnsEntry.insert(0, str(3))
     widgets["multiCgraColumnsEntry"] = multiCgraColumnsEntry
 
     vectorLanesLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Vector Lanes:')

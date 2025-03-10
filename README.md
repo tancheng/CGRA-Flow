@@ -68,7 +68,7 @@ Execution
 ```
 
 
-Mac user [debugging and troubleshooting steps doc](/debug/DEBUGGING.md)
+Mac user [debugging and troubleshooting steps doc](/doc/debug/DEBUGGING.md)
 --------------------------------------------------------
 
 Installation

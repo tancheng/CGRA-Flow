@@ -2199,6 +2199,7 @@ def create_param_pannel(master):
     # for port in paramCGRA.dataSPM.outLinks:
     #     if not paramCGRA.dataSPM.outLinks[port].disabled:
     #         spmEnabledListbox.insert(0, port)
+    return paramPannel
 
 
 def create_test_pannel(master):
@@ -2320,6 +2321,7 @@ def create_test_pannel(master):
     reportSPMAreaData.grid(row=5, column=1, pady=5)
     reportSPMPowerLabel.grid(row=6, column=0, pady=5)
     reportSPMPowerData.grid(row=6, column=1, pady=5)
+    return dataPannel;
 
 def create_layout_pannel(master):
     layoutPannel = customtkinter.CTkFrame(master, width=80)
@@ -2366,6 +2368,8 @@ def create_layout_pannel(master):
     global layoutLabel
     layoutLabel = customtkinter.CTkLabel(layoutPannel, text='')
     layoutLabel.grid(row=5, column=0, padx=(0, 5), pady=(5, 5), columnspan=2)
+    layoutLabel.grid(row=3, column=0, padx=(0,10), pady=(10,10), columnspan=4)
+    return layoutPannel
 
 """
     canvas = customtkinter.CTkCanvas(layoutPannel, bg=CANVAS_BG_COLOR, bd=0, highlightthickness=0)
@@ -2640,6 +2644,54 @@ def create_kernel_pannel(master):
     widgets["mapSpeedupEntry"] = mapSpeedupEntry
     mapSpeedupEntry.insert(0, "0")
     mapSpeedupEntry.grid(row=13, column=3)
+    return kernelPannel
+
+# Performs a perodical checks on whether the UI components are drawn into the screen or not.
+def check_ui_ready(
+    master: customtkinter.CTk,
+    kernel_panel: customtkinter.CTkFrame,
+    mapping_panel: customtkinter.CTkFrame,
+    cgra_panel: customtkinter.CTkFrame,
+    param_panel: customtkinter.CTkFrame,
+    data_panel: customtkinter.CTkFrame,
+    layout_panel: customtkinter.CTkFrame,
+    window: customtkinter.CTkToplevel,
+):
+    panels = [
+        kernel_panel,
+        mapping_panel,
+        cgra_panel,
+        param_panel,
+        data_panel,
+        layout_panel,
+    ]
+
+    if all(panel.winfo_ismapped() for panel in panels):
+        master.after(100, window.destroy)
+    else:
+        master.after(200, lambda: check_ui_ready(master, *panels, window))
+
+# Display all the UI components by calling grid() and start a periodical checks on when they are ready.
+def show_all_ui(master: customtkinter.CTk, window: customtkinter.CTkToplevel):
+    kernelPannel = create_kernel_pannel(master)
+    mappingPannel = create_mapping_pannel(master)
+    cgraPannel = create_cgra_pannel(master, ROWS, COLS)
+    paramPannel = create_param_pannel(master)
+    dataPannel = create_test_pannel(master)
+    layoutPannel = create_layout_pannel(master)
+    kernelPannel.grid(row=1, column=0, rowspan=1, columnspan=1, padx=(0, 5), pady=(5, 0), sticky="nsew")
+    mappingPannel.grid(row=1, column=1, rowspan=1, columnspan=3, pady=(5, 0), sticky="nsew")
+    cgraPannel.grid(row=0, column=0, rowspan=1, columnspan=1, padx=(5, 5), pady=(5, 0), sticky="nsew")
+    paramPannel.grid(row=0, column=1, rowspan=1, columnspan=1, padx=(0, 5), sticky="nsew")
+    dataPannel.grid(row=0, column=2, rowspan=1, columnspan=1, pady=(5,0), sticky="nsew")
+    layoutPannel.grid(row=0, column=3, rowspan=1, columnspan=1, padx=(5,0), pady=(5,0), sticky="nsew")
+    # Once kernel is drawn stop the check loop after 100ms.
+    if (kernelPannel.winfo_ismapped()):
+        master.after(100, window.destroy())
+    # Keeps checking if UI components are drawn in every 2 seconds.
+    else:
+        master.after(2000, lambda:check_ui_ready(master, kernelPannel,mappingPannel, cgraPannel, paramPannel,  dataPannel, layoutPannel, window))
+
 
 
 # paramPadPosX = GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + INTERVAL * 3
@@ -2670,6 +2722,29 @@ create_param_pannel(master)
 create_test_pannel(master)
 # layout
 create_layout_pannel(master)
+
+# Sets size first to avoid window keep resizing during loading.
+w, h = master.winfo_screenwidth(), master.winfo_screenheight()
+master.geometry("%dx%d" % (w-10, h-70))
+master.geometry("+%d+%d" % (0, 0))
+
+main_frame = customtkinter.CTkFrame(master)
+
+overlay = customtkinter.CTkToplevel(master)
+overlay.geometry("%dx%d" % (w-10, h-70))
+overlay.transient(master)
+overlay.grab_set()
+
+loading_label = customtkinter.CTkLabel(overlay, text="Loading...", font=("Arial", 24, "bold"))
+loading_label.place(relx=0.5, rely=0.4, anchor="center")
+
+progress = customtkinter.CTkProgressBar(overlay)
+progress.place(relx=0.5, rely=0.5, anchor="center")
+progress.start()
+
+# Adds other UI components in a separate thread.
+threading.Thread(target=show_all_ui(master, overlay), daemon=True).start()
+
 # The width and height of the entire window
 default_width = 1650
 default_height = 1000

@@ -1592,7 +1592,7 @@ def cgra_frame_clicked(event, cgraId):
 
 def create_multi_cgra_panel(master, cgraRows=2, cgraCols=2):
     multiCgraPanel = customtkinter.CTkFrame(master)
-    multiCgraPanel.grid(row=0, column=0, padx=(0, 5), sticky="nsew")
+    # multiCgraPanel.grid(row=0, column=0, padx=(0, 5), sticky="nsew")
     multiCgraLabel = customtkinter.CTkLabel(multiCgraPanel, text='Multi-CGRA',
                                        font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
     multiCgraLabel.pack(anchor="w", ipadx=5)
@@ -1672,6 +1672,8 @@ def create_multi_cgra_panel(master, cgraRows=2, cgraCols=2):
 
     multiCgraCanvas.pack(side="top", fill="both", expand=True)
 
+    return multiCgraPanel
+
 
 def create_cgra_tiles_on_multi_cgra_panel(parentCanvas, rootX, rootY, rows, cols, cgraSquareLength):
     # mork cgra nxn
@@ -1710,7 +1712,7 @@ def create_cgra_tiles_on_multi_cgra_panel(parentCanvas, rootX, rootY, rows, cols
 def create_multi_cgra_config_panel(master):
     multiCgraConfigPanel = customtkinter.CTkFrame(master, width=240)
     multiCgraConfigPanel.grid_propagate(0)
-    multiCgraConfigPanel.grid(row=0, column=1, sticky="nsew")
+    # multiCgraConfigPanel.grid(row=0, column=1, sticky="nsew")
     for i in range(8):
         multiCgraConfigPanel.rowconfigure(i, weight=1)
     multiCgraConfigPanel.rowconfigure(8, weight=10)
@@ -1767,12 +1769,14 @@ def create_multi_cgra_config_panel(master):
     multiCgraConfigUpdateButton = customtkinter.CTkButton(multiCgraConfigPanel, text="Update", command=partial(clickMultiCgraUpdate, master))
     multiCgraConfigUpdateButton.grid(row=7, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
 
+    return multiCgraConfigPanel
+
 
 def clickMultiCgraUpdate(root):
     cgraRows = int(widgets["multiCgraRowsLabelEntry"].get())
     cgraCols = int(widgets["multiCgraColumnsEntry"].get())
-    create_multi_cgra_panel(root, cgraRows, cgraCols)
-
+    multiCgraPanel = create_multi_cgra_panel(root, cgraRows, cgraCols)
+    multiCgraPanel.grid(row=0, column=0, padx=(0, 5), sticky="nsew")
 
 def create_cgra_pannel(master, rows, columns):
     ROWS = rows
@@ -1784,7 +1788,7 @@ def create_cgra_pannel(master, rows, columns):
     # Use solid black board to let the pannel look better
     cgraPannel = customtkinter.CTkFrame(master)
     # cgraPannel = tkinter.LabelFrame(master, text='CGRA', bd=BORDER, relief='groove')
-    cgraPannel.grid(row=0, column=2, rowspan=1, columnspan=2, padx=(5, 5), sticky="nsew")
+    # cgraPannel.grid(row=0, column=2, rowspan=1, columnspan=2, padx=(5, 5), sticky="nsew")
     # cgraPannel.pack()
     # cgraPannel.grid_propagate(0)
     # create label for cgraPannel
@@ -1922,6 +1926,7 @@ def create_cgra_pannel(master, rows, columns):
     hbar.pack(side="bottom", fill="x")
     canvas.config(xscrollcommand=hbar.set)
 
+    return cgraPannel
 
 def place_fu_options(master):
     fuCount = len(fuTypeList)
@@ -1983,7 +1988,7 @@ def place_xbar_options(master):
 def create_param_pannel(master):
     # paramPannel = tkinter.LabelFrame(master, text='Configuration', bd=BORDER, relief='groove')
     paramPannel = customtkinter.CTkFrame(master, width=550, height=480)
-    paramPannel.grid(row=0, column=4, columnspan=2, sticky="nsew")
+    # paramPannel.grid(row=0, column=4, columnspan=2, sticky="nsew")
 
     # Use columnconfigure and rowconfigure to partition the columns, so that each column and row will fill the corresponding space
     # The 'weight' represents the weight of the corresponding row/column length
@@ -2135,76 +2140,12 @@ def create_param_pannel(master):
     place_xbar_options(xbarConfigPannel)
     # xbarConfigSubPannel.pack()
 
-
-
-
-    # spmConfigPannel = tkinter.LabelFrame(paramPannel, text='Data SPM outgoing links', bd=BORDER, relief='groove')
-    # spmConfigPannel.grid(row=9, column=0, rowspan=3, columnspan=4, sticky="nsew")
-    # widgets["spmConfigPannel"] = spmConfigPannel
-    #
-    # # Use columnconfigure and rowconfigure to partition the columns, so that each column and row fills the corresponding space
-    # for i in range(3):
-    #     spmConfigPannel.rowconfigure(i, weight=1)
-    # for i in range(5):
-    #     spmConfigPannel.columnconfigure(i, weight=1)
-    #
-    # spmEnabledOutVar = tkinter.IntVar()
-    # spmDisabledOutVar = tkinter.IntVar()
-    #
-    # spmEnabledLabel = tkinter.Label(spmConfigPannel)
-    # spmDisabledLabel = tkinter.Label(spmConfigPannel)
-    #
-    # spmEnabledScrollbar = tkinter.Scrollbar(spmEnabledLabel)
-    # spmDisabledScrollbar = tkinter.Scrollbar(spmDisabledLabel)
-    #
-    # spmEnabledListbox = tkinter.Listbox(spmEnabledLabel, listvariable=spmEnabledOutVar)
-    # spmDisabledListbox = tkinter.Listbox(spmDisabledLabel, listvariable=spmDisabledOutVar)
-    #
-    # widgets["spmEnabledListbox"] = spmEnabledListbox
-    # widgets["spmDisabledListbox"] = spmDisabledListbox
-    #
-    # spmDisableButton = tkinter.Button(spmConfigPannel, text="Disable", relief='raised', command=clickSPMPortDisable,
-    #                                   highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS)
-    # spmEnableButton = tkinter.Button(spmConfigPannel, text="Enable", relief='raised', command=clickSPMPortEnable,
-    #                                  highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS)
-    # spmEnabledScrollbar.config(command=spmEnabledListbox.yview)
-    # spmEnabledListbox.config(yscrollcommand=spmEnabledScrollbar.set)
-    # spmDisabledScrollbar.config(command=spmDisabledListbox.yview)
-    # spmDisabledListbox.config(yscrollcommand=spmDisabledScrollbar.set)
-    # spmEnabledLabel.grid(row=0, column=0, rowspan=3, sticky="nsew")
-    #
-    # spmEnabledScrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
-    # spmEnabledListbox.pack()
-    #
-    # spmDisableArrow0 = tkinter.Label(spmConfigPannel, text="=>")
-    # spmDisableArrow1 = tkinter.Label(spmConfigPannel, text="=>")
-    # spmEnableArrow0 = tkinter.Label(spmConfigPannel, text="<=")
-    # spmEnableArrow1 = tkinter.Label(spmConfigPannel, text="<=")
-    #
-    # spmDisableArrow0.grid(row=0, column=1, sticky="nsew")
-    # spmDisableButton.grid(row=0, column=2, sticky="nsew")
-    # spmDisableArrow1.grid(row=0, column=3, sticky="nsew")
-    #
-    # spmEnableArrow0.grid(row=2, column=1, sticky="nsew")
-    # spmEnableButton.grid(row=2, column=2, sticky="nsew")
-    # spmEnableArrow1.grid(row=2, column=3, sticky="nsew")
-    #
-    # spmDisabledLabel.grid(row=0, column=4, rowspan=3, sticky="new")
-    #
-    # spmDisabledScrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
-    # spmDisabledListbox.pack()
-    #
-    # spmEnabledListbox.delete(0)
-    # spmDisabledListbox.delete(0)
-    # for port in paramCGRA.dataSPM.outLinks:
-    #     if not paramCGRA.dataSPM.outLinks[port].disabled:
-    #         spmEnabledListbox.insert(0, port)
     return paramPannel
 
 
 def create_test_pannel(master):
     dataPannel = customtkinter.CTkFrame(master, width=80, height=480)
-    dataPannel.grid(row=1, column=4, pady=(5,0), sticky="nsew")
+    # dataPannel.grid(row=1, column=4, pady=(5,0), sticky="nsew")
     # Increase the size of the 'SVerilog' panel
     dataPannel.grid_rowconfigure(1, weight=2)
 
@@ -2321,11 +2262,12 @@ def create_test_pannel(master):
     reportSPMAreaData.grid(row=5, column=1, pady=5)
     reportSPMPowerLabel.grid(row=6, column=0, pady=5)
     reportSPMPowerData.grid(row=6, column=1, pady=5)
-    return dataPannel;
+
+    return dataPannel
 
 def create_layout_pannel(master):
     layoutPannel = customtkinter.CTkFrame(master, width=80)
-    layoutPannel.grid(row=1, column=5, padx=(5,0), pady=(5,0), sticky="nsew")
+    # layoutPannel.grid(row=1, column=5, padx=(5,0), pady=(5,0), sticky="nsew")
     layoutPannel.grid_propagate(0)
     for row in range(5):
         layoutPannel.grid_rowconfigure(row, weight=1)
@@ -2368,9 +2310,8 @@ def create_layout_pannel(master):
     global layoutLabel
     layoutLabel = customtkinter.CTkLabel(layoutPannel, text='')
     layoutLabel.grid(row=5, column=0, padx=(0, 5), pady=(5, 5), columnspan=2)
-    layoutLabel.grid(row=3, column=0, padx=(0,10), pady=(10,10), columnspan=4)
-    return layoutPannel
 
+    return layoutPannel
 """
     canvas = customtkinter.CTkCanvas(layoutPannel, bg=CANVAS_BG_COLOR, bd=0, highlightthickness=0)
     scrollbar = customtkinter.CTkScrollbar(layoutPannel, orientation="horizontal", command=canvas.xview)
@@ -2498,7 +2439,7 @@ def display_layout_image(image_path):
 def create_mapping_pannel(master):
     # mappingPannel = tkinter.LabelFrame(master, text='Mapping', bd=BORDER, relief='groove')
     mappingPannel = customtkinter.CTkFrame(master)
-    mappingPannel.grid(row=1, column=1, rowspan=1, columnspan=3, padx=(0, 5), pady=(5, 0), sticky="nsew")
+    # mappingPannel.grid(row=1, column=1, rowspan=1, columnspan=3, padx=(0, 5), pady=(5, 0), sticky="nsew")
     mappingPannelLabel = customtkinter.CTkLabel(mappingPannel, text='Mapping ',
                                                # width=100,
                                                font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE,
@@ -2514,12 +2455,14 @@ def create_mapping_pannel(master):
     mappingCanvas.config(yscrollcommand=vbar.set)
     mappingCanvas.pack(side="top", fill="both", expand=True)
 
+    return mappingPannel
+
 
 def create_kernel_pannel(master):
     # kernelPannel = tkinter.LabelFrame(master, text="Kernel", bd=BORDER, relief='groove')
     kernelPannel = customtkinter.CTkFrame(master, width=280)
     kernelPannel.grid_propagate(0)
-    kernelPannel.grid(row=1, column=0, padx=(0, 5), pady=(5, 0), sticky="nsew")
+    # kernelPannel.grid(row=1, column=0, padx=(0, 5), pady=(5, 0), sticky="nsew")
     for row in range(14):
         kernelPannel.grid_rowconfigure(row, weight=1)
     kernelPannel.grid_rowconfigure(5, weight=2)
@@ -2644,11 +2587,14 @@ def create_kernel_pannel(master):
     widgets["mapSpeedupEntry"] = mapSpeedupEntry
     mapSpeedupEntry.insert(0, "0")
     mapSpeedupEntry.grid(row=13, column=3)
+
     return kernelPannel
 
 # Performs a perodical checks on whether the UI components are drawn into the screen or not.
 def check_ui_ready(
     master: customtkinter.CTk,
+    multiCgraPanel: customtkinter.CTkFrame,
+    multiCgraConfigPanel: customtkinter.CTkFrame,
     kernel_panel: customtkinter.CTkFrame,
     mapping_panel: customtkinter.CTkFrame,
     cgra_panel: customtkinter.CTkFrame,
@@ -2658,6 +2604,8 @@ def check_ui_ready(
     window: customtkinter.CTkToplevel,
 ):
     panels = [
+        multiCgraPanel,
+        multiCgraConfigPanel,
         kernel_panel,
         mapping_panel,
         cgra_panel,
@@ -2673,25 +2621,28 @@ def check_ui_ready(
 
 # Display all the UI components by calling grid() and start a periodical checks on when they are ready.
 def show_all_ui(master: customtkinter.CTk, window: customtkinter.CTkToplevel):
+    multiCgraPanel = create_multi_cgra_panel(master, CGRA_ROWS, CGRA_COLS)
+    multiCgraConfigPanel = create_multi_cgra_config_panel(master)
     kernelPannel = create_kernel_pannel(master)
     mappingPannel = create_mapping_pannel(master)
     cgraPannel = create_cgra_pannel(master, ROWS, COLS)
     paramPannel = create_param_pannel(master)
     dataPannel = create_test_pannel(master)
     layoutPannel = create_layout_pannel(master)
-    kernelPannel.grid(row=1, column=0, rowspan=1, columnspan=1, padx=(0, 5), pady=(5, 0), sticky="nsew")
-    mappingPannel.grid(row=1, column=1, rowspan=1, columnspan=3, pady=(5, 0), sticky="nsew")
-    cgraPannel.grid(row=0, column=0, rowspan=1, columnspan=1, padx=(5, 5), pady=(5, 0), sticky="nsew")
-    paramPannel.grid(row=0, column=1, rowspan=1, columnspan=1, padx=(0, 5), sticky="nsew")
-    dataPannel.grid(row=0, column=2, rowspan=1, columnspan=1, pady=(5,0), sticky="nsew")
-    layoutPannel.grid(row=0, column=3, rowspan=1, columnspan=1, padx=(5,0), pady=(5,0), sticky="nsew")
+    multiCgraPanel.grid(row=0, column=0, padx=(0, 5), sticky="nsew")
+    multiCgraConfigPanel.grid(row=0, column=1, sticky="nsew")
+    kernelPannel.grid(row=1, column=0, padx=(0, 5), pady=(5, 0), sticky="nsew")
+    mappingPannel.grid(row=1, column=1, rowspan=1, columnspan=3, padx=(0, 5), pady=(5, 0), sticky="nsew")
+    cgraPannel.grid(row=0, column=2, rowspan=1, columnspan=2, padx=(5, 5), sticky="nsew")
+    paramPannel.grid(row=0, column=4, columnspan=2, sticky="nsew")
+    dataPannel.grid(row=1, column=4, pady=(5,0), sticky="nsew")
+    layoutPannel.grid(row=1, column=5, padx=(5,0), pady=(5,0), sticky="nsew")
     # Once kernel is drawn stop the check loop after 100ms.
     if (kernelPannel.winfo_ismapped()):
         master.after(100, window.destroy())
     # Keeps checking if UI components are drawn in every 2 seconds.
     else:
-        master.after(2000, lambda:check_ui_ready(master, kernelPannel,mappingPannel, cgraPannel, paramPannel,  dataPannel, layoutPannel, window))
-
+        master.after(500, lambda: check_ui_ready(master, multiCgraPanel, multiCgraConfigPanel, kernelPannel, mappingPannel, cgraPannel, paramPannel, dataPannel, layoutPannel, window))
 
 
 # paramPadPosX = GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + INTERVAL * 3
@@ -2706,22 +2657,6 @@ TILE_WIDTH = 70
 LINK_LENGTH = 40
 GRID_WIDTH = (TILE_WIDTH + LINK_LENGTH) * COLS - LINK_LENGTH
 GRID_HEIGHT = (TILE_HEIGHT + LINK_LENGTH) * ROWS - LINK_LENGTH
-# kernel
-create_kernel_pannel(master)
-# mapping
-create_mapping_pannel(master)
-# multi cgra
-create_multi_cgra_panel(master, CGRA_ROWS, CGRA_COLS)
-# multi cgra config
-create_multi_cgra_config_panel(master)
-# cgra
-create_cgra_pannel(master, ROWS, COLS)
-# configuration
-create_param_pannel(master)
-# verification
-create_test_pannel(master)
-# layout
-create_layout_pannel(master)
 
 # Sets size first to avoid window keep resizing during loading.
 w, h = master.winfo_screenwidth(), master.winfo_screenheight()
@@ -2745,6 +2680,22 @@ progress.start()
 # Adds other UI components in a separate thread.
 threading.Thread(target=show_all_ui(master, overlay), daemon=True).start()
 
+# # kernel
+# create_kernel_pannel(master)
+# # mapping
+# create_mapping_pannel(master)
+# # multi cgra
+# create_multi_cgra_panel(master, CGRA_ROWS, CGRA_COLS)
+# # multi cgra config
+# create_multi_cgra_config_panel(master)
+# # cgra
+# create_cgra_pannel(master, ROWS, COLS)
+# # configuration
+# create_param_pannel(master)
+# # verification
+# create_test_pannel(master)
+# # layout
+# create_layout_pannel(master)
 # The width and height of the entire window
 default_width = 1650
 default_height = 1000
@@ -2759,7 +2710,7 @@ master.grid_columnconfigure(4, weight=1)
 master.grid_columnconfigure(5, weight=1)
 # print(master.winfo_width())
 # print(master.winfo_height())
-w, h = master.winfo_screenwidth(), master.winfo_screenheight()
+# w, h = master.winfo_screenwidth(), master.winfo_screenheight()
 master.geometry("%dx%d" % (w-10, h-70))
 master.geometry("+%d+%d" % (0, 0))
 master.mainloop()

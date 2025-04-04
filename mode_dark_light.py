@@ -2642,7 +2642,7 @@ def show_all_ui(master: customtkinter.CTk, window: customtkinter.CTkToplevel):
         master.after(100, window.destroy())
     # Keeps checking if UI components are drawn in every 2 seconds.
     else:
-        master.after(500, lambda: check_ui_ready(master, multiCgraPanel, multiCgraConfigPanel, kernelPannel, mappingPannel, cgraPannel, paramPannel, dataPannel, layoutPannel, window))
+        master.after(2000, lambda: check_ui_ready(master, multiCgraPanel, multiCgraConfigPanel, kernelPannel, mappingPannel, cgraPannel, paramPannel, dataPannel, layoutPannel, window))
 
 
 # paramPadPosX = GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + INTERVAL * 3

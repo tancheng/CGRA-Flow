@@ -25,6 +25,7 @@ CANVAS_LINE_COLOR = "white"
 MULTI_CGRA_FRAME_COLOR = "#14375E"
 MULTI_CGRA_TILE_COLOR = "#1F538D"
 MULTI_CGRA_TXT_COLOR = "white"
+MULTI_CGRA_SELECTED_COLOR = "lightblue"
 
 if args.theme:
    # print(f'Input theme argument: {args.theme}')
@@ -109,6 +110,7 @@ xbarPortOpposites[PORT_NORTHEAST] = PORT_SOUTHWEST
 xbarPortOpposites[PORT_SOUTHWEST] = PORT_NORTHEAST
 xbarPortOpposites[PORT_SOUTHEAST] = PORT_NORTHWEST
 
+# Stores the UI elements that need to communicate between UI components
 widgets = {}
 images = {}
 entireTileCheckVar = tkinter.IntVar()
@@ -1585,9 +1587,27 @@ def _on_mousewheel(canvas, event):
     else:
         canvas.yview_scroll(int(-1*event.delta), "units")
 
+# Defines selected cgra frame in multi-cgra panel.
+selected_cgra_frame = None
 
-def cgra_frame_clicked(event, cgraId):
-    print(f"cgraId: {cgraId} clicked!")
+def cgra_frame_clicked(event, cgraId, frame):
+    global selected_cgra_frame
+    if selected_cgra_frame and selected_cgra_frame != frame:
+        selected_cgra_frame.config(bg=MULTI_CGRA_FRAME_COLOR)
+        selected_cgra_frame.is_selected = False
+
+    if getattr(frame, 'is_selected', False) == False:
+        print(f"cgraId: {cgraId} selected!")
+        frame.is_selected = True
+        frame.config(bg=MULTI_CGRA_SELECTED_COLOR)  
+        selected_cgra_frame = frame
+        widgets["cgraLabel"].configure(text=f"Per-CGRA (id: {cgraId})")
+    else:
+        print(f"cgraId: {cgraId} unselected!")
+        frame.is_selected = False
+        frame.config(bg=MULTI_CGRA_FRAME_COLOR) 
+        selected_cgra_frame = None
+        widgets["cgraLabel"].configure(text="Per-CGRA (id: -)")
 
 
 def create_multi_cgra_panel(master, cgraRows=2, cgraCols=2):
@@ -1613,8 +1633,9 @@ def create_multi_cgra_panel(master, cgraRows=2, cgraCols=2):
             # draw
             print(f"cgraFrame: {x} x {y}, cgraSquareLength: {cgraSquareLength}")
             cgraFrame = tkinter.Frame(multiCgraCanvas, bg=MULTI_CGRA_FRAME_COLOR, border=4)
+            cgraFrame.is_selected = False
             # add command for frame
-            cgraFrame.bind('<Button-1>', partial(cgra_frame_clicked, cgraId=cgraId))
+            cgraFrame.bind('<Button-1>', partial(cgra_frame_clicked, cgraId=cgraId, frame=cgraFrame))
             multiCgraCanvas.create_window(x, y, window=cgraFrame, height=cgraSquareLength, width=cgraSquareLength,
                                           anchor="nw")
             multiCgraCanvas.create_text(x + cgraSquareLength/2 + 5, y + cgraSquareLength + 10, font=customtkinter.CTkFont(weight="bold"),
@@ -1776,7 +1797,7 @@ def clickMultiCgraUpdate(root):
     cgraRows = int(widgets["multiCgraRowsLabelEntry"].get())
     cgraCols = int(widgets["multiCgraColumnsEntry"].get())
     multiCgraPanel = create_multi_cgra_panel(root, cgraRows, cgraCols)
-    multiCgraPanel.grid(row=0, column=0, padx=(0, 5), sticky="nsew")
+    multiCgraPanel.grid(row=0, column=0, padx=(0, 5), sticky="nsew")    
 
 def create_cgra_pannel(master, rows, columns):
     ROWS = rows
@@ -1793,6 +1814,8 @@ def create_cgra_pannel(master, rows, columns):
     # cgraPannel.grid_propagate(0)
     # create label for cgraPannel
     cgraLabel = customtkinter.CTkLabel(cgraPannel, text='Per-CGRA (id: 0)', font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
+    widgets['cgraLabel'] = cgraLabel
+
     # cgraLabel.grid(row=0, column=0, sticky="nsew")
     cgraLabel.pack(anchor="w", ipadx=5)
 

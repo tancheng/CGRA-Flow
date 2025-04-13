@@ -1800,6 +1800,11 @@ def clickMultiCgraUpdate(root):
     multiCgraPanel.grid(row=0, column=0, padx=(0, 5), sticky="nsew")    
 
 def create_cgra_pannel(master, rows, columns):
+        # Clear previous CGRA panel if it exists
+    if 'cgraPannel' in widgets:
+        print("cgra_pannel exists, destroy the original view")
+        widgets["cgraPannel"].destroy()
+
     ROWS = rows
     COLS = columns
     widgets["ROWS"] = ROWS
@@ -1808,6 +1813,7 @@ def create_cgra_pannel(master, rows, columns):
     # master.grid_propagate(0)
     # Use solid black board to let the pannel look better
     cgraPannel = customtkinter.CTkFrame(master)
+    widgets['cgraPannel'] = cgraPannel
     # cgraPannel = tkinter.LabelFrame(master, text='CGRA', bd=BORDER, relief='groove')
     # cgraPannel.grid(row=0, column=2, rowspan=1, columnspan=2, padx=(5, 5), sticky="nsew")
     # cgraPannel.pack()
@@ -1948,6 +1954,8 @@ def create_cgra_pannel(master, rows, columns):
     hbar = customtkinter.CTkScrollbar(cgraPannel, orientation="horizontal", command=canvas.xview)
     hbar.pack(side="bottom", fill="x")
     canvas.config(xscrollcommand=hbar.set)
+
+    cgraPannel.grid(row=0, column=2, rowspan=1, columnspan=2, padx=(5, 5), sticky="nsew")
 
     return cgraPannel
 
@@ -2656,7 +2664,6 @@ def show_all_ui(master: customtkinter.CTk, window: customtkinter.CTkToplevel):
     multiCgraConfigPanel.grid(row=0, column=1, sticky="nsew")
     kernelPannel.grid(row=1, column=0, padx=(0, 5), pady=(5, 0), sticky="nsew")
     mappingPannel.grid(row=1, column=1, rowspan=1, columnspan=3, padx=(0, 5), pady=(5, 0), sticky="nsew")
-    cgraPannel.grid(row=0, column=2, rowspan=1, columnspan=2, padx=(5, 5), sticky="nsew")
     paramPannel.grid(row=0, column=4, columnspan=2, sticky="nsew")
     dataPannel.grid(row=1, column=4, pady=(5,0), sticky="nsew")
     layoutPannel.grid(row=1, column=5, padx=(5,0), pady=(5,0), sticky="nsew")

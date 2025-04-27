@@ -297,6 +297,8 @@ def clickUpdate(root):
 
     old_rows_num = selectedCgraParam.rows
     if selectedCgraParam.rows != rows or selectedCgraParam.columns != columns:
+        #selectedCgraParam.rows = rows
+        #selectedCgraParam.columns = columns
         selectedCgraParam = CGRAParam(rows, columns ,CONFIG_MEM_SIZE, DATA_MEM_SIZE, widgets)
         selectedCgraParam.set_cgra_param_callbacks(switchDataSPMOutLinks=switchDataSPMOutLinks,
                                            updateFunCheckoutButtons=updateFunCheckoutButtons,
@@ -903,10 +905,10 @@ def drawSchedule():
 
     canvas = widgets["mappingCanvas"]
     canvas.delete("all")
-    ROWS = widgets["ROWS"]
-    COLS = widgets["COLS"]
-    GRID_WIDTH = (TILE_WIDTH + LINK_LENGTH) * COLS - LINK_LENGTH
-    GRID_HEIGHT = (TILE_HEIGHT + LINK_LENGTH) * ROWS - LINK_LENGTH
+    #ROWS = widgets["ROWS"]
+    #COLS = widgets["COLS"]
+    GRID_WIDTH = (TILE_WIDTH + LINK_LENGTH) * selectedCgraParam.columns - LINK_LENGTH
+    GRID_HEIGHT = (TILE_HEIGHT + LINK_LENGTH) * selectedCgraParam.rows - LINK_LENGTH
     cgraWidth = GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + 20
     canvas.configure(scrollregion=(0, 0, mappingII * cgraWidth, GRID_HEIGHT + 40 + BORDER))
 
@@ -1263,11 +1265,11 @@ def create_cgra_pannel(master, rows, columns):
         print("cgra_pannel exists, destroy the original view")
         widgets["cgraPannel"].destroy()
 
-    ROWS = rows
-    COLS = columns
-    widgets["ROWS"] = ROWS
-    widgets["COLS"] = COLS
-    print(f"create_cgra_pannel - ROWS: {ROWS}, COLS: {COLS}")
+    #ROWS = rows
+    #COLS = columns
+    #widgets["ROWS"] = ROWS
+    #widgets["COLS"] = COLS
+    print(f"create_cgra_pannel - ROWS: {rows}, COLS: {columns}")
     # master.grid_propagate(0)
     # Use solid black board to let the pannel look better
     cgraPannel = customtkinter.CTkFrame(master)
@@ -1303,7 +1305,7 @@ def create_cgra_pannel(master, rows, columns):
     padHeight = TILE_HEIGHT + LINK_LENGTH
     padWidth = TILE_WIDTH + LINK_LENGTH
 
-    GRID_HEIGHT = (TILE_HEIGHT + LINK_LENGTH) * ROWS - LINK_LENGTH
+    GRID_HEIGHT = (TILE_HEIGHT + LINK_LENGTH) * rows - LINK_LENGTH
     # draw data memory
     memHeight = GRID_HEIGHT
     # spmLabel = tkinter.Button(canvas, text="Data\nSPM", fg='black', bg='gray', relief='raised', bd=BORDER,
@@ -1319,9 +1321,9 @@ def create_cgra_pannel(master, rows, columns):
 
     # construct tiles
     if len(selectedCgraParam.tiles) == 0:
-        for i in range(ROWS):
-            for j in range(COLS):
-                ID = i * COLS + j
+        for i in range(rows):
+            for j in range(columns):
+                ID = i * columns + j
                 posX = padWidth * j + MEM_WIDTH + LINK_LENGTH
                 posY = GRID_HEIGHT - padHeight * i - TILE_HEIGHT
 
@@ -1346,9 +1348,9 @@ def create_cgra_pannel(master, rows, columns):
 
             # construct links
     if len(selectedCgraParam.templateLinks) == 0:
-        for i in range(ROWS):
-            for j in range(COLS):
-                if j < COLS - 1:
+        for i in range(rows):
+            for j in range(columns):
+                if j < columns - 1:
                     # horizontal
                     tile0 = selectedCgraParam.getTileOfDim(j, i)
                     tile1 = selectedCgraParam.getTileOfDim(j + 1, i)
@@ -1357,7 +1359,7 @@ def create_cgra_pannel(master, rows, columns):
                     selectedCgraParam.addTemplateLink(link0)
                     selectedCgraParam.addTemplateLink(link1)
 
-                if i < ROWS - 1 and j < COLS - 1:
+                if i < rows - 1 and j < columns - 1:
                     # diagonal left bottom to right top
                     tile0 = selectedCgraParam.getTileOfDim(j, i)
                     tile1 = selectedCgraParam.getTileOfDim(j + 1, i + 1)
@@ -1366,7 +1368,7 @@ def create_cgra_pannel(master, rows, columns):
                     selectedCgraParam.addTemplateLink(link0)
                     selectedCgraParam.addTemplateLink(link1)
 
-                if i < ROWS - 1 and j > 0:
+                if i < rows - 1 and j > 0:
                     # diagonal left top to right bottom
                     tile0 = selectedCgraParam.getTileOfDim(j, i)
                     tile1 = selectedCgraParam.getTileOfDim(j - 1, i + 1)
@@ -1375,7 +1377,7 @@ def create_cgra_pannel(master, rows, columns):
                     selectedCgraParam.addTemplateLink(link0)
                     selectedCgraParam.addTemplateLink(link1)
 
-                if i < ROWS - 1:
+                if i < columns - 1:
                     # vertical
                     tile0 = selectedCgraParam.getTileOfDim(j, i)
                     tile1 = selectedCgraParam.getTileOfDim(j, i + 1)
@@ -2113,8 +2115,8 @@ def show_all_ui(master: customtkinter.CTk, window: customtkinter.CTkToplevel):
     multiCgraConfigPanel = create_multi_cgra_config_panel(master)
     kernelPannel = create_kernel_pannel(master)
     mappingPannel = create_mapping_pannel(master)
-    cgraPannel = create_cgra_pannel(master, ROWS, COLS)
-    multiCgraPanel = create_multi_cgra_panel(master, CGRA_ROWS, CGRA_COLS)
+    cgraPannel = create_cgra_pannel(master, selectedCgraParam.rows, selectedCgraParam.columns)
+    multiCgraPanel = create_multi_cgra_panel(master, multiCgraParam.rows, multiCgraParam.cols)
     paramPannel = create_param_pannel(master)
     dataPannel = create_test_pannel(master)
     layoutPannel = create_layout_pannel(master)

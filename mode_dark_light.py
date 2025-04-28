@@ -136,6 +136,7 @@ def CreateToolTip(widget, text):
 
 
 def clickTile(ID):
+    print("click Title ")
     # widgets["fuConfigPannel"].configure(text='Tile ' + str(ID) + ' functional units')
     widgets["fuConfigPannel"].configure(label_text='Tile ' + str(ID) + '\nfunctional units')
     # widgets["xbarConfigPannel"].config(text='Tile ' + str(ID) + ' crossbar outgoing links')
@@ -297,8 +298,6 @@ def clickUpdate(root):
 
     old_rows_num = selectedCgraParam.rows
     if selectedCgraParam.rows != rows or selectedCgraParam.columns != columns:
-        #selectedCgraParam.rows = rows
-        #selectedCgraParam.columns = columns
         selectedCgraParam = CGRAParam(rows, columns ,CONFIG_MEM_SIZE, DATA_MEM_SIZE, widgets)
         selectedCgraParam.set_cgra_param_callbacks(switchDataSPMOutLinks=switchDataSPMOutLinks,
                                            updateFunCheckoutButtons=updateFunCheckoutButtons,
@@ -307,6 +306,8 @@ def clickUpdate(root):
                                            updateXbarCheckVars=updateXbarCheckVars,
                                            getFunCheckVars=getFunCheckVars,
                                            getXbarCheckVars= getXbarCheckVars)
+
+    multiCgraParam.cgras[multiCgraParam.selected_row][multiCgraParam.selected_col] = selectedCgraParam    
 
     # dataSPM = ParamSPM(MEM_WIDTH, rows, rows)
     # cgraParam.initDataSPM(dataSPM)
@@ -1048,7 +1049,7 @@ def _on_mousewheel(canvas, event):
 selected_cgra_frame = None
 
 def cgra_frame_clicked(event, cgraId, frame):
-    global selected_cgra_frame
+    global selected_cgra_frame, selectedCgraParam
     if selected_cgra_frame and selected_cgra_frame != frame:
         selected_cgra_frame.config(bg=MULTI_CGRA_FRAME_COLOR)
         selected_cgra_frame.is_selected = False
@@ -1058,14 +1059,21 @@ def cgra_frame_clicked(event, cgraId, frame):
         frame.is_selected = True
         frame.config(bg=MULTI_CGRA_SELECTED_COLOR)  
         selected_cgra_frame = frame
-        widgets["cgraLabel"].configure(text=f"Per-CGRA (id: {cgraId})")
+        multiCgraParam.setSelectedCgra(cgraId//multiCgraParam.rows,cgraId%multiCgraParam.cols)
+        selectedCgraParam = multiCgraParam.getSelectedCgra()
+        selectedCgraParam.set_cgra_param_callbacks(switchDataSPMOutLinks=switchDataSPMOutLinks,
+                                                   updateFunCheckoutButtons=updateFunCheckoutButtons,
+                                                   updateFunCheckVars=updateFunCheckVars,
+                                                   updateXbarCheckbuttons=updateXbarCheckbuttons,
+                                                   updateXbarCheckVars=updateXbarCheckVars,
+                                                   getFunCheckVars=getFunCheckVars,
+                                                   getXbarCheckVars= getXbarCheckVars)
+        # Only re-draw if this re-draw is triggered from user click
+        if (event != None):
+            create_cgra_pannel(master, selectedCgraParam.rows, selectedCgraParam.columns)
     else:
-        print(f"cgraId: {cgraId} unselected!")
-        frame.is_selected = False
-        frame.config(bg=MULTI_CGRA_FRAME_COLOR) 
-        selected_cgra_frame = None
-        widgets["cgraLabel"].configure(text="Per-CGRA (id: -)")
-
+        print(f"cgraId: {cgraId} unselected!, do nothing")
+    
 
 def create_multi_cgra_panel(master, cgraRows=2, cgraCols=2):
     multiCgraPanel = customtkinter.CTkFrame(master)
@@ -1265,10 +1273,6 @@ def create_cgra_pannel(master, rows, columns):
         print("cgra_pannel exists, destroy the original view")
         widgets["cgraPannel"].destroy()
 
-    #ROWS = rows
-    #COLS = columns
-    #widgets["ROWS"] = ROWS
-    #widgets["COLS"] = COLS
     print(f"create_cgra_pannel - ROWS: {rows}, COLS: {columns}")
     # master.grid_propagate(0)
     # Use solid black board to let the pannel look better
@@ -1281,6 +1285,8 @@ def create_cgra_pannel(master, rows, columns):
     # create label for cgraPannel
     cgraLabel = customtkinter.CTkLabel(cgraPannel, text='Per-CGRA (id: 0)', font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
     widgets['cgraLabel'] = cgraLabel
+
+    widgets["cgraLabel"].configure(text=f"Per-CGRA (id: {multiCgraParam.getSelectedCgraId()})")
 
     # cgraLabel.grid(row=0, column=0, sticky="nsew")
     cgraLabel.pack(anchor="w", ipadx=5)
@@ -1331,6 +1337,8 @@ def create_cgra_pannel(master, rows, columns):
                 selectedCgraParam.addTile(tile)
 
     # draw tiles
+    print(f"create_cgra_pannel - selectedCgraParam has : {selectedCgraParam.tiles} titles")
+
     for tile in selectedCgraParam.tiles:
         if not tile.disabled:
             # button = tkinter.Button(canvas, text="Tile " + str(tile.ID), fg='black', bg='gray', relief='raised',

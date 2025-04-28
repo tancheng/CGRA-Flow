@@ -32,12 +32,6 @@ class CGRAParam:
         s.updateXbarCheckbuttons = None
         s.updateXbarCheckVars = None
 
-    def get_row(s):
-        return s.rows
-    
-    def get_col(s):
-        return s.columns
-
     
     def set_cgra_param_callbacks(s,
                          switchDataSPMOutLinks,

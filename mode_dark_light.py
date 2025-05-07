@@ -1264,8 +1264,27 @@ def create_multi_cgra_config_panel(master):
 def clickMultiCgraUpdate(root):
     cgraRows = int(widgets["multiCgraRowsLabelEntry"].get())
     cgraCols = int(widgets["multiCgraColumnsEntry"].get())
+
+    # Refreshes the multi-cgra data model when row/col changes
+    global multiCgraParam
+    global selectedCgraParam
+
+    multiCgraParam = MultiCGRAParam(rows=cgraRows, cols=cgraCols, golbalWidgets = widgets)
+    multiCgraParam.setSelectedCgra(0, 0)
+    selectedCgraParam = multiCgraParam.getSelectedCgra()
+    selectedCgraParam.set_cgra_param_callbacks(switchDataSPMOutLinks=switchDataSPMOutLinks,
+                                               updateFunCheckoutButtons=updateFunCheckoutButtons,
+                                               updateFunCheckVars=updateFunCheckVars,
+                                               updateXbarCheckbuttons=updateXbarCheckbuttons,
+                                               updateXbarCheckVars=updateXbarCheckVars,
+                                               getFunCheckVars=getFunCheckVars,
+                                               getXbarCheckVars= getXbarCheckVars)
+
     multiCgraPanel = create_multi_cgra_panel(root, cgraRows, cgraCols)
-    multiCgraPanel.grid(row=0, column=0, padx=(0, 5), sticky="nsew")    
+    multiCgraPanel.grid(row=0, column=0, padx=(0, 5), sticky="nsew")  
+    create_cgra_pannel(root, selectedCgraParam.rows, selectedCgraParam.columns)
+    create_param_pannel(root)
+
 
 def create_cgra_pannel(master, rows, columns):
         # Clear previous CGRA panel if it exists
@@ -1638,6 +1657,7 @@ def create_param_pannel(master):
         xbarConfigPannel.rowconfigure(i, weight=1)
     place_xbar_options(xbarConfigPannel)
     # xbarConfigSubPannel.pack()
+    paramPannel.grid(row=0, column=4, columnspan=2, sticky="nsew")
 
     return paramPannel
 
@@ -2132,7 +2152,7 @@ def show_all_ui(master: customtkinter.CTk, window: customtkinter.CTkToplevel):
     multiCgraConfigPanel.grid(row=0, column=1, sticky="nsew")
     kernelPannel.grid(row=1, column=0, padx=(0, 5), pady=(5, 0), sticky="nsew")
     mappingPannel.grid(row=1, column=1, rowspan=1, columnspan=3, padx=(0, 5), pady=(5, 0), sticky="nsew")
-    paramPannel.grid(row=0, column=4, columnspan=2, sticky="nsew")
+    #paramPannel.grid(row=0, column=4, columnspan=2, sticky="nsew")
     dataPannel.grid(row=1, column=4, pady=(5,0), sticky="nsew")
     layoutPannel.grid(row=1, column=5, padx=(5,0), pady=(5,0), sticky="nsew")
     # Once kernel is drawn stop the check loop after 100ms.

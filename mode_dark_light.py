@@ -1095,6 +1095,9 @@ def create_multi_cgra_panel(master, cgraRows=2, cgraCols=2):
                                           anchor="nw")
             multiCgraCanvas.create_text(x + cgraSquareLength/2 + 5, y + cgraSquareLength + 10, font=customtkinter.CTkFont(weight="bold"),
                          text=f"CGRA {cgraId}", fill=MULTI_CGRA_TXT_COLOR)
+            if (multiCgraParam.getCgraParam(row, col) == selectedCgraParam):
+                cgra_frame_clicked(None, cgraId= cgraId, frame=cgraFrame)
+                # current cgra param model is the selected one, hightlight it.
             cgraId = cgraId + 1
 
             # todo
@@ -2107,11 +2110,11 @@ def check_ui_ready(
 
 # Display all the UI components by calling grid() and start a periodical checks on when they are ready.
 def show_all_ui(master: customtkinter.CTk, window: customtkinter.CTkToplevel):
-    multiCgraPanel = create_multi_cgra_panel(master, CGRA_ROWS, CGRA_COLS)
     multiCgraConfigPanel = create_multi_cgra_config_panel(master)
     kernelPannel = create_kernel_pannel(master)
     mappingPannel = create_mapping_pannel(master)
     cgraPannel = create_cgra_pannel(master, ROWS, COLS)
+    multiCgraPanel = create_multi_cgra_panel(master, CGRA_ROWS, CGRA_COLS)
     paramPannel = create_param_pannel(master)
     dataPannel = create_test_pannel(master)
     layoutPannel = create_layout_pannel(master)

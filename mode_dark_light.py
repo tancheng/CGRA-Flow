@@ -9,7 +9,12 @@ import tkinter
 import tkinter.messagebox
 from functools import partial
 from tkinter import filedialog as fd
-
+from constants import *
+from cgra_param_tile import ParamTile
+from cgra_param_spm import ParamSPM
+from cgra_param_link import ParamLink
+from cgra_param import CGRAParam
+from cgra_multi_param import MultiCGRAParam
 import customtkinter
 from PIL import Image, ImageTk, ImageFile
 
@@ -47,29 +52,6 @@ import logging
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
-PORT_NORTH = 0
-PORT_SOUTH = 1
-PORT_WEST = 2
-PORT_EAST = 3
-PORT_NORTHWEST = 4
-PORT_NORTHEAST = 5
-PORT_SOUTHEAST = 6
-PORT_SOUTHWEST = 7
-PORT_DIRECTION_COUNTS = 8
-CGRA_ROWS = 3
-CGRA_COLS = 3
-ROWS = 4
-COLS = 4
-INTERVAL = 10
-BORDER = 4
-MEM_WIDTH = 50
-CONFIG_MEM_SIZE = 8
-DATA_MEM_SIZE = 4
-HIGHLIGHT_THICKNESS = 1
-
-FRAME_LABEL_FONT_SIZE = 15
-# FRAME_LABEL_LEVEL_1_FONT_SIZE = FRAME_LABEL_LEVEL_1_FONT_SIZE - 3
-
 
 def window_size(window, width, height):
     window.geometry(f"{width}x{height}")
@@ -77,38 +59,6 @@ def window_size(window, width, height):
 master = customtkinter.CTk()
 master.title("Neura: An Integrated End-to-End Framework for Multi-CGRA Exploration, Compilation, Synthesis and Evaluation")
 
-fuTypeList = ["Phi", "Add", "Shift", "Ld", "Sel", "Cmp", "MAC", "St", "Ret", "Mul", "Logic", "Br"]
-xbarTypeList = ["W", "E", "N", "S", "NE", "NW", "SE", "SW"]
-
-xbarType2Port = {}
-xbarType2Port["W"] = PORT_WEST
-xbarType2Port["E"] = PORT_EAST
-xbarType2Port["N"] = PORT_NORTH
-xbarType2Port["S"] = PORT_SOUTH
-xbarType2Port["NE"] = PORT_NORTHEAST
-xbarType2Port["NW"] = PORT_NORTHWEST
-xbarType2Port["SE"] = PORT_SOUTHEAST
-xbarType2Port["SW"] = PORT_SOUTHWEST
-
-xbarPort2Type = {}
-xbarPort2Type[PORT_WEST] = "W"
-xbarPort2Type[PORT_EAST] = "E"
-xbarPort2Type[PORT_NORTH] = "N"
-xbarPort2Type[PORT_SOUTH] = "S"
-xbarPort2Type[PORT_NORTHEAST] = "NE"
-xbarPort2Type[PORT_NORTHWEST] = "NW"
-xbarPort2Type[PORT_SOUTHEAST] = "SE"
-xbarPort2Type[PORT_SOUTHWEST] = "SW"
-
-xbarPortOpposites = {}
-xbarPortOpposites[PORT_WEST] = PORT_EAST
-xbarPortOpposites[PORT_EAST] = PORT_WEST
-xbarPortOpposites[PORT_NORTH] = PORT_SOUTH
-xbarPortOpposites[PORT_SOUTH] = PORT_NORTH
-xbarPortOpposites[PORT_NORTHWEST] = PORT_SOUTHEAST
-xbarPortOpposites[PORT_NORTHEAST] = PORT_SOUTHWEST
-xbarPortOpposites[PORT_SOUTHWEST] = PORT_NORTHEAST
-xbarPortOpposites[PORT_SOUTHEAST] = PORT_NORTHWEST
 
 # Stores the UI elements that need to communicate between UI components
 widgets = {}
@@ -130,7 +80,7 @@ mapped_tile_color_list = ['#FFF113', '#75D561', '#F2CB67', '#FFAC73', '#F3993A',
 processOptions = tkinter.StringVar()
 processOptions.set("asap7")
 
-
+# TODO: Removes this and uses MultiCGRAParams.py 
 class CgraOfMultiCgra:
     def __init__(s, cgraId, xStartPos, yStartPos, tileRows, tileCols):
         s.cgraId = cgraId
@@ -138,541 +88,6 @@ class CgraOfMultiCgra:
         s.yStartPos = yStartPos
         s.tileRows = tileRows
         s.tileCols = tileCols
-
-
-class ParamTile:
-    def __init__(s, ID, dimX, dimY, posX, posY, tileWidth, tileHeight):
-        s.ID = ID
-        s.disabled = False
-        s.posX = posX
-        s.posY = posY
-        s.dimX = dimX
-        s.dimY = dimY
-        s.width = tileWidth
-        s.height = tileHeight
-        s.outLinks = {}
-        s.inLinks = {}
-        s.neverUsedOutPorts = set()
-        s.fuDict = {}
-        s.xbarDict = {}
-        s.mapping = {}
-
-        for i in range(PORT_DIRECTION_COUNTS):
-            s.neverUsedOutPorts.add(i)
-
-        for xbarType in xbarTypeList:
-            s.xbarDict[xbarType] = 0
-
-        for fuType in fuTypeList:
-            s.fuDict[fuType] = 1
-
-    def hasFromMem(s):
-        for link in s.inLinks.values():
-            if not link.disabled and link.isFromMem():
-                return True
-        return False
-
-    def hasToMem(s):
-        for link in s.outLinks.values():
-            if not link.disabled and link.isToMem():
-                return True
-        return False
-
-    def getInvalidInPorts(s):
-        invalidInPorts = set()
-        for port in range(PORT_DIRECTION_COUNTS):
-            if port not in s.inLinks:
-                invalidInPorts.add(port)
-                continue
-            link = s.inLinks[port]
-            if link.disabled or type(link.srcTile) == ParamSPM or link.srcTile.disabled:
-                invalidInPorts.add(port)
-                continue
-        return invalidInPorts
-
-    def isDefaultFus(s):
-        for fuType in fuTypeList:
-            if s.fuDict[fuType] != 1:
-                return False
-        return True
-
-    def getAllValidFuTypes(s):
-        fuTypes = set()
-        for fuType in fuTypeList:
-            if s.fuDict[fuType] == 1:
-                if fuType == "Ld" or fuType == "St":
-                    fuTypes.add("Ld")
-                else:
-                    fuTypes.add(fuType)
-        return list(fuTypes)
-
-    def getInvalidOutPorts(s):
-        invalidOutPorts = set()
-        for port in range(PORT_DIRECTION_COUNTS):
-            if port not in s.outLinks:
-                invalidOutPorts.add(port)
-                continue
-            link = s.outLinks[port]
-            if link.disabled or type(link.dstTile) == ParamSPM or link.dstTile.disabled:
-                invalidOutPorts.add(port)
-                continue
-        return invalidOutPorts
-
-    def reset(s):
-        s.disabled = False
-        s.mapping = {}
-
-        for i in range(PORT_DIRECTION_COUNTS):
-            s.neverUsedOutPorts.add(i)
-
-        for xbarType in xbarTypeList:
-            s.xbarDict[xbarType] = 0
-
-        for fuType in fuTypeList:
-            s.fuDict[fuType] = 1
-
-    def resetOutLink(s, portType, link):
-        s.outLinks[portType] = link
-        s.xbarDict[xbarPort2Type[portType]] = 1
-        if portType in s.neverUsedOutPorts:
-            s.neverUsedOutPorts.remove(portType)
-
-    def resetInLink(s, portType, link):
-        s.inLinks[portType] = link
-
-    def setOutLink(s, portType, link):
-        s.outLinks[portType] = link
-
-    def setInLink(s, portType, link):
-        s.resetInLink(portType, link)
-
-    # position X/Y for drawing the tile
-    def getPosXY(s, baseX=0, baseY=0):
-        return (baseX + s.posX, baseY + s.posY)
-
-    # position X/Y for connecting routing ports
-    def getPosXYOnPort(s, portType, baseX=0, baseY=0):
-        if portType == PORT_NORTH:
-            return s.getNorth(baseX, baseY)
-        elif portType == PORT_SOUTH:
-            return s.getSouth(baseX, baseY)
-        elif portType == PORT_WEST:
-            return s.getWest(baseX, baseY)
-        elif portType == PORT_EAST:
-            return s.getEast(baseX, baseY)
-        elif portType == PORT_NORTHEAST:
-            return s.getNorthEast(baseX, baseY)
-        elif portType == PORT_NORTHWEST:
-            return s.getNorthWest(baseX, baseY)
-        elif portType == PORT_SOUTHEAST:
-            return s.getSouthEast(baseX, baseY)
-        else:
-            return s.getSouthWest(baseX, baseY)
-
-    def getNorthWest(s, baseX=0, baseY=0):
-        return (baseX + s.posX, baseY + s.posY)
-
-    def getNorthEast(s, baseX=0, baseY=0):
-        return (baseX + s.posX + s.width, baseY + s.posY)
-
-    def getSouthWest(s, baseX=0, baseY=0):
-        return (baseX + s.posX, baseY + s.posY + s.height)
-
-    def getSouthEast(s, baseX=0, baseY=0):
-        return (baseX + s.posX + s.width, baseY + s.posY + s.height)
-
-    def getWest(s, baseX=0, baseY=0):
-        return (baseX + s.posX, baseY + s.posY + s.height // 2)
-
-    def getEast(s, baseX=0, baseY=0):
-        return (baseX + s.posX + s.width, baseY + s.posY + s.height // 2)
-
-    def getNorth(s, baseX=0, baseY=0):
-        return (baseX + s.posX + s.width // 2, baseY + s.posY)
-
-    def getSouth(s, baseX=0, baseY=0):
-        return (baseX + s.posX + s.width // 2, baseY + s.posY + s.height)
-
-    def getDimXY(s):
-        return s.dimX, s.dimY
-
-    def getIndex(s, tileList):
-        if s.disabled:
-            return -1
-        index = 0
-        for tile in tileList:
-            if tile.dimY < s.dimY and not tile.disabled:
-                index += 1
-            elif tile.dimY == s.dimY and tile.dimX < s.dimX and not tile.disabled:
-                index += 1
-        return index
-
-
-class ParamSPM:
-    def __init__(s, posX, numOfReadPorts, numOfWritePorts):
-        s.posX = posX
-        s.ID = -1
-        s.numOfReadPorts = numOfReadPorts
-        s.numOfWritePorts = numOfWritePorts
-        s.disabled = False
-        s.inLinks = {}
-        s.outLinks = {}
-
-    def getNumOfValidReadPorts(s):
-        ports = 0
-        for physicalPort in range(s.numOfReadPorts):
-            if physicalPort not in s.inLinks:
-                continue
-            if s.inLinks[physicalPort].disabled:
-                continue
-            ports += 1
-        return ports
-
-    def getNumOfValidWritePorts(s):
-        ports = 0
-        for physicalPort in range(s.numOfWritePorts):
-            if physicalPort not in s.outLinks:
-                continue
-            if s.outLinks[physicalPort].disabled:
-                continue
-            ports += 1
-        return ports
-
-    def getValidReadPort(s, logicalPort):
-        port = 0
-        for physicalPort in range(logicalPort + 1):
-            if physicalPort not in s.inLinks:
-                continue
-            if s.inLinks[physicalPort].disabled:
-                continue
-            if physicalPort == logicalPort:
-                return port
-            port += 1
-        return -1
-
-    def getValidWritePort(s, logicalPort):
-        port = 0
-        for physicalPort in range(logicalPort + 1):
-            if physicalPort not in s.outLinks:
-                continue
-            if s.outLinks[physicalPort].disabled:
-                continue
-            if physicalPort == logicalPort:
-                return port
-            port += 1
-        return -1
-
-    def getPosX(s, baseX):
-        return s.posX + baseX
-
-    def setInLink(s, portType, link):
-        s.inLinks[portType] = link
-
-    def resetInLink(s, portType, link):
-        s.setInLink(portType, link)
-
-    def setOutLink(s, portType, link):
-        s.outLinks[portType] = link
-
-    def resetOutLink(s, portType, link):
-        s.setOutLink(portType, link)
-
-
-class ParamLink:
-    def __init__(s, srcTile, dstTile, srcPort, dstPort):
-        s.srcTile = srcTile
-        s.dstTile = dstTile
-        s.srcPort = srcPort
-        s.dstPort = dstPort
-        s.disabled = False
-        s.srcTile.resetOutLink(s.srcPort, s)
-        s.dstTile.resetInLink(s.dstPort, s)
-        s.mapping = set()
-
-    def getMemReadPort(s):
-        if s.isFromMem():
-            spm = s.srcTile
-            return spm.getValidReadPort(s.srcPort)
-        return -1
-
-    def getMemWritePort(s):
-        if s.isToMem():
-            spm = s.dstTile
-            return spm.getValidWritePort(s.dstPort)
-        return -1
-
-    def isToMem(s):
-        return type(s.dstTile) == ParamSPM
-
-    def isFromMem(s):
-        return type(s.srcTile) == ParamSPM
-
-    def getSrcXY(s, baseX=0, baseY=0):
-        if type(s.srcTile) != ParamSPM:
-            return s.srcTile.getPosXYOnPort(s.srcPort, baseX, baseY)
-        else:
-            dstPosX, dstPosY = s.dstTile.getPosXYOnPort(s.dstPort, baseX, baseY)
-            spmPosX = s.srcTile.getPosX(baseX)
-            return spmPosX, dstPosY
-
-    def getDstXY(s, baseX=0, baseY=0):
-        if type(s.dstTile) != ParamSPM:
-            return s.dstTile.getPosXYOnPort(s.dstPort, baseX, baseY)
-        else:
-            srcPosX, srcPosY = s.srcTile.getPosXYOnPort(s.srcPort, baseX, baseY)
-            spmPosX = s.dstTile.getPosX(baseX)
-            return spmPosX, srcPosY
-
-
-class ParamCGRA:
-    def __init__(s, rows, columns, configMemSize=CONFIG_MEM_SIZE, dataMemSize=DATA_MEM_SIZE):
-        s.rows = rows
-        s.columns = columns
-        s.configMemSize = configMemSize
-        s.dataMemSize = dataMemSize
-        s.tiles = []
-        s.templateLinks = []
-        s.updatedLinks = []
-        s.targetTileID = 0
-        s.dataSPM = None
-        s.targetAppName = "   Not selected yet"
-        s.compilationDone = False
-        s.verilogDone = False
-        s.targetKernels = []
-        s.targetKernelName = None
-        s.DFGNodeCount = -1
-        s.resMII = -1
-        s.recMII = -1
-
-    # return error message if the model is not valid
-    def getErrorMessage(s):
-        # at least one tile can perform mem acess
-        memExist = False
-        # at least one tile exists
-        tileExist = False
-        for tile in s.tiles:
-            if not tile.disabled:
-                tileExist = True
-                # a tile contains at least one FU
-                fuExist = False
-                # the tile connect to mem need to able to access mem
-                if tile.hasToMem() or tile.hasFromMem():
-                    # for now, the compiler doesn't support seperate read or write, both of them need to locate in the same tile
-                    if tile.hasToMem() and tile.hasFromMem() and tile.fuDict["Ld"] == 1 and tile.fuDict["St"] == 1:
-                        memExist = True
-                    else:
-                        return "Tile " + str(tile.ID) + " needs to contain the Load/Store functional units."
-
-                for fuType in fuTypeList:
-                    if tile.fuDict[fuType] == 1:
-                        fuExist = True
-                if not fuExist:
-                    return "At least one functional unit needs to exist in tile " + str(tile.ID) + "."
-
-        if not tileExist:
-            return "At least one tile needs to exist in the CGRA."
-
-        if not memExist:
-            return "At least one tile including a Load/Store functional unit needs to directly connect to the data SPM."
-
-        return ""
-
-    def getValidTiles(s):
-        validTiles = []
-        for tile in s.tiles:
-            if not tile.disabled:
-                validTiles.append(tile)
-        return validTiles
-
-    def getValidLinks(s):
-        validLinks = []
-        for link in s.updatedLinks:
-            if not link.disabled and not link.srcTile.disabled and not link.dstTile.disabled:
-                validLinks.append(link)
-        return validLinks
-
-    def updateFuXbarPannel(s):
-        targetTile = s.getTileOfID(s.targetTileID)
-        for fuType in fuTypeList:
-            if fuType in fuCheckVars:
-                fuCheckVars[fuType].set(targetTile.fuDict[fuType])
-
-        for xbarType in xbarTypeList:
-            if xbarType in xbarCheckVars:
-                xbarCheckVars[xbarType].set(targetTile.xbarDict[xbarType])
-
-    def initDataSPM(s, dataSPM):
-        s.dataSPM = dataSPM
-
-    def updateMemSize(s, configMemSize, dataMemSize):
-        s.configMemSize = configMemSize
-        s.dataMemSize = dataMemSize
-
-    def initTiles(s, tiles):
-        for r in range(s.rows):
-            for c in range(s.columns):
-                s.tiles.append(tiles[r][c])
-
-    def addTile(s, tile):
-        s.tiles.append(tile)
-
-    def initTemplateLinks(s, links):
-        numOfLinks = s.rows * s.columns * 2 + (s.rows - 1) * s.columns * 2 + (s.rows - 1) * (s.columns - 1) * 2 * 2
-
-        for link in links:
-            s.templateLinks.append(link)
-
-    def resetTiles(s):
-
-        for tile in s.tiles:
-            tile.reset()
-
-            for fuType in fuTypeList:
-                fuCheckVars[fuType].set(tile.fuDict[fuType])
-                fuCheckbuttons[fuType].configure(state="normal")
-
-            for xbarType in xbarTypeList:
-                xbarCheckVars[xbarType].set(tile.xbarDict[xbarType])
-                xbarCheckbuttons[xbarType].configure(state="normal")
-
-    def enableAllTemplateLinks(s):
-        for link in s.templateLinks:
-            link.disabled = False
-
-    def resetLinks(s):
-        for link in s.templateLinks:
-            link.disabled = False
-            link.srcTile.resetOutLink(link.srcPort, link)
-            link.dstTile.resetInLink(link.dstPort, link)
-            link.mapping = set()
-
-        s.updatedLinks = s.templateLinks[:]
-
-        for portType in range(PORT_DIRECTION_COUNTS):
-            if portType in s.getTileOfID(s.targetTileID).neverUsedOutPorts:
-                xbarCheckbuttons[xbarPort2Type[portType]].configure(state="disabled")
-
-    def addTemplateLink(s, link):
-        s.templateLinks.append(link)
-
-    def addUpdatedLink(s, link):
-        s.updatedLinks.append(link)
-
-    def removeUpdatedLink(s, link):
-        s.updatedLinks.remove(link)
-        # src = link.srcTile
-        # src.xbarDict[link.srcPort] = 0
-
-    def updateFuCheckbutton(s, fuType, value):
-        tile = s.getTileOfID(s.targetTileID)
-        tile.fuDict[fuType] = value
-
-    def updateXbarCheckbutton(s, xbarType, value):
-        tile = s.getTileOfID(s.targetTileID)
-        tile.xbarDict[xbarType] = value
-        port = xbarType2Port[xbarType]
-        if port in tile.outLinks:
-            tile.outLinks[port].disabled = True if value == 0 else False
-
-    def getTileOfID(s, ID):
-        for tile in s.tiles:
-            if tile.ID == ID:
-                return tile
-        return None
-
-    def getTileOfDim(s, dimX, dimY):
-        for tile in s.tiles:
-            if tile.dimX == dimX and tile.dimY == dimY:
-                return tile
-        return None
-
-    # tiles could be disabled due to the disabled links
-    def updateTiles(s):
-        unreachableTiles = set()
-        for tile in s.tiles:
-            unreachableTiles.add(tile)
-
-        for link in s.updatedLinks:
-            if link.disabled == False and type(link.dstTile) == ParamTile:
-                if link.dstTile in unreachableTiles:
-                    unreachableTiles.remove(link.dstTile)
-                    if len(unreachableTiles) == 0:
-                        break
-
-        for tile in unreachableTiles:
-            tile.disabled = True
-
-    def getUpdatedLink(s, srcTile, dstTile):
-        for link in s.updatedLinks:
-            if link.srcTile == srcTile and link.dstTile == dstTile:
-                return link
-        return None
-
-    # TODO: also need to consider adding back after removing...
-    def updateLinks(s):
-        needRemoveLinks = set()
-        for link in s.updatedLinks:
-            if link.disabled:
-                needRemoveLinks.add((link.srcTile, link.dstTile))
-
-        for link in s.templateLinks:
-            link.srcTile.setOutLink(link.srcPort, link)
-            link.dstTile.setInLink(link.dstPort, link)
-        s.updatedLinks = s.templateLinks[:]
-
-        for tile in s.tiles:
-            if tile.disabled:
-                for portType in tile.outLinks:
-                    outLink = tile.outLinks[portType]
-                    dstNeiTile = outLink.dstTile
-                    oppositePort = xbarPortOpposites[portType]
-                    if oppositePort in tile.inLinks:
-                        inLink = tile.inLinks[oppositePort]
-                        srcNeiTile = inLink.srcTile
-
-                        # some links can be fused as single one due to disabled tiles
-                        if not inLink.disabled and not outLink.disabled and inLink in s.updatedLinks and outLink in s.updatedLinks:
-                            updatedLink = ParamLink(srcNeiTile, dstNeiTile, inLink.srcPort, outLink.dstPort)
-                            s.addUpdatedLink(updatedLink)
-                            s.removeUpdatedLink(inLink)
-                            s.removeUpdatedLink(outLink)
-                        # links that are disabled need to be removed
-                        if inLink.disabled and inLink in s.updatedLinks:
-                            s.removeUpdatedLink(inLink)
-                        if outLink.disabled and outLink in s.updatedLinks:
-                            s.removeUpdatedLink(outLink)
-
-                    else:
-                        if outLink in s.updatedLinks:
-                            s.removeUpdatedLink(outLink)
-
-                for portType in tile.outLinks:
-                    outLink = tile.outLinks[portType]
-                    if outLink in s.updatedLinks:
-                        s.removeUpdatedLink(outLink)
-
-                for portType in tile.inLinks:
-                    inLink = tile.inLinks[portType]
-                    if inLink in s.updatedLinks:
-                        s.removeUpdatedLink(inLink)
-
-        for link in s.updatedLinks:
-            if (link.srcTile, link.dstTile) in needRemoveLinks:
-                link.disabled = True
-                if type(link.srcTile) == ParamTile:
-                    link.srcTile.xbarDict[xbarPort2Type[link.srcPort]] = 0
-
-    def updateSpmOutlinks(s):
-        spmOutlinksSwitches = widgets['spmOutlinksSwitches']
-        spmConfigPannel = widgets["spmConfigPannel"]
-        for switch in spmOutlinksSwitches:
-            switch.destroy()
-        for port in paramCGRA.dataSPM.outLinks:
-            switch = customtkinter.CTkSwitch(spmConfigPannel, text=f"link {port}", command=switchDataSPMOutLinks)
-            if not paramCGRA.dataSPM.outLinks[port].disabled:
-                switch.select()
-            switch.pack(pady=(5, 10))
-            spmOutlinksSwitches.insert(0, switch)
 
 class ToolTip(object):
 
@@ -720,9 +135,6 @@ def CreateToolTip(widget, text):
     widget.bind('<Leave>', leave)
 
 
-paramCGRA = ParamCGRA(ROWS, COLS, CONFIG_MEM_SIZE, DATA_MEM_SIZE)
-
-
 def clickTile(ID):
     # widgets["fuConfigPannel"].configure(text='Tile ' + str(ID) + ' functional units')
     widgets["fuConfigPannel"].configure(label_text='Tile ' + str(ID) + '\nfunctional units')
@@ -734,28 +146,28 @@ def clickTile(ID):
     # widgets["xbarConfigPannel"].grid(columnspan=4, row=9, column=0, rowspan=3, sticky="nsew")
     widgets["entireTileCheckbutton"].configure(text='Disable entire Tile ' + str(ID), state="normal")
     # widgets["spmConfigPannel"].grid_forget()
-    paramCGRA.targetTileID = ID
+    selectedCgraParam.targetTileID = ID
 
-    disabled = paramCGRA.getTileOfID(ID).disabled
+    disabled = selectedCgraParam.getTileOfID(ID).disabled
     for fuType in fuTypeList:
-        fuCheckVars[fuType].set(paramCGRA.tiles[ID].fuDict[fuType])
+        fuCheckVars[fuType].set(selectedCgraParam.tiles[ID].fuDict[fuType])
         fuCheckbuttons[fuType].configure(state="disabled" if disabled else "normal")
 
     for xbarType in xbarTypeList:
-        xbarCheckVars[xbarType].set(paramCGRA.tiles[ID].xbarDict[xbarType])
-        xbarCheckbuttons[xbarType].configure(state="disabled" if disabled or xbarType2Port[xbarType] in paramCGRA.tiles[
+        xbarCheckVars[xbarType].set(selectedCgraParam.tiles[ID].xbarDict[xbarType])
+        xbarCheckbuttons[xbarType].configure(state="disabled" if disabled or xbarType2Port[xbarType] in selectedCgraParam.tiles[
             ID].neverUsedOutPorts else "normal")
 
-    entireTileCheckVar.set(1 if paramCGRA.getTileOfID(ID).disabled else 0)
+    entireTileCheckVar.set(1 if selectedCgraParam.getTileOfID(ID).disabled else 0)
 
 
 def clickSPM():
     print('clickSPM')
-    # widgets["fuConfigPannel"].config(text='Tile ' + str(paramCGRA.targetTileID) + ' functional units')
-    # widgets["fuConfigPannelLabel"].configure(text='Tile ' + str(paramCGRA.targetTileID) + ' functional units')
+    # widgets["fuConfigPannel"].config(text='Tile ' + str(cgraParam.targetTileID) + ' functional units')
+    # widgets["fuConfigPannelLabel"].configure(text='Tile ' + str(cgraParam.targetTileID) + ' functional units')
     #
     # for fuType in fuTypeList:
-    #     fuCheckVars[fuType].set(paramCGRA.tiles[paramCGRA.targetTileID].fuDict[fuType])
+    #     fuCheckVars[fuType].set(cgraParam.tiles[cgraParam.targetTileID].fuDict[fuType])
     #     fuCheckbuttons[fuType].configure(state="disabled")
     #
     # widgets["xbarConfigPannel"].grid_forget()
@@ -768,21 +180,50 @@ def clickSPM():
     # spmEnabledListbox = widgets["spmEnabledListbox"]
     # spmDisabledListbox = widgets["spmDisabledListbox"]
     #
-    # widgets["entireTileCheckbutton"].configure(text='Disable entire Tile ' + str(paramCGRA.targetTileID), state="disabled")
+    # widgets["entireTileCheckbutton"].configure(text='Disable entire Tile ' + str(cgraParam.targetTileID), state="disabled")
 
 
 def switchDataSPMOutLinks():
     spmOutlinksSwitches = widgets['spmOutlinksSwitches']
     for portIdx, switch in enumerate(spmOutlinksSwitches):
-        link = paramCGRA.dataSPM.outLinks[portIdx]
+        link = selectedCgraParam.dataSPM.outLinks[portIdx]
         if switch.get():
             link.disabled = False
         else:
             link.disabled = True
 
 
+# TODO : move this inside CGRAParams and trigger UI update.
+def updateFunCheckVars(type, value):
+    fuCheckVars[type].set(value)
+
+def updateFunCheckoutButtons(type, updatedState):
+    fuCheckbuttons[type].configure(state=updatedState)
+
+# TODO : move this inside CGRAParams and trigger UI update.
+def updateXbarCheckVars(type, value):
+    xbarCheckVars[type].set(value)
+
+def updateXbarCheckbuttons(type, updateState):
+    xbarCheckbuttons[type].configure(state=updateState)
+
+def getFunCheckVars():
+    return fuCheckVars
+
+def getXbarCheckVars():
+    return xbarCheckVars
 
 
+multiCgraParam = MultiCGRAParam(rows=CGRA_ROWS, cols=CGRA_COLS, golbalWidgets = widgets)
+multiCgraParam.setSelectedCgra(0, 0)
+selectedCgraParam = multiCgraParam.getSelectedCgra()
+selectedCgraParam.set_cgra_param_callbacks(switchDataSPMOutLinks=switchDataSPMOutLinks,
+    updateFunCheckoutButtons=updateFunCheckoutButtons,
+    updateFunCheckVars=updateFunCheckVars,
+    updateXbarCheckbuttons=updateXbarCheckbuttons,
+    updateXbarCheckVars=updateXbarCheckVars,
+    getFunCheckVars=getFunCheckVars,
+    getXbarCheckVars= getXbarCheckVars)
 
 def clickSPMPortDisable():
     spmEnabledListbox = widgets["spmEnabledListbox"]
@@ -792,7 +233,7 @@ def clickSPMPortDisable():
         spmEnabledListbox.delete(portIndex)
         widgets["spmDisabledListbox"].insert(0, port)
 
-        link = paramCGRA.dataSPM.outLinks[port]
+        link = selectedCgraParam.dataSPM.outLinks[port]
         link.disabled = True
 
 
@@ -805,7 +246,7 @@ def clickSPMPortEnable():
 
         widgets["spmEnabledListbox"].insert(0, port)
 
-        link = paramCGRA.dataSPM.outLinks[port]
+        link = selectedCgraParam.dataSPM.outLinks[port]
         link.disabled = False
 
 
@@ -814,35 +255,35 @@ def clickEntireTileCheckbutton():
 
         for fuType in fuTypeList:
             fuCheckVars[fuType].set(0)
-            tile = paramCGRA.getTileOfID(paramCGRA.targetTileID)
+            tile = selectedCgraParam.getTileOfID(selectedCgraParam.targetTileID)
             tile.fuDict[fuType] = 0
             # clickFuCheckbutton(fuType)
             fuCheckbuttons[fuType].configure(state="disabled")
 
-        paramCGRA.getTileOfID(paramCGRA.targetTileID).disabled = True
+        selectedCgraParam.getTileOfID(selectedCgraParam.targetTileID).disabled = True
     else:
         for fuType in fuTypeList:
             fuCheckVars[fuType].set(0)
-            tile = paramCGRA.getTileOfID(paramCGRA.targetTileID)
+            tile = selectedCgraParam.getTileOfID(selectedCgraParam.targetTileID)
             tile.fuDict[fuType] = 0
             # clickFuCheckbutton(fuType)
             fuCheckbuttons[fuType].configure(state="normal")
 
-        # paramCGRA.getTileOfID(paramCGRA.targetTileID).disabled = False
+        # cgraParam.getTileOfID(cgraParam.targetTileID).disabled = False
 
 
 def clickFuCheckbutton(fuType):
     if fuType == "Ld":
         fuCheckVars["St"].set(fuCheckVars["Ld"].get())
-        paramCGRA.updateFuCheckbutton("St", fuCheckVars["St"].get())
+        selectedCgraParam.updateFuCheckbutton("St", fuCheckVars["St"].get())
     elif fuType == "St":
         fuCheckVars["Ld"].set(fuCheckVars["St"].get())
-        paramCGRA.updateFuCheckbutton("Ld", fuCheckVars["Ld"].get())
-    paramCGRA.updateFuCheckbutton(fuType, fuCheckVars[fuType].get())
+        selectedCgraParam.updateFuCheckbutton("Ld", fuCheckVars["Ld"].get())
+    selectedCgraParam.updateFuCheckbutton(fuType, fuCheckVars[fuType].get())
 
 
 def clickXbarCheckbutton(xbarType):
-    paramCGRA.updateXbarCheckbutton(xbarType, xbarCheckVars[xbarType].get())
+    selectedCgraParam.updateXbarCheckbutton(xbarType, xbarCheckVars[xbarType].get())
 
 
 def clickUpdate(root):
@@ -851,38 +292,45 @@ def clickUpdate(root):
     configMemSize = int(widgets["configMemEntry"].get())
     dataMemSize = int(widgets["dataMemEntry"].get())
 
-    global paramCGRA
-    oldCGRA = paramCGRA
+    global selectedCgraParam
+    oldCGRA = selectedCgraParam
 
-    old_rows_num = paramCGRA.rows
-    if paramCGRA.rows != rows or paramCGRA.columns != columns:
-        paramCGRA = ParamCGRA(rows, columns)
+    old_rows_num = selectedCgraParam.rows
+    if selectedCgraParam.rows != rows or selectedCgraParam.columns != columns:
+        selectedCgraParam = CGRAParam(rows, columns ,CONFIG_MEM_SIZE, DATA_MEM_SIZE, widgets)
+        selectedCgraParam.set_cgra_param_callbacks(switchDataSPMOutLinks=switchDataSPMOutLinks,
+                                           updateFunCheckoutButtons=updateFunCheckoutButtons,
+                                           updateFunCheckVars=updateFunCheckVars,
+                                           updateXbarCheckbuttons=updateXbarCheckbuttons,
+                                           updateXbarCheckVars=updateXbarCheckVars,
+                                           getFunCheckVars=getFunCheckVars,
+                                           getXbarCheckVars= getXbarCheckVars)
 
     # dataSPM = ParamSPM(MEM_WIDTH, rows, rows)
-    # paramCGRA.initDataSPM(dataSPM)
+    # cgraParam.initDataSPM(dataSPM)
 
     create_cgra_pannel(root, rows, columns)
 
     # kernel related information and be kept to avoid redundant compilation
-    paramCGRA.updateMemSize(configMemSize, dataMemSize)
-    paramCGRA.updateTiles()
-    paramCGRA.updateLinks()
+    selectedCgraParam.updateMemSize(configMemSize, dataMemSize)
+    selectedCgraParam.updateTiles()
+    selectedCgraParam.updateLinks()
     if old_rows_num != rows:
-        paramCGRA.updateSpmOutlinks()
+        selectedCgraParam.updateSpmOutlinks()
 
-    paramCGRA.targetAppName = oldCGRA.targetAppName
-    paramCGRA.compilationDone = oldCGRA.compilationDone
-    paramCGRA.targetKernels = oldCGRA.targetKernels
-    paramCGRA.targetKernelName = oldCGRA.targetKernelName
-    paramCGRA.DFGNodeCount = oldCGRA.DFGNodeCount
-    paramCGRA.recMII = oldCGRA.recMII
-    paramCGRA.verilogDone = False
+    selectedCgraParam.targetAppName = oldCGRA.targetAppName
+    selectedCgraParam.compilationDone = oldCGRA.compilationDone
+    selectedCgraParam.targetKernels = oldCGRA.targetKernels
+    selectedCgraParam.targetKernelName = oldCGRA.targetKernelName
+    selectedCgraParam.DFGNodeCount = oldCGRA.DFGNodeCount
+    selectedCgraParam.recMII = oldCGRA.recMII
+    selectedCgraParam.verilogDone = False
 
     widgets["verilogText"].delete("1.0", tkinter.END)
     widgets["resMIIEntry"].delete(0, tkinter.END)
-    if len(paramCGRA.getValidTiles()) > 0 and paramCGRA.DFGNodeCount > 0:
-        paramCGRA.resMII = math.ceil((paramCGRA.DFGNodeCount + 0.0) / len(paramCGRA.getValidTiles())) // 1
-        widgets["resMIIEntry"].insert(0, paramCGRA.resMII)
+    if len(selectedCgraParam.getValidTiles()) > 0 and selectedCgraParam.DFGNodeCount > 0:
+        selectedCgraParam.resMII = math.ceil((selectedCgraParam.DFGNodeCount + 0.0) / len(selectedCgraParam.getValidTiles())) // 1
+        widgets["resMIIEntry"].insert(0, selectedCgraParam.resMII)
     else:
         widgets["resMIIEntry"].insert(0, 0)
 
@@ -893,49 +341,56 @@ def clickReset(root):
     configMemSize = int(widgets["configMemEntry"].get())
     dataMemSize = int(widgets["dataMemEntry"].get())
 
-    global paramCGRA
-    oldCGRA = paramCGRA
+    global selectedCgraParam
+    oldCGRA = selectedCgraParam
 
-    if paramCGRA.rows != rows or paramCGRA.columns != columns:
-        paramCGRA = ParamCGRA(rows, columns)
+    if selectedCgraParam.rows != rows or selectedCgraParam.columns != columns:
+        selectedCgraParam = CGRAParam(rows, columns, CONFIG_MEM_SIZE, DATA_MEM_SIZE, widgets)
+        selectedCgraParam.set_cgra_param_callbacks(switchDataSPMOutLinks=switchDataSPMOutLinks,
+                                           updateFunCheckoutButtons=updateFunCheckoutButtons,
+                                           updateFunCheckVars=updateFunCheckVars,
+                                           updateXbarCheckbuttons=updateXbarCheckbuttons,
+                                           updateXbarCheckVars=updateXbarCheckVars,
+                                           getFunCheckVars=getFunCheckVars,
+                                           getXbarCheckVars= getXbarCheckVars)
 
-    paramCGRA.updateMemSize(configMemSize, dataMemSize)
-    paramCGRA.resetTiles()
-    paramCGRA.enableAllTemplateLinks()
-    paramCGRA.resetLinks()
+    selectedCgraParam.updateMemSize(configMemSize, dataMemSize)
+    selectedCgraParam.resetTiles()
+    selectedCgraParam.enableAllTemplateLinks()
+    selectedCgraParam.resetLinks()
 
-    paramCGRA.updateSpmOutlinks()
+    selectedCgraParam.updateSpmOutlinks()
 
     create_cgra_pannel(root, rows, columns)
 
-    # for _ in range(paramCGRA.rows):
+    # for _ in range(cgraParam.rows):
     #     widgets["spmEnabledListbox"].delete(0)
     #     widgets["spmDisabledListbox"].delete(0)
 
     # widgets['spmOutlinksSwitches'] = []
     # spmOutlinksSwitches = []
     # spmConfigPannel = widgets["spmConfigPannel"]
-    # for port in paramCGRA.dataSPM.outLinks:
+    # for port in cgraParam.dataSPM.outLinks:
     #     switch = customtkinter.CTkSwitch(spmConfigPannel, text=f"link {port}", command=switchDataSPMOutLinks)
-    #     if not paramCGRA.dataSPM.outLinks[port].disabled:
+    #     if not cgraParam.dataSPM.outLinks[port].disabled:
     #         switch.select()
     #     switch.pack(pady=(5, 10))
     #     spmOutlinksSwitches.insert(0, switch)
     # widgets['spmOutlinksSwitches'] = spmOutlinksSwitches
 
     # kernel related information and be kept to avoid redundant compilation
-    paramCGRA.targetAppName = oldCGRA.targetAppName
-    paramCGRA.compilationDone = oldCGRA.compilationDone
-    paramCGRA.targetKernels = oldCGRA.targetKernels
-    paramCGRA.targetKernelName = oldCGRA.targetKernelName
-    paramCGRA.DFGNodeCount = oldCGRA.DFGNodeCount
-    paramCGRA.recMII = oldCGRA.recMII
+    selectedCgraParam.targetAppName = oldCGRA.targetAppName
+    selectedCgraParam.compilationDone = oldCGRA.compilationDone
+    selectedCgraParam.targetKernels = oldCGRA.targetKernels
+    selectedCgraParam.targetKernelName = oldCGRA.targetKernelName
+    selectedCgraParam.DFGNodeCount = oldCGRA.DFGNodeCount
+    selectedCgraParam.recMII = oldCGRA.recMII
 
     widgets["verilogText"].delete(0, tkinter.END)
     widgets["resMIIEntry"].delete(0, tkinter.END)
-    if len(paramCGRA.getValidTiles()) > 0 and paramCGRA.DFGNodeCount > 0:
-        paramCGRA.resMII = math.ceil((paramCGRA.DFGNodeCount + 0.0) / len(paramCGRA.getValidTiles())) // 1
-        widgets["resMIIEntry"].insert(0, paramCGRA.resMII)
+    if len(selectedCgraParam.getValidTiles()) > 0 and selectedCgraParam.DFGNodeCount > 0:
+        selectedCgraParam.resMII = math.ceil((selectedCgraParam.DFGNodeCount + 0.0) / len(selectedCgraParam.getValidTiles())) // 1
+        widgets["resMIIEntry"].insert(0, selectedCgraParam.resMII)
     else:
         widgets["resMIIEntry"].insert(0, 0)
 
@@ -975,7 +430,7 @@ def clickTest():
 
 
 def clickGenerateVerilog():
-    message = paramCGRA.getErrorMessage()
+    message = selectedCgraParam.getErrorMessage()
     if message != "":
         tkinter.messagebox.showerror(title="CGRA Model Checking", message=message)
         return
@@ -986,7 +441,7 @@ def clickGenerateVerilog():
     # pymtl function that is used to generate synthesizable verilog
     cmdline_opts = {'test_verilog': 'zeros', 'test_yosys_verilog': '', 'dump_textwave': False, 'dump_vcd': False,
                     'dump_vtb': False, 'max_cycles': None}
-    test_cgra_universal(paramCGRA = paramCGRA)
+    test_cgra_universal(cgraParam = selectedCgraParam)
 
     widgets["verilogText"].delete("1.0", tkinter.END)
     found = False
@@ -999,9 +454,9 @@ def clickGenerateVerilog():
             found = True
             break
 
-    paramCGRA.verilogDone = True
+    selectedCgraParam.verilogDone = True
     if not found:
-        paramCGRA.verilogDone = False
+        selectedCgraParam.verilogDone = False
         widgets["verilogText"].insert(tkinter.END, "Error exists during Verilog generation")
 
     os.system("mv CGRATemplateRTL__*.v design.v")
@@ -1055,13 +510,13 @@ def runYosys():
 
 
 def clickSynthesize():
-    global paramCGRA
+    global selectedCgraParam
     global synthesisRunning
 
     if synthesisRunning:
         return
 
-    if not paramCGRA.verilogDone:
+    if not selectedCgraParam.verilogDone:
         tkinter.messagebox.showerror(title="Sythesis", message="The verilog generation needs to be done first.")
         return
 
@@ -1077,9 +532,9 @@ def clickSynthesize():
     readPortPattern = "[READ_PORT_COUNT]"
     writePortPattern = "[WRITE_PORT_COUNT]"
 
-    updatedSizePattern = str(paramCGRA.dataMemSize * 1024)
-    updatedReadPortPattern = str(paramCGRA.dataSPM.getNumOfValidReadPorts())
-    updatedWritePortPattern = str(paramCGRA.dataSPM.getNumOfValidWritePorts())
+    updatedSizePattern = str(selectedCgraParam.dataMemSize * 1024)
+    updatedReadPortPattern = str(selectedCgraParam.dataSPM.getNumOfValidReadPorts())
+    updatedWritePortPattern = str(selectedCgraParam.dataSPM.getNumOfValidWritePorts())
 
     with open(r'../../tools/cacti/spm_template.cfg', 'r') as file:
         data = file.read()
@@ -1149,23 +604,23 @@ def clickSynthesize():
 
 
 def clickSelectApp(event):
-    global paramCGRA
-    paramCGRA.compilationDone = False
+    global selectedCgraParam
+    selectedCgraParam.compilationDone = False
     appName = fd.askopenfilename(title="choose an application", initialdir="../", filetypes=(
     ("C/C++ file", "*.cpp"), ("C/C++ file", "*.c"), ("C/C++ file", "*.C"), ("C/C++ file", "*.CPP")))
-    paramCGRA.targetAppName = appName
+    selectedCgraParam.targetAppName = appName
 
     # widgets["appPathEntry"].configure(state="normal")
     widgets["appPathEntry"].delete(0, tkinter.END)
-    widgets["appPathEntry"].insert(0, paramCGRA.targetAppName)
+    widgets["appPathEntry"].insert(0, selectedCgraParam.targetAppName)
     # widgets["appPathEntry"].configure(state="disabled")
 
     widgets["compileAppShow"].configure(text="IDLE")
 
 
 def clickCompileApp():
-    global paramCGRA
-    fileName = paramCGRA.targetAppName
+    global selectedCgraParam
+    fileName = selectedCgraParam.targetAppName
     if not fileName or fileName == "   Not selected yet":
         return
 
@@ -1193,19 +648,19 @@ def clickCompileApp():
         return
 
     widgets["compileAppShow"].configure(text=u'\u2713\u2713\u2713')
-    paramCGRA.compilationDone = True
+    selectedCgraParam.compilationDone = True
 
     # collect the potentially targeting kernel/function
     irFile = open('kernel.ll', 'r')
     irLines = irFile.readlines()
 
     # Strips the newline character
-    paramCGRA.targetKernels = []
+    selectedCgraParam.targetKernels = []
     for line in irLines:
         if "define " in line and "{" in line and "@" in line:
             funcName = line.split("@")[1].split("(")[0]
             if "main" not in funcName:
-                paramCGRA.targetKernels.append(funcName)
+                selectedCgraParam.targetKernels.append(funcName)
 
     irFile.close()
 
@@ -1213,11 +668,11 @@ def clickCompileApp():
     kernelPannel = widgets["kernelPannel"]
     # kernelNameMenu["menu"].delete(0, "end")
     kernelNameMenu.destroy()
-    kernelNameOptions = [kernelName for kernelName in paramCGRA.targetKernels]
+    kernelNameOptions = [kernelName for kernelName in selectedCgraParam.targetKernels]
     kernelNameMenu = customtkinter.CTkOptionMenu(kernelPannel, variable=kernelOptions, values=kernelNameOptions)
     kernelNameMenu.grid(row=2, column=1)
     widgets["kernelNameMenu"] = kernelNameMenu
-    # for kernelName in paramCGRA.targetKernels:
+    # for kernelName in cgraParam.targetKernels:
     #     # kernelNameMenu["menu"].add_command(label=kernelName, command=tkinter._setit(kernelOptions, kernelName))
     #     print(f'kernelName: {kernelName}')
     # options.set(my_list[0])
@@ -1228,18 +683,18 @@ def clickCompileApp():
 
 
 def clickKernelMenu(*args):
-    global paramCGRA
+    global selectedCgraParam
     name = kernelOptions.get()
     if name == None or name == " " or name == "Not selected yet":
         return
-    paramCGRA.targetKernelName = name
+    selectedCgraParam.targetKernelName = name
 
 
-def dumpParamCGRA2JSON(fileName):
-    global paramCGRA
-    paramCGRAJson = {}
-    paramCGRAJson["tiles"] = {}
-    for tile in paramCGRA.tiles:
+def dumpcgraParam2JSON(fileName):
+    global selectedCgraParam
+    cgraParamJson = {}
+    cgraParamJson["tiles"] = {}
+    for tile in selectedCgraParam.tiles:
         curDict = {}
         if tile.disabled:
             curDict["disabled"] = True
@@ -1258,10 +713,10 @@ def dumpParamCGRA2JSON(fileName):
                     (tile.hasToMem() and tile.fuDict["St"] == 1):
                 curDict["accessMem"] = True
 
-        paramCGRAJson["tiles"][str(tile.ID)] = curDict
+        cgraParamJson["tiles"][str(tile.ID)] = curDict
 
-    paramCGRAJson["links"] = []
-    for link in paramCGRA.updatedLinks:
+    cgraParamJson["links"] = []
+    for link in selectedCgraParam.updatedLinks:
         curDict = {}
         srcTile = link.srcTile
         dstTile = link.dstTile
@@ -1269,37 +724,37 @@ def dumpParamCGRA2JSON(fileName):
                 dstTile) != ParamSPM:
             curDict["srcTile"] = srcTile.ID
             curDict["dstTile"] = dstTile.ID
-            paramCGRAJson["links"].append(curDict)
+            cgraParamJson["links"].append(curDict)
 
-    paramCGRAJsonObject = json.dumps(paramCGRAJson, indent=4)
+    cgraParamJsonObject = json.dumps(cgraParamJson, indent=4)
 
     # Writing to sample.json
     with open(fileName, "w") as outfile:
-        outfile.write(paramCGRAJsonObject)
+        outfile.write(cgraParamJsonObject)
 
 
 def clickShowDFG():
     os.system("mkdir kernel")
     os.chdir("kernel")
     fileExist = os.path.exists("kernel.bc")
-    global paramCGRA
+    global selectedCgraParam
 
-    if not fileExist or not paramCGRA.compilationDone or paramCGRA.targetKernelName == None:
+    if not fileExist or not selectedCgraParam.compilationDone or selectedCgraParam.targetKernelName == None:
         os.chdir("..")
         tkinter.messagebox.showerror(title="DFG Generation",
                                      message="The compilation and kernel selection need to be done first.")
         return
 
-    paramCGRA.targetKernelName = kernelOptions.get()
+    selectedCgraParam.targetKernelName = kernelOptions.get()
 
     genDFGJson = {
-        "kernel": paramCGRA.targetKernelName,
+        "kernel": selectedCgraParam.targetKernelName,
         "targetFunction": False,
         "targetNested": True,
         "targetLoopsID": [0],
         "doCGRAMapping": False,
-        "row": paramCGRA.rows,
-        "column": paramCGRA.columns,
+        "row": selectedCgraParam.rows,
+        "column": selectedCgraParam.columns,
         "precisionAware": False,
         "heterogeneity": False,
         "isTrimmedDemo": True,
@@ -1317,7 +772,7 @@ def clickShowDFG():
     with open("param.json", "w") as outfile:
         outfile.write(json_object)
 
-    dumpParamCGRA2JSON("paramCGRA.json")
+    dumpcgraParam2JSON("cgraParam.json")
 
     genDFGCommand = "opt-12 -load ../../CGRA-Mapper/build/src/libmapperPass.so -mapperPass ./kernel.bc"
     print("trying to run opt-12")
@@ -1328,22 +783,22 @@ def clickShowDFG():
             outputLine = line.decode("ISO-8859-1")
             print(outputLine)
             if "DFG node count: " in outputLine:
-                paramCGRA.DFGNodeCount = int(outputLine.split("DFG node count: ")[1].split(";")[0])
+                selectedCgraParam.DFGNodeCount = int(outputLine.split("DFG node count: ")[1].split(";")[0])
             if "[RecMII: " in outputLine:
-                paramCGRA.recMII = int(outputLine.split("[RecMII: ")[1].split("]")[0])
+                selectedCgraParam.recMII = int(outputLine.split("[RecMII: ")[1].split("]")[0])
 
     (out, err) = genDFGProc.communicate()
     print("opt-12 out: ", out)
     print("opt-12 err: ", err)
 
-    paramCGRA.resMII = math.ceil((paramCGRA.DFGNodeCount + 0.0) / len(paramCGRA.getValidTiles())) // 1
+    selectedCgraParam.resMII = math.ceil((selectedCgraParam.DFGNodeCount + 0.0) / len(selectedCgraParam.getValidTiles())) // 1
     widgets["resMIIEntry"].delete(0, tkinter.END)
-    widgets["resMIIEntry"].insert(0, paramCGRA.resMII)
+    widgets["resMIIEntry"].insert(0, selectedCgraParam.resMII)
 
     widgets["recMIIEntry"].delete(0, tkinter.END)
-    widgets["recMIIEntry"].insert(0, paramCGRA.recMII)
+    widgets["recMIIEntry"].insert(0, selectedCgraParam.recMII)
 
-    convertCommand = "dot -Tpng " + paramCGRA.targetKernelName + ".dot -o kernel.png"
+    convertCommand = "dot -Tpng " + selectedCgraParam.targetKernelName + ".dot -o kernel.png"
     convertProc = subprocess.Popen([convertCommand, "-u"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     (out, err) = convertProc.communicate()
 
@@ -1413,11 +868,11 @@ def drawSchedule():
     widgets["mapIIEntry"].delete(0, tkinter.END)
     widgets["mapIIEntry"].insert(0, mappingII)
     widgets["mapSpeedupEntry"].delete(0, tkinter.END)
-    widgets["mapSpeedupEntry"].insert(0, paramCGRA.DFGNodeCount / mappingII)
+    widgets["mapSpeedupEntry"].insert(0, selectedCgraParam.DFGNodeCount / mappingII)
 
     # pad contains tile and links
-    tileWidth = paramCGRA.tiles[0].width
-    tileHeight = paramCGRA.tiles[0].height
+    tileWidth = selectedCgraParam.tiles[0].width
+    tileHeight = selectedCgraParam.tiles[0].height
     padWidth = tileWidth + LINK_LENGTH
     padHeight = tileHeight + LINK_LENGTH
     baseX = 0
@@ -1429,7 +884,7 @@ def drawSchedule():
     # Iterating through the json
     for strTileID in schedule["tiles"]:
         tileID = int(strTileID)
-        tile = paramCGRA.getTileOfID(tileID)
+        tile = selectedCgraParam.getTileOfID(tileID)
         for strCycle in schedule["tiles"][strTileID]:
             cycle = int(strCycle)
             optID = schedule["tiles"][strTileID][strCycle]
@@ -1437,9 +892,9 @@ def drawSchedule():
 
     for strSrcTileID in schedule["links"]:
         for strDstTileID in schedule["links"][strSrcTileID]:
-            srcTile = paramCGRA.getTileOfID(int(strSrcTileID))
-            dstTile = paramCGRA.getTileOfID(int(strDstTileID))
-            link = paramCGRA.getUpdatedLink(srcTile, dstTile)
+            srcTile = selectedCgraParam.getTileOfID(int(strSrcTileID))
+            dstTile = selectedCgraParam.getTileOfID(int(strDstTileID))
+            link = selectedCgraParam.getUpdatedLink(srcTile, dstTile)
             for cycle in schedule["links"][strSrcTileID][strDstTileID]:
                 link.mapping.add(cycle)
 
@@ -1465,7 +920,7 @@ def drawSchedule():
         mapped_tile_color = mapped_tile_color_list[ii % len(mapped_tile_color_list)]
 
         # draw tiles
-        for tile in paramCGRA.tiles:
+        for tile in selectedCgraParam.tiles:
             if not tile.disabled:
                 button = None
                 if ii in tile.mapping:
@@ -1487,7 +942,7 @@ def drawSchedule():
                 canvas.create_window(posX, posY, window=button, height=tileHeight, width=tileWidth, anchor="nw")
 
         # draw links
-        for link in paramCGRA.updatedLinks:
+        for link in selectedCgraParam.updatedLinks:
             if not link.disabled:
                 srcX, srcY = link.getSrcXY(baseX + BORDER, BORDER)
                 dstX, dstY = link.getDstXY(baseX + BORDER, BORDER)
@@ -1526,27 +981,27 @@ def clickMapDFG():
     os.system("mkdir kernel")
     os.chdir("kernel")
     fileExist = os.path.exists("kernel.bc")
-    global paramCGRA
+    global selectedCgraParam
 
-    if not fileExist or not paramCGRA.compilationDone or paramCGRA.targetKernelName == None:
+    if not fileExist or not selectedCgraParam.compilationDone or selectedCgraParam.targetKernelName == None:
         os.chdir("..")
         # tkinter.messagebox.showerror(title="DFG mapping", message="The compilation and kernel selection need to be done first.")
         if not fileExist:
             tkinter.messagebox.showerror(title="DFG mapping", message="The kernel.bc doesn't exist.")
-        if not paramCGRA.compilationDone:
+        if not selectedCgraParam.compilationDone:
             tkinter.messagebox.showerror(title="DFG mapping", message="The compilation needs to be done first.")
-        if paramCGRA.targetKernelName == None:
+        if selectedCgraParam.targetKernelName == None:
             tkinter.messagebox.showerror(title="DFG mapping", message="The kernel name is not selected yet.")
         return
 
     mappingJson = {
-        "kernel": paramCGRA.targetKernelName,
+        "kernel": selectedCgraParam.targetKernelName,
         "targetFunction": False,
         "targetNested": True,
         "targetLoopsID": [0],
         "doCGRAMapping": True,
-        "row": paramCGRA.rows,
-        "column": paramCGRA.columns,
+        "row": selectedCgraParam.rows,
+        "column": selectedCgraParam.columns,
         "precisionAware": False,
         "heterogeneity": False,
         "isTrimmedDemo": True,
@@ -1555,7 +1010,7 @@ def clickMapDFG():
         "diagonalVectorization": False,
         "bypassConstraint": 8,
         "isStaticElasticCGRA": False,
-        "ctrlMemConstraint": paramCGRA.configMemSize,
+        "ctrlMemConstraint": selectedCgraParam.configMemSize,
         "regConstraint": 12,
     }
 
@@ -1564,7 +1019,7 @@ def clickMapDFG():
     with open("param.json", "w") as outfile:
         outfile.write(mappingJsonObject)
 
-    dumpParamCGRA2JSON("paramCGRA.json")
+    dumpcgraParam2JSON("cgraParam.json")
 
     mappingCommand = "opt-12 -load ../../CGRA-Mapper/build/src/libmapperPass.so -mapperPass ./kernel.bc"
 
@@ -1836,9 +1291,9 @@ def create_cgra_pannel(master, rows, columns):
     baseX = 0
 
     # construct data memory
-    if paramCGRA.dataSPM == None:
+    if selectedCgraParam.dataSPM == None:
         dataSPM = ParamSPM(MEM_WIDTH, rows, rows)
-        paramCGRA.initDataSPM(dataSPM)
+        selectedCgraParam.initDataSPM(dataSPM)
 
     # pad contains tile and links
     # padSize = TILE_SIZE + LINK_LENGTH
@@ -1860,7 +1315,7 @@ def create_cgra_pannel(master, rows, columns):
     canvas.create_window(baseX + BORDER, BORDER, window=spmLabel, height=GRID_HEIGHT, width=MEM_WIDTH, anchor="nw")
 
     # construct tiles
-    if len(paramCGRA.tiles) == 0:
+    if len(selectedCgraParam.tiles) == 0:
         for i in range(ROWS):
             for j in range(COLS):
                 ID = i * COLS + j
@@ -1868,10 +1323,10 @@ def create_cgra_pannel(master, rows, columns):
                 posY = GRID_HEIGHT - padHeight * i - TILE_HEIGHT
 
                 tile = ParamTile(ID, j, i, posX, posY, TILE_WIDTH, TILE_HEIGHT)
-                paramCGRA.addTile(tile)
+                selectedCgraParam.addTile(tile)
 
     # draw tiles
-    for tile in paramCGRA.tiles:
+    for tile in selectedCgraParam.tiles:
         if not tile.disabled:
             # button = tkinter.Button(canvas, text="Tile " + str(tile.ID), fg='black', bg='gray', relief='raised',
             #                         bd=BORDER, command=partial(clickTile, tile.ID), highlightbackground="black",
@@ -1887,58 +1342,58 @@ def create_cgra_pannel(master, rows, columns):
             canvas.create_window(posX, posY, window=button, height=TILE_HEIGHT, width=TILE_WIDTH, anchor="nw")
 
             # construct links
-    if len(paramCGRA.templateLinks) == 0:
+    if len(selectedCgraParam.templateLinks) == 0:
         for i in range(ROWS):
             for j in range(COLS):
                 if j < COLS - 1:
                     # horizontal
-                    tile0 = paramCGRA.getTileOfDim(j, i)
-                    tile1 = paramCGRA.getTileOfDim(j + 1, i)
+                    tile0 = selectedCgraParam.getTileOfDim(j, i)
+                    tile1 = selectedCgraParam.getTileOfDim(j + 1, i)
                     link0 = ParamLink(tile0, tile1, PORT_EAST, PORT_WEST)
                     link1 = ParamLink(tile1, tile0, PORT_WEST, PORT_EAST)
-                    paramCGRA.addTemplateLink(link0)
-                    paramCGRA.addTemplateLink(link1)
+                    selectedCgraParam.addTemplateLink(link0)
+                    selectedCgraParam.addTemplateLink(link1)
 
                 if i < ROWS - 1 and j < COLS - 1:
                     # diagonal left bottom to right top
-                    tile0 = paramCGRA.getTileOfDim(j, i)
-                    tile1 = paramCGRA.getTileOfDim(j + 1, i + 1)
+                    tile0 = selectedCgraParam.getTileOfDim(j, i)
+                    tile1 = selectedCgraParam.getTileOfDim(j + 1, i + 1)
                     link0 = ParamLink(tile0, tile1, PORT_NORTHEAST, PORT_SOUTHWEST)
                     link1 = ParamLink(tile1, tile0, PORT_SOUTHWEST, PORT_NORTHEAST)
-                    paramCGRA.addTemplateLink(link0)
-                    paramCGRA.addTemplateLink(link1)
+                    selectedCgraParam.addTemplateLink(link0)
+                    selectedCgraParam.addTemplateLink(link1)
 
                 if i < ROWS - 1 and j > 0:
                     # diagonal left top to right bottom
-                    tile0 = paramCGRA.getTileOfDim(j, i)
-                    tile1 = paramCGRA.getTileOfDim(j - 1, i + 1)
+                    tile0 = selectedCgraParam.getTileOfDim(j, i)
+                    tile1 = selectedCgraParam.getTileOfDim(j - 1, i + 1)
                     link0 = ParamLink(tile0, tile1, PORT_NORTHWEST, PORT_SOUTHEAST)
                     link1 = ParamLink(tile1, tile0, PORT_SOUTHEAST, PORT_NORTHWEST)
-                    paramCGRA.addTemplateLink(link0)
-                    paramCGRA.addTemplateLink(link1)
+                    selectedCgraParam.addTemplateLink(link0)
+                    selectedCgraParam.addTemplateLink(link1)
 
                 if i < ROWS - 1:
                     # vertical
-                    tile0 = paramCGRA.getTileOfDim(j, i)
-                    tile1 = paramCGRA.getTileOfDim(j, i + 1)
+                    tile0 = selectedCgraParam.getTileOfDim(j, i)
+                    tile1 = selectedCgraParam.getTileOfDim(j, i + 1)
                     link0 = ParamLink(tile0, tile1, PORT_NORTH, PORT_SOUTH)
                     link1 = ParamLink(tile1, tile0, PORT_SOUTH, PORT_NORTH)
-                    paramCGRA.addTemplateLink(link0)
-                    paramCGRA.addTemplateLink(link1)
+                    selectedCgraParam.addTemplateLink(link0)
+                    selectedCgraParam.addTemplateLink(link1)
 
                 if j == 0:
                     # connect to memory
-                    tile0 = paramCGRA.getTileOfDim(j, i)
-                    link0 = ParamLink(tile0, paramCGRA.dataSPM, PORT_WEST, i)
-                    link1 = ParamLink(paramCGRA.dataSPM, tile0, i, PORT_WEST)
-                    paramCGRA.addTemplateLink(link0)
-                    paramCGRA.addTemplateLink(link1)
+                    tile0 = selectedCgraParam.getTileOfDim(j, i)
+                    link0 = ParamLink(tile0, selectedCgraParam.dataSPM, PORT_WEST, i)
+                    link1 = ParamLink(selectedCgraParam.dataSPM, tile0, i, PORT_WEST)
+                    selectedCgraParam.addTemplateLink(link0)
+                    selectedCgraParam.addTemplateLink(link1)
 
-    paramCGRA.updateLinks()
-    paramCGRA.updateFuXbarPannel()
+    selectedCgraParam.updateLinks()
+    selectedCgraParam.updateFuXbarPannel()
 
     # draw links
-    for link in paramCGRA.updatedLinks:
+    for link in selectedCgraParam.updatedLinks:
         if link.disabled:
             pass
         else:
@@ -1968,7 +1423,7 @@ def place_fu_options(master):
                                             command=partial(clickFuCheckbutton, fuTypeList[i]))
         fuCheckbuttons[fuTypeList[i]] = fuCheckbutton
         fuCheckbutton.select()
-        paramCGRA.updateFuCheckbutton(fuTypeList[i], fuVar.get())
+        selectedCgraParam.updateFuCheckbutton(fuTypeList[i], fuVar.get())
         fuCheckbutton.grid(row=(i // 2), column=i % 2, pady=6)
 
 
@@ -1982,12 +1437,12 @@ def place_xbar_options(master):
                                               command=partial(clickXbarCheckbutton, xbarType))
         xbarCheckbuttons[xbarType] = xbarCheckbutton
 
-        if paramCGRA.getTileOfID(0).xbarDict[xbarType] == 1:
+        if selectedCgraParam.getTileOfID(0).xbarDict[xbarType] == 1:
             xbarCheckbutton.select()
 
-        paramCGRA.updateXbarCheckbutton(xbarType, xbarVar.get())
+        selectedCgraParam.updateXbarCheckbutton(xbarType, xbarVar.get())
 
-        if portType in paramCGRA.getTileOfID(0).neverUsedOutPorts:
+        if portType in selectedCgraParam.getTileOfID(0).neverUsedOutPorts:
             xbarCheckbutton.configure(state="disabled")
 
         # xbarCheckbutton.grid(row=(i // 3)+1, column=i % 3, padx=15, pady=15, sticky="nsew")
@@ -2038,14 +1493,14 @@ def create_param_pannel(master):
                                        #highlightthickness=HIGHLIGHT_THICKNESS
                                        )
     rowsEntry.grid(row=1, column=1, padx=5, pady=5)
-    rowsEntry.insert(0, str(paramCGRA.rows))
+    rowsEntry.insert(0, str(selectedCgraParam.rows))
     widgets["rowsEntry"] = rowsEntry
     columnsEntry = customtkinter.CTkEntry(paramPannel, justify=tkinter.CENTER#,
                                           #highlightbackground="black",
                                           #highlightthickness=HIGHLIGHT_THICKNESS
                                           )
     columnsEntry.grid(row=1, column=2, padx=2, pady=5)
-    columnsEntry.insert(0, str(paramCGRA.columns))
+    columnsEntry.insert(0, str(selectedCgraParam.columns))
     widgets["columnsEntry"] = columnsEntry
 
     dataMemLabel = customtkinter.CTkLabel(paramPannel, text='Per-Bank SRAM (KBs):')
@@ -2055,7 +1510,7 @@ def create_param_pannel(master):
                                           #highlightthickness=HIGHLIGHT_THICKNESS
                                           )
     dataMemEntry.grid(row=2, column=1, padx=5, pady=5)
-    dataMemEntry.insert(0, str(paramCGRA.dataMemSize))
+    dataMemEntry.insert(0, str(selectedCgraParam.dataMemSize))
     widgets["dataMemEntry"] = dataMemEntry
     resetButton = customtkinter.CTkButton(paramPannel, text="Reset",
                                           #relief='raised',
@@ -2072,7 +1527,7 @@ def create_param_pannel(master):
                                             #highlightthickness=HIGHLIGHT_THICKNESS
                                             )
     configMemEntry.grid(row=3, column=1, pady=5)
-    configMemEntry.insert(0, paramCGRA.configMemSize)
+    configMemEntry.insert(0, selectedCgraParam.configMemSize)
     widgets["configMemEntry"] = configMemEntry
     updateButton = customtkinter.CTkButton(paramPannel, text="Update",
                                            #relief='raised',
@@ -2114,9 +1569,9 @@ def create_param_pannel(master):
     #     # switch.grid(row=i + 1, column=0, padx=5, pady=(0, 10))
     #     switch.pack(pady=(5, 10))
     #     scrollable_frame_switches.append(switch)
-    for port in paramCGRA.dataSPM.outLinks:
+    for port in selectedCgraParam.dataSPM.outLinks:
         switch = customtkinter.CTkSwitch(spmConfigPannel, text=f"link {port}", command=switchDataSPMOutLinks)
-        if not paramCGRA.dataSPM.outLinks[port].disabled:
+        if not selectedCgraParam.dataSPM.outLinks[port].disabled:
             switch.select()
         switch.pack(pady=(5, 10))
         spmOutlinksSwitches.insert(0, switch)

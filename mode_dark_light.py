@@ -1071,6 +1071,7 @@ def cgra_frame_clicked(event, cgraId, frame):
         # Only re-draw if this re-draw is triggered from user click
         if (event != None):
             create_cgra_pannel(master, selectedCgraParam.rows, selectedCgraParam.columns)
+            create_param_pannel(master)
     else:
         print(f"cgraId: {cgraId} unselected!, do nothing")
     

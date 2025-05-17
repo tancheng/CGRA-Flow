@@ -19,7 +19,7 @@ RUN mkdir ${HOME}/cgra \
     && make \
     # Test for CGRA-Mapper \
     && cd ../test \
-    && ln -sf /usr/bin/opt-12 /usr/bin/opt && source compile.sh \
+    # && ln -sf /usr/bin/opt-12 /usr/bin/opt && source compile.sh \
     && cd ../../ \
     # VectorCGRA Git Sumbodule Update
     && cd VectorCGRA \

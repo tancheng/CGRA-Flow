@@ -67,7 +67,7 @@ RUN mkdir ${HOME}/cgra \
     # && source ${HOME}/venv/bin/activate \
     && pip install pillow \
     # Test for tkinter
-    && mkdir build && cd build \
+    && mkdir build && cd build
     # && source ${HOME}/venv/bin/activate
 
 ENV PATH="/root/verilator/bin:$PATH"

@@ -14,15 +14,12 @@ RUN mkdir ${HOME}/cgra \
     && apt-get -y install llvm-12 llvm-12-dev llvm-12-tools clang-12 \
     && apt-get -y install build-essential \
     # Configure CMake for CGRA-Mapper
-    && cd CGRA-Mapper && mkdir build && cd build && cmake .. \
+    && cd ${HOME}/cgra/CGRA-Flow/CGRA-Mapper \
+    && mkdir build && cd build && cmake .. \
     # Build for CGRA-Mapper
     && make \
-    # Test for CGRA-Mapper \
-    && cd ../test \
-    # && ln -sf /usr/bin/opt-12 /usr/bin/opt && source compile.sh \
-    && cd ../../ \
     # VectorCGRA Git Sumbodule Update
-    && cd VectorCGRA \
+    && cd ${HOME}/cgra/CGRA-Flow/VectorCGRA \
     && git submodule update --init \
     && apt-get -y install wget \
     && wget https://github.com/tancheng/pymtl-verilator/raw/master/verilator-travis-4.036.tar.gz \
@@ -40,28 +37,24 @@ RUN mkdir ${HOME}/cgra \
     && pip install pytest \
     && pip install py-markdown-table \
     # Test with pytest for VectorCGRA
-    && cd VectorCGRA \
+    && cd ${HOME}/cgra/CGRA-Flow/VectorCGRA \
     && mkdir -p build && cd build \
-    && cd ../../ \
     # Install dependencies for mflowgen
     && apt-get install -y yosys \
     # Build for mflowgen
-    && tools/mflowgen \
+    && cd ${HOME}/cgra/CGRA-Flow/tools/mflowgen \
     && pip install -e . \
     # Test for mflowgen
     && mkdir build && cd build \
     && mflowgen run --design ../designs/GcdUnit \
     && make 3 \
-    && cd ../../../ \
     # Build for cacti
-    && cd tools/cacti \
+    && cd ${HOME}/cgra/CGRA-Flow/tools/cacti \
     && make \
-    && cd ../../ \
     # Install dependencies for sv2v \
     && stack upgrade \
-    && cd tools/sv2v \
+    && cd ${HOME}/cgra/CGRA-Flow/tools/sv2v \
     && make \
-    && cd ../../ \
     # Install dependencies for tkinter
     && apt-get install -y python3-tk \
     # && source ${HOME}/venv/bin/activate \

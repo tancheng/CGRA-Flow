@@ -37,6 +37,7 @@ RUN mkdir ${HOME}/cgra \
     && apt-get -y install git libffi-dev \
     && apt-get -y install python3.10-venv \
     && python3 -m venv ${HOME}/venv \
+    && source ${HOME}/venv/bin/activate \
     && pip install py==1.11.0 \
     && pip install wheel \
     && pip install -U git+https://github.com/tancheng/pymtl3.1@yo-struct-list-fix \
@@ -56,20 +57,25 @@ RUN mkdir ${HOME}/cgra \
     && mflowgen run --design ../designs/GcdUnit \
     && make 3 \
     # Build for cacti
-#    && cd ${HOME}/cgra/CGRA-Flow/tools/cacti \
-#    && make \
+    && cd ${HOME}/cgra/CGRA-Flow/tools/cacti \
+    && make \
     # Install dependencies for sv2v \
-    # && stack upgrade \
-#    && cd ${HOME}/cgra/CGRA-Flow/tools/sv2v \
-#    && make \
+    && apt-get install -y curl \
+    && curl -sSL https://get.haskellstack.org/ | sh \
+    && export PATH="/root/.local/bin:$PATH" \
+    && stack upgrade \
+    && cd ${HOME}/cgra/CGRA-Flow/tools/sv2v \
+    && make \
+    && export PATH="/root/cgra/CGRA-Flow/tools/sv2v/bin:$PATH" \
     # Install dependencies for tkinter
     && apt-get install -y python3-tk \
     # && source ${HOME}/venv/bin/activate \
     && pip install pillow \
+    && pip install customtkinter \
     # Test for tkinter
     && cd ${HOME}/cgra/CGRA-Flow \
     && mkdir build && cd build
     # && source ${HOME}/venv/bin/activate
 
-#ENTRYPOINT ["python", "../mode_dark_light.py"]
-CMD ["tail", "-f", "/dev/null"]
+ENTRYPOINT ["python", "../mode_dark_light.py"]
+#CMD ["tail", "-f", "/dev/null"]

@@ -68,8 +68,8 @@ RUN mkdir ${HOME}/cgra \
     && pip install pillow \
     # Test for tkinter
     && cd ${HOME}/cgra/CGRA-Flow \
-    && mkdir build && cd build \
-    && source ${HOME}/venv/bin/activate
+    && mkdir build && cd build
+    # && source ${HOME}/venv/bin/activate
 
-ENTRYPOINT ["python", "../mode_dark_light.py"]
-#CMD ["tail", "-f", "/dev/null"]
+#ENTRYPOINT ["python", "../mode_dark_light.py"]
+CMD ["tail", "-f", "/dev/null"]

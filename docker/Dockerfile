@@ -1,5 +1,12 @@
 FROM ubuntu:22.04
 
+SHELL ["/bin/bash", "-c"]
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PATH="/root/verilator/bin:$PATH"
+ENV VERILATOR_ROOT=/root/verilator
+ENV PYMTL_VERILATOR_INCLUDE_DIR=/root/verilator/share/verilator/include
+
 RUN mkdir ${HOME}/cgra \
     && cd ${HOME}/cgra \
     && apt-get -y update \
@@ -62,10 +69,6 @@ RUN mkdir ${HOME}/cgra \
     # Test for tkinter
     && mkdir build && cd build
     # && source ${HOME}/venv/bin/activate
-
-ENV PATH="/root/verilator/bin:$PATH"
-ENV VERILATOR_ROOT=/root/verilator
-ENV PYMTL_VERILATOR_INCLUDE_DIR=/root/verilator/share/verilator/include
 
 #ENTRYPOINT ["python", "../mode_dark_light.py"]
 CMD ["tail", "-f", "/dev/null"]

@@ -77,5 +77,7 @@ RUN mkdir ${HOME}/cgra \
     && mkdir build && cd build
     # && source ${HOME}/venv/bin/activate
 
-ENTRYPOINT ["python", "../mode_dark_light.py"]
+#ENTRYPOINT ["python", "../mode_dark_light.py"]
+WORKDIR "/root/cgra/CGRA-Flow/build"
+CMD ["/root/venv/bin/python", "../mode_dark_light.py"]
 #CMD ["tail", "-f", "/dev/null"]

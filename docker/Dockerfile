@@ -78,5 +78,5 @@ RUN mkdir ${HOME}/cgra \
     && mkdir build && cd build
 
 WORKDIR "/root/cgra/CGRA-Flow/build"
-CMD ["/root/venv/bin/python", "../mode_dark_light.py"]
-#CMD ["tail", "-f", "/dev/null"]
+#CMD ["/root/venv/bin/python", "../mode_dark_light.py"]
+CMD ["tail", "-f", "/dev/null"]

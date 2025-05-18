@@ -40,7 +40,14 @@ The docker image is available
 
 As CGRA-Flow requires GUI, a script is provided for setting up the display:
 ```sh
+ # Use pre-built image 
  docker pull cgra/cgra-flow:20241028
+ # Or build image from Dockerfile
+ $ mkdir -p ${HOME}/cgra
+ $ cd ${HOME}/cgra
+ $ git clone https://github.com/tancheng/CGRA-Flow.git
+ $ cd CGRA-Flow/docker/
+ $ docker build -t image_name:tag .
 
  # For Mac users:
  sh ./run_mac_docker.sh

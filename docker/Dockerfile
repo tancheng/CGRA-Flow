@@ -16,6 +16,8 @@ RUN mkdir ${HOME}/cgra \
     && git clone https://github.com/tancheng/CGRA-Flow.git \
     && cd CGRA-Flow \
     && git submodule update --init \
+    # FIXME: remove once master works good
+    && git checkout 523bf44f \
     # Install LLVM and Clang for CGRA-Mapper
     && apt-get -y install cmake \
     && apt-get -y install llvm-12 llvm-12-dev llvm-12-tools clang-12 \
@@ -69,15 +71,12 @@ RUN mkdir ${HOME}/cgra \
     && export PATH="/root/cgra/CGRA-Flow/tools/sv2v/bin:$PATH" \
     # Install dependencies for tkinter
     && apt-get install -y python3-tk \
-    # && source ${HOME}/venv/bin/activate \
     && pip install pillow \
     && pip install customtkinter \
     # Test for tkinter
     && cd ${HOME}/cgra/CGRA-Flow \
     && mkdir build && cd build
-    # && source ${HOME}/venv/bin/activate
 
-#ENTRYPOINT ["python", "../mode_dark_light.py"]
 WORKDIR "/root/cgra/CGRA-Flow/build"
 CMD ["/root/venv/bin/python", "../mode_dark_light.py"]
 #CMD ["tail", "-f", "/dev/null"]

@@ -56,19 +56,20 @@ RUN mkdir ${HOME}/cgra \
     && mflowgen run --design ../designs/GcdUnit \
     && make 3 \
     # Build for cacti
-    && cd ${HOME}/cgra/CGRA-Flow/tools/cacti \
-    && make \
+#    && cd ${HOME}/cgra/CGRA-Flow/tools/cacti \
+#    && make \
     # Install dependencies for sv2v \
-    && stack upgrade \
-    && cd ${HOME}/cgra/CGRA-Flow/tools/sv2v \
-    && make \
+    # && stack upgrade \
+#    && cd ${HOME}/cgra/CGRA-Flow/tools/sv2v \
+#    && make \
     # Install dependencies for tkinter
     && apt-get install -y python3-tk \
     # && source ${HOME}/venv/bin/activate \
     && pip install pillow \
     # Test for tkinter
-    && mkdir build && cd build
-    # && source ${HOME}/venv/bin/activate
+    && cd ${HOME}/cgra/CGRA-Flow \
+    && mkdir build && cd build \
+    && source ${HOME}/venv/bin/activate
 
-#ENTRYPOINT ["python", "../mode_dark_light.py"]
-CMD ["tail", "-f", "/dev/null"]
+ENTRYPOINT ["python", "../mode_dark_light.py"]
+#CMD ["tail", "-f", "/dev/null"]

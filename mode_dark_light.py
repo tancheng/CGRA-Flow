@@ -21,6 +21,10 @@ from PIL import Image, ImageTk, ImageFile
 import argparse
 parser=argparse.ArgumentParser()
 parser.add_argument("--theme")
+parser.add_argument("--rows", type=int, default=ROWS, help="Number of rows in the CGRA (default: 4).")
+parser.add_argument("--cols", type=int, default=COLS, help="Number of columns in the CGRA (default: 4).")
+parser.add_argument("--multi_rows", type=int, default=CGRA_ROWS, help="Number of rows in the Multi-CGRA (default: 2).")
+parser.add_argument("--multi_cols", type=int, default=CGRA_COLS, help="Number of columns in the Multi-CGRA (default: 2).")
 args=parser.parse_args()
 customtkinter.set_appearance_mode("dark")  # Modes: system (default), light, dark
 customtkinter.set_default_color_theme("dark-blue")  # Themes: blue (default), dark-blue, green
@@ -79,6 +83,12 @@ mapped_tile_color_list = ['#FFF113', '#75D561', '#F2CB67', '#FFAC73', '#F3993A',
 
 processOptions = tkinter.StringVar()
 processOptions.set("asap7")
+
+# Update default values based on arguments
+CGRA_ROWS = args.rows
+CGRA_COLS = args.cols
+MULTI_CGRA_ROWS = args.multi_rows
+MULTI_CGRA_COLS = args.multi_cols
 
 # TODO: Removes this and uses MultiCGRAParams.py 
 class CgraOfMultiCgra:
@@ -215,7 +225,7 @@ def getXbarCheckVars():
     return xbarCheckVars
 
 
-multiCgraParam = MultiCGRAParam(rows=CGRA_ROWS, cols=CGRA_COLS, golbalWidgets = widgets)
+multiCgraParam = MultiCGRAParam(rows=MULTI_CGRA_ROWS, cols=MULTI_CGRA_COLS, per_cgra_rows=CGRA_ROWS, per_cgra_cols=CGRA_COLS, golbalWidgets = widgets)
 multiCgraParam.setSelectedCgra(0, 0)
 selectedCgraParam = multiCgraParam.getSelectedCgra()
 selectedCgraParam.set_cgra_param_callbacks(switchDataSPMOutLinks=switchDataSPMOutLinks,
@@ -1270,7 +1280,7 @@ def clickMultiCgraUpdate(root):
     global multiCgraParam
     global selectedCgraParam
 
-    multiCgraParam = MultiCGRAParam(rows=cgraRows, cols=cgraCols, golbalWidgets = widgets)
+    multiCgraParam = MultiCGRAParam(rows=cgraRows, cols=cgraCols,per_cgra_rows=ROWS, per_cgra_cols=COLS, golbalWidgets = widgets)
     multiCgraParam.setSelectedCgra(0, 0)
     selectedCgraParam = multiCgraParam.getSelectedCgra()
     selectedCgraParam.set_cgra_param_callbacks(switchDataSPMOutLinks=switchDataSPMOutLinks,

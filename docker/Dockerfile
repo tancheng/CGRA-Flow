@@ -6,6 +6,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV PATH="/WORK_REPO/verilator/bin:$PATH"
 ENV VERILATOR_ROOT=/WORK_REPO/verilator
 ENV PYMTL_VERILATOR_INCLUDE_DIR=/WORK_REPO/verilator/share/verilator/include
+ENV PATH="/WORK_REPO/CGRA-Flow/tools/sv2v/bin:$PATH"
 
 RUN mkdir /WORK_REPO \
     && cd /WORK_REPO \
@@ -16,8 +17,6 @@ RUN mkdir /WORK_REPO \
     && git clone https://github.com/tancheng/CGRA-Flow.git \
     && cd CGRA-Flow \
     && git submodule update --init \
-    # FIXME: remove once master works good
-    && git checkout 523bf44f \
     # Install LLVM and Clang for CGRA-Mapper
     && apt-get -y install cmake \
     && apt-get -y install llvm-12 llvm-12-dev llvm-12-tools clang-12 \
@@ -30,6 +29,7 @@ RUN mkdir /WORK_REPO \
     # VectorCGRA Git Sumbodule Update
     && cd /WORK_REPO/CGRA-Flow/VectorCGRA \
     && git submodule update --init \
+    && cd /WORK_REPO \
     && apt-get -y install wget \
     && wget https://github.com/tancheng/pymtl-verilator/raw/master/verilator-travis-4.036.tar.gz \
     && tar -C /WORK_REPO -xzf verilator-travis-4.036.tar.gz \

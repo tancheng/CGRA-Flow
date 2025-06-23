@@ -6,7 +6,8 @@ import customtkinter
 
 
 class CGRAParam:
-    def __init__(s, rows, columns, configMemSize=CONFIG_MEM_SIZE, dataMemSize=DATA_MEM_SIZE, masterWidgets = {}):
+    def __init__(s, cgraId, rows, columns, configMemSize=CONFIG_MEM_SIZE, dataMemSize=DATA_MEM_SIZE, masterWidgets = {}):
+        s.cgraId = cgraId
         s.rows = rows
         s.columns = columns
         s.configMemSize = configMemSize

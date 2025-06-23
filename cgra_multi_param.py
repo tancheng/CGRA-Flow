@@ -5,7 +5,8 @@ class MultiCGRAParam:
     def __init__(self, rows, cols, golbalWidgets):
         self.rows = rows
         self.cols = cols
-        self.cgras = [[CGRAParam(ROWS, COLS, CONFIG_MEM_SIZE, DATA_MEM_SIZE, golbalWidgets) for c in range(cols)] for r in range(rows)]
+        #                                   cgraId
+        self.cgras = [[CGRAParam((r*self.rows + c), ROWS, COLS, CONFIG_MEM_SIZE, DATA_MEM_SIZE, golbalWidgets) for c in range(cols)] for r in range(rows)]
         self.selectedCgraParam = None
         self.selected_row = 0
         self.selected_col = 0

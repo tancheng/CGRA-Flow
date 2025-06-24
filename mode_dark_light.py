@@ -43,7 +43,8 @@ if args.theme:
        MULTI_CGRA_TILE_COLOR = "#3A7EBF"
        MULTI_CGRA_TXT_COLOR = "black"
 
-from VectorCGRA.cgra.translate.CGRATemplateRTL_test import *
+# from VectorCGRA.cgra.translate.CGRATemplateRTL_test import *
+from VectorCGRA.multi_cgra.test.MeshMultiCgraTemplateRTL_test import *
 
 # importing module
 import logging
@@ -445,9 +446,11 @@ def clickGenerateVerilog():
     cmdline_opts = {'test_verilog': 'zeros', 'test_yosys_verilog': '', 'dump_textwave': False, 'dump_vcd': False,
                     'dump_vtb': False, 'max_cycles': None}
     # test_cgra_universal(cgraParam = selectedCgraParam)
-    print("-------------  selectedCgraParam  --------------")
-    print(selectedCgraParam)
-    print("-------------  selectedCgraParam  --------------<")
+
+    print("-------------  multiCgraParam  --------------")
+    print(multiCgraParam)
+    print("-------------  multiCgraParam  --------------<")
+    test_multi_CGRA_universal(cmdline_opts, multiCgraParam=multiCgraParam)
 
     widgets["verilogText"].delete("1.0", tkinter.END)
     found = False
@@ -1110,7 +1113,7 @@ def create_multi_cgra_panel(master, cgraRows=2, cgraCols=2):
             multiCgraCanvas.create_text(x + cgraSquareLength/2 + 5, y + cgraSquareLength + 10, font=customtkinter.CTkFont(weight="bold"),
                          text=f"CGRA {cgraId}", fill=MULTI_CGRA_TXT_COLOR)
             if (multiCgraParam.getCgraParam(row, col) == selectedCgraParam):
-                cgra_frame_clicked(None, cgraId= cgraId, frame=cgraFrame)
+                cgra_frame_clicked(None, cgraId=cgraId, frame=cgraFrame)
                 # current cgra param model is the selected one, hightlight it.
             cgraId = cgraId + 1
 

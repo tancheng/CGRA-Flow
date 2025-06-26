@@ -43,7 +43,7 @@ if args.theme:
        MULTI_CGRA_TILE_COLOR = "#3A7EBF"
        MULTI_CGRA_TXT_COLOR = "black"
 
-# from VectorCGRA.cgra.translate.CGRATemplateRTL_test import *
+# from VectorCGRA.cgra.test.CgraTemplateRTL_test import *
 from VectorCGRA.multi_cgra.test.MeshMultiCgraTemplateRTL_test import *
 
 # importing module
@@ -468,7 +468,7 @@ def clickGenerateVerilog():
         selectedCgraParam.verilogDone = False
         widgets["verilogText"].insert(tkinter.END, "Error exists during Verilog generation")
 
-    os.system("mv CGRATemplateRTL__*.v design.v")
+    os.system("mv CgraTemplateRTL__*.v design.v")
     # os.system("rename s/\.v/\.log/g *")
 
     os.chdir("..")
@@ -592,7 +592,7 @@ def clickSynthesize():
     progress = threading.Thread(target=setReportProgress, args=[40])
     progress.start()
 
-    os.system("sed -i 's/CGRATemplateRTL__.*/CGRATemplateRTL (/g' design_sv2v.v")
+    os.system("sed -i 's/CgraTemplateRTL__.*/CgraTemplateRTL (/g' design_sv2v.v")
     progress = threading.Thread(target=setReportProgress, args=[50])
     progress.start()
 
@@ -1876,7 +1876,7 @@ def constructDependencyFiles(cgraflow_basepath, standard_module_name, test_platf
                 newFile.write(contents)
             break
 
-    # Makes directories and copies CGRATemplateRTL.v, the pre-defined config.mk, and constraint.sdc to their respective directories.
+    # Makes directories and copies CgraTemplateRTL.v, the pre-defined config.mk, and constraint.sdc to their respective directories.
     global constraintFilePath, configFilePath
     os.chdir(orfs_basePath)
     subprocess.run(["mkdir -p " + verilog_srcfile_path], shell=True, encoding="utf-8")
@@ -1912,7 +1912,7 @@ def runOpenRoad(mk_sdc_file_path, cmd_path, odb_path, layout_path):
 
 def clickRTL2Layout():
     global constraintFilePath, configFilePath
-    standard_module_name = "CGRATemplateRTL"
+    standard_module_name = "CgraTemplateRTL"
     cgraflow_basepath = os.path.dirname(os.path.abspath(__file__))
     test_platform_name = processOptions.get()
     print("Test platform is %s" % (test_platform_name))

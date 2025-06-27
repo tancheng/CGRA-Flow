@@ -446,10 +446,7 @@ def clickGenerateVerilog():
     cmdline_opts = {'test_verilog': 'zeros', 'test_yosys_verilog': '', 'dump_textwave': False, 'dump_vcd': False,
                     'dump_vtb': False, 'max_cycles': None}
     # test_cgra_universal(cgraParam = selectedCgraParam)
-
     print("-------------  multiCgraParam  --------------")
-    print(multiCgraParam)
-    print("-------------  multiCgraParam  --------------<")
     test_multi_CGRA_universal(cmdline_opts, multiCgraParam=multiCgraParam)
 
     widgets["verilogText"].delete("1.0", tkinter.END)

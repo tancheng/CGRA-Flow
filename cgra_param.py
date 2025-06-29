@@ -6,8 +6,7 @@ import customtkinter
 
 
 class CGRAParam:
-    def __init__(s, cgraId, rows, columns, configMemSize=CONFIG_MEM_SIZE, dataMemSize=DATA_MEM_SIZE):
-        s.cgraId = cgraId
+    def __init__(s, rows, columns, configMemSize=CONFIG_MEM_SIZE, dataMemSize=DATA_MEM_SIZE, masterWidgets = {}):
         s.rows = rows
         s.columns = columns
         s.configMemSize = configMemSize
@@ -25,6 +24,7 @@ class CGRAParam:
         s.DFGNodeCount = -1
         s.resMII = -1
         s.recMII = -1
+        s.widgets = masterWidgets
         # These will be injected later.
         s.switchDataSPMOutLinks = None
         s.updateFunCheckoutButtons = None
@@ -266,10 +266,9 @@ class CGRAParam:
                 if type(link.srcTile) == ParamTile:
                     link.srcTile.xbarDict[xbarPort2Type[link.srcPort]] = 0
 
-    def updateSpmOutlinks(s, widgets):
-        print(f"-------------------{widgets}")
-        spmOutlinksSwitches = widgets['spmOutlinksSwitches']
-        spmConfigPannel = widgets["spmConfigPannel"]
+    def updateSpmOutlinks(s):
+        spmOutlinksSwitches = s.widgets['spmOutlinksSwitches']
+        spmConfigPannel = s.widgets["spmConfigPannel"]
         for switch in spmOutlinksSwitches:
             switch.destroy()
         for port in s.dataSPM.outLinks:

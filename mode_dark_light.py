@@ -216,7 +216,7 @@ def getXbarCheckVars():
     return xbarCheckVars
 
 
-multiCgraParam = MultiCGRAParam(rows=CGRA_ROWS, cols=CGRA_COLS, golbalWidgets = widgets)
+multiCgraParam = MultiCGRAParam(rows=CGRA_ROWS, cols=CGRA_COLS)
 multiCgraParam.setSelectedCgra(0, 0)
 selectedCgraParam = multiCgraParam.getSelectedCgra()
 selectedCgraParam.set_cgra_param_callbacks(switchDataSPMOutLinks=switchDataSPMOutLinks,
@@ -320,7 +320,7 @@ def clickUpdate(root):
     selectedCgraParam.updateTiles()
     selectedCgraParam.updateLinks()
     if old_rows_num != rows:
-        selectedCgraParam.updateSpmOutlinks()
+        selectedCgraParam.updateSpmOutlinks(widgets)
 
     selectedCgraParam.targetAppName = oldCGRA.targetAppName
     selectedCgraParam.compilationDone = oldCGRA.compilationDone
@@ -363,7 +363,7 @@ def clickReset(root):
     selectedCgraParam.enableAllTemplateLinks()
     selectedCgraParam.resetLinks()
 
-    selectedCgraParam.updateSpmOutlinks()
+    selectedCgraParam.updateSpmOutlinks(widgets)
 
     create_cgra_pannel(root, rows, columns)
 
@@ -1273,7 +1273,7 @@ def clickMultiCgraUpdate(root):
     global multiCgraParam
     global selectedCgraParam
 
-    multiCgraParam = MultiCGRAParam(rows=cgraRows, cols=cgraCols, golbalWidgets = widgets)
+    multiCgraParam = MultiCGRAParam(rows=cgraRows, cols=cgraCols)
     multiCgraParam.setSelectedCgra(0, 0)
     selectedCgraParam = multiCgraParam.getSelectedCgra()
     selectedCgraParam.set_cgra_param_callbacks(switchDataSPMOutLinks=switchDataSPMOutLinks,

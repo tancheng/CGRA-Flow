@@ -2,11 +2,11 @@ from cgra_param import CGRAParam
 from constants import *
 
 class MultiCGRAParam:
-    def __init__(self, rows, cols, golbalWidgets):
+    def __init__(self, rows, cols):
         self.rows = rows
         self.cols = cols
         #                                   cgraId
-        self.cgras = [[CGRAParam((r*self.rows + c), ROWS, COLS, CONFIG_MEM_SIZE, DATA_MEM_SIZE, golbalWidgets) for c in range(cols)] for r in range(rows)]
+        self.cgras = [[CGRAParam((r*self.rows + c), ROWS, COLS, CONFIG_MEM_SIZE, DATA_MEM_SIZE) for c in range(cols)] for r in range(rows)]
         self.selectedCgraParam = None
         self.selected_row = 0
         self.selected_col = 0

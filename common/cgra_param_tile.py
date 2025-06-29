@@ -1,5 +1,5 @@
-from constants import *
-from cgra_param_spm import ParamSPM
+from common.constants import *
+from common.cgra_param_spm import ParamSPM
 
 class ParamTile:
     def __init__(s, ID, dimX, dimY, posX, posY, tileWidth, tileHeight):

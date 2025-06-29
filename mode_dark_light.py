@@ -9,12 +9,12 @@ import tkinter
 import tkinter.messagebox
 from functools import partial
 from tkinter import filedialog as fd
-from constants import *
-from cgra_param_tile import ParamTile
-from cgra_param_spm import ParamSPM
-from cgra_param_link import ParamLink
-from cgra_param import CGRAParam
-from cgra_multi_param import MultiCGRAParam
+from common.constants import *
+from common.cgra_param_tile import ParamTile
+from common.cgra_param_spm import ParamSPM
+from common.cgra_param_link import ParamLink
+from common.cgra_param import CGRAParam
+from common.cgra_multi_param import MultiCGRAParam
 import customtkinter
 from PIL import Image, ImageTk, ImageFile
 

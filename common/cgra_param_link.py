@@ -1,4 +1,4 @@
-from cgra_param_spm import ParamSPM
+from common.cgra_param_spm import ParamSPM
 
 class ParamLink:
     def __init__(s, srcTile, dstTile, srcPort, dstPort):

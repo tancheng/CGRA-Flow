@@ -1,5 +1,5 @@
-from cgra_param import CGRAParam 
-from constants import *
+from common.cgra_param import CGRAParam 
+from common.constants import *
 
 class MultiCGRAParam:
     def __init__(self, rows, cols, globalWidgets):

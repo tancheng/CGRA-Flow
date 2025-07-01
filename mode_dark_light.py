@@ -1016,7 +1016,7 @@ def clickMapDFG():
         "fusionStrategy"        : [],
         "isTrimmedDemo"         : True,
         "heuristicMapping"      : heuristic,
-        "parameterizableCGRA"   : False,
+        "parameterizableCGRA"   : True,
         "bypassConstraint"      : 4,
         "isStaticElasticCGRA"   : False,
         "precisionAware"        : False,

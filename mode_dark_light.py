@@ -765,7 +765,7 @@ def clickShowDFG():
         "fusionStrategy": [],
         "isTrimmedDemo": True,
         "heuristicMapping": True,
-        "parameterizableCGRA": True,
+        "parameterizableCGRA": False,
         "bypassConstraint": 4,
         "isStaticElasticCGRA": False,
         "precisionAware": False,

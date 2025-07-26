@@ -31,7 +31,9 @@ if args.theme:
        CANVAS_BG_COLOR = "#E5E5E5"
        CANVAS_LINE_COLOR = "black"
 
-from VectorCGRA.cgra.translate.CGRATemplateRTL_test import *
+##from VectorCGRA.cgra.translate.CGRATemplateRTL_test import *
+from VectorCGRA.cgra.test.CgraTemplateRTL_test import *
+
 
 # importing module
 import logging
@@ -966,7 +968,7 @@ def clickGenerateVerilog():
     # pymtl function that is used to generate synthesizable verilog
     cmdline_opts = {'test_verilog': 'zeros', 'test_yosys_verilog': '', 'dump_textwave': False, 'dump_vcd': False,
                     'dump_vtb': False, 'max_cycles': None}
-    test_cgra_universal(paramCGRA = paramCGRA)
+    test_cgra_universal(cmdline_opts,paramCGRA = paramCGRA)
 
     widgets["verilogText"].delete("1.0", tkinter.END)
     found = False
@@ -980,7 +982,7 @@ def clickGenerateVerilog():
             break
 
     paramCGRA.verilogDone = True
-    if not found:
+    if not found: 
         paramCGRA.verilogDone = False
         widgets["verilogText"].insert(tkinter.END, "Error exists during Verilog generation")
 
@@ -1149,8 +1151,13 @@ def clickCompileApp():
     if not fileName or fileName == "   Not selected yet":
         return
 
-    os.system("mkdir kernel")
-    os.chdir("kernel")
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+
+    kernel_dir = os.path.join(script_dir, "build/kernel")
+
+    os.makedirs(kernel_dir, exist_ok=True)
+
+    os.chdir(kernel_dir)
 
     compileCommand = "clang-12 -emit-llvm -fno-unroll-loops -O3 -o kernel.bc -c " + fileName
     compileProc = subprocess.Popen([compileCommand, '-u'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
@@ -1204,7 +1211,7 @@ def clickCompileApp():
 
     widgets["generateDFGShow"].configure(text="IDLE")
 
-    os.chdir("..")
+    os.chdir(script_dir)
 
 
 def clickKernelMenu(*args):
@@ -1259,13 +1266,26 @@ def dumpParamCGRA2JSON(fileName):
 
 
 def clickShowDFG():
-    os.system("mkdir kernel")
-    os.chdir("kernel")
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+
+    mapper_so_path = os.path.join(script_dir, "CGRA-Mapper", "build", "src", "libmapperPass.so")
+
+    mapper_so_path = os.path.abspath(mapper_so_path)
+
+    kernel_dir = os.path.join(script_dir, "build/kernel")
+
+    os.makedirs(kernel_dir, exist_ok=True)
+
+    os.chdir(kernel_dir)
+
+    kernel_bc_path = os.path.join(script_dir, "build/kernel/kernel.bc")
+
     fileExist = os.path.exists("kernel.bc")
     global paramCGRA
 
     if not fileExist or not paramCGRA.compilationDone or paramCGRA.targetKernelName == None:
-        os.chdir("..")
+        os.chdir(script_dir)
         tkinter.messagebox.showerror(title="DFG Generation",
                                      message="The compilation and kernel selection need to be done first.")
         return
@@ -1299,7 +1319,7 @@ def clickShowDFG():
 
     dumpParamCGRA2JSON("paramCGRA.json")
 
-    genDFGCommand = "opt-12 -load ../../CGRA-Mapper/build/src/libmapperPass.so -mapperPass ./kernel.bc"
+    genDFGCommand = f"opt-12 -load {mapper_so_path} -mapperPass {kernel_bc_path}"
     print("trying to run opt-12")
     genDFGProc = subprocess.Popen([genDFGCommand, "-u"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 
@@ -1323,6 +1343,9 @@ def clickShowDFG():
     widgets["recMIIEntry"].delete(0, tkinter.END)
     widgets["recMIIEntry"].insert(0, paramCGRA.recMII)
 
+
+    if not os.path.exists(paramCGRA.targetKernelName + ".dot"):
+        print("DFG dot file was not generated!")
     convertCommand = "dot -Tpng " + paramCGRA.targetKernelName + ".dot -o kernel.png"
     convertProc = subprocess.Popen([convertCommand, "-u"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     (out, err) = convertProc.communicate()
@@ -1354,7 +1377,7 @@ def clickShowDFG():
 
     widgets["generateDFGShow"].configure(text=u'\u2713\u2713\u2713')
 
-    os.chdir("..")
+    os.chdir(script_dir)
 
 
 mappingProc = None
@@ -1372,7 +1395,24 @@ def countMapTime():
 
 def drawSchedule():
     global mappingProc
-    mappingCommand = "opt-12 -load ../../CGRA-Mapper/build/src/libmapperPass.so -mapperPass ./kernel.bc"
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+
+    mapper_so_path = os.path.join(script_dir, "CGRA-Mapper", "build", "src", "libmapperPass.so")
+
+    mapper_so_path = os.path.abspath(mapper_so_path)
+
+    kernel_dir = os.path.join(script_dir, "build/kernel")
+
+    os.makedirs(kernel_dir, exist_ok=True)
+
+    os.chdir(kernel_dir)
+
+    kernel_bc_path = os.path.join(script_dir, "build/kernel/kernel.bc")
+
+    #f"opt-12 -load {mapper_so_path} -mapperPass {kernel_bc_path}"
+
+    mappingCommand = f"opt-12 -load {mapper_so_path} -mapperPass {kernel_bc_path}"
     mappingProc = subprocess.Popen(["exec " + mappingCommand, '-u'], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                    shell=True, bufsize=1)
     (out, err) = mappingProc.communicate()
@@ -1503,8 +1543,20 @@ def clickMapDFG():
     mappingProc = None
     heuristic = mappingAlgoCheckVar.get() == 0
 
-    os.system("mkdir kernel")
-    os.chdir("kernel")
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+
+    mapper_so_path = os.path.join(script_dir, "CGRA-Mapper", "build", "src", "libmapperPass.so")
+
+    mapper_so_path = os.path.abspath(mapper_so_path)
+
+    kernel_dir = os.path.join(script_dir, "build/kernel")
+
+    os.makedirs(kernel_dir, exist_ok=True)
+
+    os.chdir(kernel_dir)
+
+    kernel_bc_path = os.path.join(script_dir, "build/kernel/kernel.bc")
+
     fileExist = os.path.exists("kernel.bc")
     global paramCGRA
 
@@ -1545,8 +1597,6 @@ def clickMapDFG():
         outfile.write(mappingJsonObject)
 
     dumpParamCGRA2JSON("paramCGRA.json")
-
-    mappingCommand = "opt-12 -load ../../CGRA-Mapper/build/src/libmapperPass.so -mapperPass ./kernel.bc"
 
     widgets["mapTimeEntry"].delete(0, tkinter.END)
     widgets["mapTimeEntry"].insert(0, 0)

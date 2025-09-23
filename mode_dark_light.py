@@ -19,9 +19,10 @@ import customtkinter
 from PIL import Image, ImageTk, ImageFile
 
 import argparse
-parser=argparse.ArgumentParser()
+
+parser = argparse.ArgumentParser()
 parser.add_argument("--theme")
-args=parser.parse_args()
+args = parser.parse_args()
 customtkinter.set_appearance_mode("dark")  # Modes: system (default), light, dark
 customtkinter.set_default_color_theme("dark-blue")  # Themes: blue (default), dark-blue, green
 # CANVAS_BG_COLOR = "#2B2B2B"
@@ -33,33 +34,34 @@ MULTI_CGRA_TXT_COLOR = "white"
 MULTI_CGRA_SELECTED_COLOR = "lightblue"
 
 if args.theme:
-   # print(f'Input theme argument: {args.theme}')
-   if args.theme == 'light':
-       customtkinter.set_appearance_mode("light")  # Modes: system (default), light, dark
-       customtkinter.set_default_color_theme("dark-blue")  # Themes: blue (default), dark-blue, green
-       CANVAS_BG_COLOR = "#E5E5E5"
-       CANVAS_LINE_COLOR = "black"
-       MULTI_CGRA_FRAME_COLOR = "#325882"
-       MULTI_CGRA_TILE_COLOR = "#3A7EBF"
-       MULTI_CGRA_TXT_COLOR = "black"
+    # print(f'Input theme argument: {args.theme}')
+    if args.theme == 'light':
+        customtkinter.set_appearance_mode("light")  # Modes: system (default), light, dark
+        customtkinter.set_default_color_theme("dark-blue")  # Themes: blue (default), dark-blue, green
+        CANVAS_BG_COLOR = "#E5E5E5"
+        CANVAS_LINE_COLOR = "black"
+        MULTI_CGRA_FRAME_COLOR = "#325882"
+        MULTI_CGRA_TILE_COLOR = "#3A7EBF"
+        MULTI_CGRA_TXT_COLOR = "black"
 
 # from VectorCGRA.cgra.test.CgraTemplateRTL_test import *
-from VectorCGRA.multi_cgra.test.MeshMultiCgraTemplateRTL_test import *
+# from VectorCGRA.multi_cgra.test.MeshMultiCgraTemplateRTL_test import *
 
 # importing module
 import logging
 
 # Create and configure logger
 logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s - %(levelname)s - %(message)s')
+                    format='%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s')
 
 
 def window_size(window, width, height):
     window.geometry(f"{width}x{height}")
 
-master = customtkinter.CTk()
-master.title("Neura: An Integrated End-to-End Framework for Multi-CGRA Exploration, Compilation, Synthesis and Evaluation")
 
+master = customtkinter.CTk()
+master.title(
+    "Neura: An Integrated End-to-End Framework for Multi-CGRA Exploration, Compilation, Synthesis and Evaluation")
 
 # Stores the UI elements that need to communicate between UI components
 widgets = {}
@@ -81,7 +83,8 @@ mapped_tile_color_list = ['#FFF113', '#75D561', '#F2CB67', '#FFAC73', '#F3993A',
 processOptions = tkinter.StringVar()
 processOptions.set("asap7")
 
-# TODO: Removes this and uses MultiCGRAParams.py 
+
+# TODO: Removes this and uses MultiCGRAParams.py
 class CgraOfMultiCgra:
     def __init__(s, cgraId, xStartPos, yStartPos, tileRows, tileCols):
         s.cgraId = cgraId
@@ -89,6 +92,7 @@ class CgraOfMultiCgra:
         s.yStartPos = yStartPos
         s.tileRows = tileRows
         s.tileCols = tileCols
+
 
 class ToolTip(object):
 
@@ -137,13 +141,13 @@ def CreateToolTip(widget, text):
 
 
 def clickTile(ID):
-    print("click Title ")
+    logging.info("click Title ")
     # widgets["fuConfigPannel"].configure(text='Tile ' + str(ID) + ' functional units')
     widgets["fuConfigPannel"].configure(label_text='Tile ' + str(ID) + '\nfunctional units')
     # widgets["xbarConfigPannel"].config(text='Tile ' + str(ID) + ' crossbar outgoing links')
     widgets["xbarConfigPannel"].configure(label_text='Tile ' + str(ID) + '\ncrossbar outgoing links')
     widgets["xbarCentralTilelabel"].configure(text='Tile ' + str(ID))
-    # print(widgets['spmOutlinksSwitches'])
+    # logging.info(widgets['spmOutlinksSwitches'])
     # After clicking the tile, the pannel will fill all directions
     # widgets["xbarConfigPannel"].grid(columnspan=4, row=9, column=0, rowspan=3, sticky="nsew")
     widgets["entireTileCheckbutton"].configure(text='Disable entire Tile ' + str(ID), state="normal")
@@ -157,14 +161,15 @@ def clickTile(ID):
 
     for xbarType in xbarTypeList:
         xbarCheckVars[xbarType].set(selectedCgraParam.tiles[ID].xbarDict[xbarType])
-        xbarCheckbuttons[xbarType].configure(state="disabled" if disabled or xbarType2Port[xbarType] in selectedCgraParam.tiles[
-            ID].neverUsedOutPorts else "normal")
+        xbarCheckbuttons[xbarType].configure(
+            state="disabled" if disabled or xbarType2Port[xbarType] in selectedCgraParam.tiles[
+                ID].neverUsedOutPorts else "normal")
 
     entireTileCheckVar.set(1 if selectedCgraParam.getTileOfID(ID).disabled else 0)
 
 
 def clickSPM():
-    print('clickSPM')
+    logging.info('clickSPM')
     # widgets["fuConfigPannel"].config(text='Tile ' + str(cgraParam.targetTileID) + ' functional units')
     # widgets["fuConfigPannelLabel"].configure(text='Tile ' + str(cgraParam.targetTileID) + ' functional units')
     #
@@ -199,18 +204,23 @@ def switchDataSPMOutLinks():
 def updateFunCheckVars(type, value):
     fuCheckVars[type].set(value)
 
+
 def updateFunCheckoutButtons(type, updatedState):
     fuCheckbuttons[type].configure(state=updatedState)
+
 
 # TODO : move this inside CGRAParams and trigger UI update.
 def updateXbarCheckVars(type, value):
     xbarCheckVars[type].set(value)
 
+
 def updateXbarCheckbuttons(type, updateState):
     xbarCheckbuttons[type].configure(state=updateState)
 
+
 def getFunCheckVars():
     return fuCheckVars
+
 
 def getXbarCheckVars():
     return xbarCheckVars
@@ -220,12 +230,13 @@ multiCgraParam = MultiCGRAParam(rows=CGRA_ROWS, cols=CGRA_COLS, globalWidgets=wi
 multiCgraParam.setSelectedCgra(0, 0)
 selectedCgraParam = multiCgraParam.getSelectedCgra()
 selectedCgraParam.set_cgra_param_callbacks(switchDataSPMOutLinks=switchDataSPMOutLinks,
-    updateFunCheckoutButtons=updateFunCheckoutButtons,
-    updateFunCheckVars=updateFunCheckVars,
-    updateXbarCheckbuttons=updateXbarCheckbuttons,
-    updateXbarCheckVars=updateXbarCheckVars,
-    getFunCheckVars=getFunCheckVars,
-    getXbarCheckVars= getXbarCheckVars)
+                                           updateFunCheckoutButtons=updateFunCheckoutButtons,
+                                           updateFunCheckVars=updateFunCheckVars,
+                                           updateXbarCheckbuttons=updateXbarCheckbuttons,
+                                           updateXbarCheckVars=updateXbarCheckVars,
+                                           getFunCheckVars=getFunCheckVars,
+                                           getXbarCheckVars=getXbarCheckVars)
+
 
 def clickSPMPortDisable():
     spmEnabledListbox = widgets["spmEnabledListbox"]
@@ -299,16 +310,16 @@ def clickUpdate(root):
 
     old_rows_num = selectedCgraParam.rows
     if selectedCgraParam.rows != rows or selectedCgraParam.columns != columns:
-        selectedCgraParam = CGRAParam(rows, columns ,CONFIG_MEM_SIZE, DATA_MEM_SIZE, widgets)
+        selectedCgraParam = CGRAParam(rows, columns, CONFIG_MEM_SIZE, DATA_MEM_SIZE, widgets)
         selectedCgraParam.set_cgra_param_callbacks(switchDataSPMOutLinks=switchDataSPMOutLinks,
-                                           updateFunCheckoutButtons=updateFunCheckoutButtons,
-                                           updateFunCheckVars=updateFunCheckVars,
-                                           updateXbarCheckbuttons=updateXbarCheckbuttons,
-                                           updateXbarCheckVars=updateXbarCheckVars,
-                                           getFunCheckVars=getFunCheckVars,
-                                           getXbarCheckVars= getXbarCheckVars)
+                                                   updateFunCheckoutButtons=updateFunCheckoutButtons,
+                                                   updateFunCheckVars=updateFunCheckVars,
+                                                   updateXbarCheckbuttons=updateXbarCheckbuttons,
+                                                   updateXbarCheckVars=updateXbarCheckVars,
+                                                   getFunCheckVars=getFunCheckVars,
+                                                   getXbarCheckVars=getXbarCheckVars)
 
-    multiCgraParam.cgras[multiCgraParam.selected_row][multiCgraParam.selected_col] = selectedCgraParam    
+    multiCgraParam.cgras[multiCgraParam.selected_row][multiCgraParam.selected_col] = selectedCgraParam
 
     # dataSPM = ParamSPM(MEM_WIDTH, rows, rows)
     # cgraParam.initDataSPM(dataSPM)
@@ -333,7 +344,8 @@ def clickUpdate(root):
     widgets["verilogText"].delete("1.0", tkinter.END)
     widgets["resMIIEntry"].delete(0, tkinter.END)
     if len(selectedCgraParam.getValidTiles()) > 0 and selectedCgraParam.DFGNodeCount > 0:
-        selectedCgraParam.resMII = math.ceil((selectedCgraParam.DFGNodeCount + 0.0) / len(selectedCgraParam.getValidTiles())) // 1
+        selectedCgraParam.resMII = math.ceil(
+            (selectedCgraParam.DFGNodeCount + 0.0) / len(selectedCgraParam.getValidTiles())) // 1
         widgets["resMIIEntry"].insert(0, selectedCgraParam.resMII)
     else:
         widgets["resMIIEntry"].insert(0, 0)
@@ -351,12 +363,12 @@ def clickReset(root):
     if selectedCgraParam.rows != rows or selectedCgraParam.columns != columns:
         selectedCgraParam = CGRAParam(rows, columns, CONFIG_MEM_SIZE, DATA_MEM_SIZE, widgets)
         selectedCgraParam.set_cgra_param_callbacks(switchDataSPMOutLinks=switchDataSPMOutLinks,
-                                           updateFunCheckoutButtons=updateFunCheckoutButtons,
-                                           updateFunCheckVars=updateFunCheckVars,
-                                           updateXbarCheckbuttons=updateXbarCheckbuttons,
-                                           updateXbarCheckVars=updateXbarCheckVars,
-                                           getFunCheckVars=getFunCheckVars,
-                                           getXbarCheckVars= getXbarCheckVars)
+                                                   updateFunCheckoutButtons=updateFunCheckoutButtons,
+                                                   updateFunCheckVars=updateFunCheckVars,
+                                                   updateXbarCheckbuttons=updateXbarCheckbuttons,
+                                                   updateXbarCheckVars=updateXbarCheckVars,
+                                                   getFunCheckVars=getFunCheckVars,
+                                                   getXbarCheckVars=getXbarCheckVars)
 
     selectedCgraParam.updateMemSize(configMemSize, dataMemSize)
     selectedCgraParam.resetTiles()
@@ -393,7 +405,8 @@ def clickReset(root):
     widgets["verilogText"].delete(0, tkinter.END)
     widgets["resMIIEntry"].delete(0, tkinter.END)
     if len(selectedCgraParam.getValidTiles()) > 0 and selectedCgraParam.DFGNodeCount > 0:
-        selectedCgraParam.resMII = math.ceil((selectedCgraParam.DFGNodeCount + 0.0) / len(selectedCgraParam.getValidTiles())) // 1
+        selectedCgraParam.resMII = math.ceil(
+            (selectedCgraParam.DFGNodeCount + 0.0) / len(selectedCgraParam.getValidTiles())) // 1
         widgets["resMIIEntry"].insert(0, selectedCgraParam.resMII)
     else:
         widgets["resMIIEntry"].insert(0, 0)
@@ -415,11 +428,11 @@ def clickTest():
     with testProc.stdout:
         for line in iter(testProc.stdout.readline, b''):
             outputLine = line.decode("ISO-8859-1")
-            print(outputLine)
+            logging.info(outputLine)
             if "%]" in outputLine:
                 value = int(outputLine.split("[")[1].split("%]")[0])
-                # print(f'testProgress value: {value}')
-                widgets["testProgress"].set(value/100)
+                # logging.info(f'testProgress value: {value}')
+                widgets["testProgress"].set(value / 100)
                 widgets["testShow"].configure(text=str(value) + "%")
                 master.update_idletasks()
                 total += 1
@@ -428,7 +441,7 @@ def clickTest():
 
     widgets["testShow"].configure(text=" PASSED " if failed == 0 else str(total - failed) + "/" + str(total))
     # (out, err) = testProc.communicate()
-    # print("check test output:", out)
+    # logging.info("check test output:", out)
 
     os.chdir("..")
 
@@ -446,15 +459,15 @@ def clickGenerateVerilog():
     cmdline_opts = {'test_verilog': 'zeros', 'test_yosys_verilog': '', 'dump_textwave': False, 'dump_vcd': False,
                     'dump_vtb': False, 'max_cycles': None}
     # test_cgra_universal(cgraParam = selectedCgraParam)
-    print("-------------  multiCgraParam  --------------")
-    test_multi_CGRA_universal(cmdline_opts, multiCgraParam=multiCgraParam)
+    logging.info("-------------  multiCgraParam  --------------")
+    # test_multi_CGRA_universal(cmdline_opts, multiCgraParam=multiCgraParam)
 
     widgets["verilogText"].delete("1.0", tkinter.END)
     found = False
-    print(os.listdir("./"))
+    logging.info(os.listdir("./"))
     for fileName in os.listdir("./"):
         if "__" in fileName and ".v" in fileName:
-            print("Found the file: ", fileName)
+            logging.info("Found the file: ", fileName)
             f = open(fileName, "r")
             widgets["verilogText"].insert("1.0", f.read())
             found = True
@@ -473,7 +486,7 @@ def clickGenerateVerilog():
 
 def setReportProgress(value):
     # widgets["reportProgress"].configure(value=value)
-    widgets["reportProgress"].set(value/100)
+    widgets["reportProgress"].set(value / 100)
 
 
 def countSynthesisTime():
@@ -613,7 +626,7 @@ def clickSelectApp(event):
     global selectedCgraParam
     selectedCgraParam.compilationDone = False
     appName = fd.askopenfilename(title="choose an application", initialdir="../", filetypes=(
-    ("C/C++ file", "*.cpp"), ("C/C++ file", "*.c"), ("C/C++ file", "*.C"), ("C/C++ file", "*.CPP")))
+        ("C/C++ file", "*.cpp"), ("C/C++ file", "*.c"), ("C/C++ file", "*.C"), ("C/C++ file", "*.CPP")))
     selectedCgraParam.targetAppName = appName
 
     # widgets["appPathEntry"].configure(state="normal")
@@ -645,12 +658,12 @@ def clickCompileApp():
     if compileErr:
         widgets["compileAppShow"].configure(text=u'\u2717\u2717\u2717')
         os.chdir("..")
-        print("Compile error message: ", compileErr)
+        logging.info("Compile error message: ", compileErr)
         return
     if disassembleErr:
         widgets["compileAppShow"].configure(text=u'\u2717\u2717\u2717')
         os.chdir("..")
-        print("Disassemble error message: ", disassembleErr)
+        logging.info("Disassemble error message: ", disassembleErr)
         return
 
     widgets["compileAppShow"].configure(text=u'\u2713\u2713\u2713')
@@ -680,7 +693,7 @@ def clickCompileApp():
     widgets["kernelNameMenu"] = kernelNameMenu
     # for kernelName in cgraParam.targetKernels:
     #     # kernelNameMenu["menu"].add_command(label=kernelName, command=tkinter._setit(kernelOptions, kernelName))
-    #     print(f'kernelName: {kernelName}')
+    #     logging.info(f'kernelName: {kernelName}')
     # options.set(my_list[0])
 
     widgets["generateDFGShow"].configure(text="IDLE")
@@ -755,26 +768,26 @@ def clickShowDFG():
 
     genDFGJson = {
         "kernel": selectedCgraParam.targetKernelName,
-        "targetFunction"        : False,
-        "targetNested"          : True,
-        "targetLoopsID"         : [0],
-        "doCGRAMapping"         : False,
-        "row"                   : selectedCgraParam.rows,
-        "column"                : selectedCgraParam.columns,
-        "diagonalVectorization" : False,
-        "fusionStrategy"        : [],
-        "isTrimmedDemo"         : True,
-        "heuristicMapping"      : True,
-        "parameterizableCGRA"   : True,
-        "bypassConstraint"      : 8,
-        "isStaticElasticCGRA"   : False,
-        "precisionAware"        : False,
-        "ctrlMemConstraint"     : 200,
-        "regConstraint"         : 12,
-        "supportDVFS"           : False,
-        "DVFSIslandDim"         : 2,
-        "DVFSAwareMapping"      : False,
-        "enablePowerGating"     : False,
+        "targetFunction": False,
+        "targetNested": True,
+        "targetLoopsID": [0],
+        "doCGRAMapping": False,
+        "row": selectedCgraParam.rows,
+        "column": selectedCgraParam.columns,
+        "diagonalVectorization": False,
+        "fusionStrategy": [],
+        "isTrimmedDemo": True,
+        "heuristicMapping": True,
+        "parameterizableCGRA": True,
+        "bypassConstraint": 8,
+        "isStaticElasticCGRA": False,
+        "precisionAware": False,
+        "ctrlMemConstraint": 200,
+        "regConstraint": 12,
+        "supportDVFS": False,
+        "DVFSIslandDim": 2,
+        "DVFSAwareMapping": False,
+        "enablePowerGating": False,
     }
 
     json_object = json.dumps(genDFGJson, indent=4)
@@ -787,23 +800,24 @@ def clickShowDFG():
     dumpcgraParam2JSON("param.json")
 
     genDFGCommand = "opt-12 -load ../../CGRA-Mapper/build/src/libmapperPass.so -mapperPass ./kernel.bc"
-    print("trying to run opt-12")
+    logging.info("trying to run opt-12")
     genDFGProc = subprocess.Popen([genDFGCommand, "-u"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 
     with genDFGProc.stdout:
         for line in iter(genDFGProc.stdout.readline, b''):
             outputLine = line.decode("ISO-8859-1")
-            print(outputLine)
+            logging.info(outputLine)
             if "DFG node count: " in outputLine:
                 selectedCgraParam.DFGNodeCount = int(outputLine.split("DFG node count: ")[1].split(";")[0])
             if "[RecMII: " in outputLine:
                 selectedCgraParam.recMII = int(outputLine.split("[RecMII: ")[1].split("]")[0])
 
     (out, err) = genDFGProc.communicate()
-    print("opt-12 out: ", out)
-    print("opt-12 err: ", err)
+    logging.info("opt-12 out: ", out)
+    logging.info("opt-12 err: ", err)
 
-    selectedCgraParam.resMII = math.ceil((selectedCgraParam.DFGNodeCount + 0.0) / len(selectedCgraParam.getValidTiles())) // 1
+    selectedCgraParam.resMII = math.ceil(
+        (selectedCgraParam.DFGNodeCount + 0.0) / len(selectedCgraParam.getValidTiles())) // 1
     widgets["resMIIEntry"].delete(0, tkinter.END)
     widgets["resMIIEntry"].insert(0, selectedCgraParam.resMII)
 
@@ -836,7 +850,8 @@ def clickShowDFG():
 
     # dfgImage = ImageTk.PhotoImage(PIL_image_stretched)
     dfgImage = customtkinter.CTkImage(PIL_image_stretched, size=(260, 380))
-    images["dfgImage"] = dfgImage  # This is important due to the garbage collection would remove local variable of image
+    images[
+        "dfgImage"] = dfgImage  # This is important due to the garbage collection would remove local variable of image
     widgets["dfgLabel"].configure(image=dfgImage)
 
     widgets["generateDFGShow"].configure(text=u'\u2713\u2713\u2713')
@@ -915,8 +930,8 @@ def drawSchedule():
 
     canvas = widgets["mappingCanvas"]
     canvas.delete("all")
-    #ROWS = widgets["ROWS"]
-    #COLS = widgets["COLS"]
+    # ROWS = widgets["ROWS"]
+    # COLS = widgets["COLS"]
     GRID_WIDTH = (TILE_WIDTH + LINK_LENGTH) * selectedCgraParam.columns - LINK_LENGTH
     GRID_HEIGHT = (TILE_HEIGHT + LINK_LENGTH) * selectedCgraParam.rows - LINK_LENGTH
     cgraWidth = GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + 20
@@ -949,7 +964,8 @@ def drawSchedule():
                     # button = tkinter.Label(canvas, text="Tile " + str(tile.ID), fg="black", bg="grey", relief="raised",
                     #                        bd=BORDER, highlightbackground="black",
                     #                        highlightthickness=HIGHLIGHT_THICKNESS)
-                    button = customtkinter.CTkButton(canvas, text="Tile " + str(tile.ID), state='disabled', text_color_disabled='white')
+                    button = customtkinter.CTkButton(canvas, text="Tile " + str(tile.ID), state='disabled',
+                                                     text_color_disabled='white')
                 posX, posY = tile.getPosXY(baseX + BORDER, BORDER)
                 canvas.create_window(posX, posY, window=button, height=tileHeight, width=tileWidth, anchor="nw")
 
@@ -966,7 +982,7 @@ def drawSchedule():
         # cycleLabel = tkinter.Label(canvas, text="Cycle " + str(ii))
         cycleLabel = customtkinter.CTkLabel(canvas, text="Cycle " + str(ii) + " ",
                                             font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
-        canvas.create_window(baseX + (cgraWidth)/2, GRID_HEIGHT + 30 + BORDER, window=cycleLabel, height=20, width=80)
+        canvas.create_window(baseX + (cgraWidth) / 2, GRID_HEIGHT + 30 + BORDER, window=cycleLabel, height=20, width=80)
 
         baseX += GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + 20
         canvas.create_line(baseX - 5, INTERVAL, baseX - 5, GRID_HEIGHT, width=2, dash=(10, 2), fill="grey")
@@ -1008,26 +1024,26 @@ def clickMapDFG():
 
     mappingJson = {
         "kernel": selectedCgraParam.targetKernelName,
-        "targetFunction"        : False,
-        "targetNested"          : True,
-        "targetLoopsID"         : [0],
-        "doCGRAMapping"         : True,
-        "row"                   : selectedCgraParam.rows,
-        "column"                : selectedCgraParam.columns,
-        "diagonalVectorization" : False,
-        "fusionStrategy"        : [],
-        "isTrimmedDemo"         : True,
-        "heuristicMapping"      : heuristic,
-        "parameterizableCGRA"   : True,
-        "bypassConstraint"      : 8,
-        "isStaticElasticCGRA"   : False,
-        "precisionAware"        : False,
-        "ctrlMemConstraint"     : selectedCgraParam.configMemSize,
-        "regConstraint"         : 12,
-        "supportDVFS"           : False,
-        "DVFSIslandDim"         : 2,
-        "DVFSAwareMapping"      : False,
-        "enablePowerGating"     : False,
+        "targetFunction": False,
+        "targetNested": True,
+        "targetLoopsID": [0],
+        "doCGRAMapping": True,
+        "row": selectedCgraParam.rows,
+        "column": selectedCgraParam.columns,
+        "diagonalVectorization": False,
+        "fusionStrategy": [],
+        "isTrimmedDemo": True,
+        "heuristicMapping": heuristic,
+        "parameterizableCGRA": True,
+        "bypassConstraint": 8,
+        "isStaticElasticCGRA": False,
+        "precisionAware": False,
+        "ctrlMemConstraint": selectedCgraParam.configMemSize,
+        "regConstraint": 12,
+        "supportDVFS": False,
+        "DVFSIslandDim": 2,
+        "DVFSAwareMapping": False,
+        "enablePowerGating": False,
     }
 
     mappingJsonObject = json.dumps(mappingJson, indent=4)
@@ -1054,14 +1070,16 @@ def _on_mousewheel(canvas, event):
     platformSystem = platform.system()
     logging.info("Current platform.system: %s", platformSystem)
     if platformSystem == "Windows":
-        canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
     elif platformSystem == "Linux":
-        canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
     else:
-        canvas.yview_scroll(int(-1*event.delta), "units")
+        canvas.yview_scroll(int(-1 * event.delta), "units")
+
 
 # Defines selected cgra frame in multi-cgra panel.
 selected_cgra_frame = None
+
 
 def cgra_frame_clicked(event, cgraId, frame):
     global selected_cgra_frame, selectedCgraParam
@@ -1070,11 +1088,11 @@ def cgra_frame_clicked(event, cgraId, frame):
         selected_cgra_frame.is_selected = False
 
     if getattr(frame, 'is_selected', False) == False:
-        print(f"cgraId: {cgraId} selected!")
+        logging.info(f"cgraId: {cgraId} selected!")
         frame.is_selected = True
-        frame.config(bg=MULTI_CGRA_SELECTED_COLOR)  
+        frame.config(bg=MULTI_CGRA_SELECTED_COLOR)
         selected_cgra_frame = frame
-        multiCgraParam.setSelectedCgra(cgraId//multiCgraParam.rows,cgraId%multiCgraParam.cols)
+        multiCgraParam.setSelectedCgra(cgraId // multiCgraParam.rows, cgraId % multiCgraParam.cols)
         selectedCgraParam = multiCgraParam.getSelectedCgra()
         selectedCgraParam.set_cgra_param_callbacks(switchDataSPMOutLinks=switchDataSPMOutLinks,
                                                    updateFunCheckoutButtons=updateFunCheckoutButtons,
@@ -1082,20 +1100,20 @@ def cgra_frame_clicked(event, cgraId, frame):
                                                    updateXbarCheckbuttons=updateXbarCheckbuttons,
                                                    updateXbarCheckVars=updateXbarCheckVars,
                                                    getFunCheckVars=getFunCheckVars,
-                                                   getXbarCheckVars= getXbarCheckVars)
+                                                   getXbarCheckVars=getXbarCheckVars)
         # Only re-draw if this re-draw is triggered from user click
         if (event != None):
             create_cgra_pannel(master, selectedCgraParam.rows, selectedCgraParam.columns)
             create_param_pannel(master)
     else:
-        print(f"cgraId: {cgraId} unselected!, do nothing")
-    
+        logging.info(f"cgraId: {cgraId} unselected!, do nothing")
+
 
 def create_multi_cgra_panel(master, cgraRows=2, cgraCols=2):
     multiCgraPanel = customtkinter.CTkFrame(master)
     # multiCgraPanel.grid(row=0, column=0, padx=(0, 5), sticky="nsew")
     multiCgraLabel = customtkinter.CTkLabel(multiCgraPanel, text='Multi-CGRA',
-                                       font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
+                                            font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
     multiCgraLabel.pack(anchor="w", ipadx=5)
     multiCgraCanvas = customtkinter.CTkCanvas(multiCgraPanel, bg=CANVAS_BG_COLOR, bd=0, highlightthickness=0)
 
@@ -1103,24 +1121,25 @@ def create_multi_cgra_panel(master, cgraRows=2, cgraCols=2):
     # suppose default rowsxcols 2x2, may extra operation to connect cgra frames when one row only
     xStartPos, yStartPos = 0, 0
     distanceOfCgraAndRouter = 20
-    cgraSquareLength = 80 # 100
+    cgraSquareLength = 80  # 100
     routerDiameter = cgraSquareLength / 4
-    distanceOfCgras = 140 # 200
+    distanceOfCgras = 140  # 200
 
     x, y = xStartPos, yStartPos
     cgraId = 0
     for row in range(cgraRows):
         for col in range(cgraCols):
             # draw
-            print(f"cgraFrame: {x} x {y}, cgraSquareLength: {cgraSquareLength}")
+            logging.info(f"cgraFrame: {x} x {y}, cgraSquareLength: {cgraSquareLength}")
             cgraFrame = tkinter.Frame(multiCgraCanvas, bg=MULTI_CGRA_FRAME_COLOR, border=4)
             cgraFrame.is_selected = False
             # add command for frame
             cgraFrame.bind('<Button-1>', partial(cgra_frame_clicked, cgraId=cgraId, frame=cgraFrame))
             multiCgraCanvas.create_window(x, y, window=cgraFrame, height=cgraSquareLength, width=cgraSquareLength,
                                           anchor="nw")
-            multiCgraCanvas.create_text(x + cgraSquareLength/2 + 5, y + cgraSquareLength + 10, font=customtkinter.CTkFont(weight="bold"),
-                         text=f"CGRA {cgraId}", fill=MULTI_CGRA_TXT_COLOR)
+            multiCgraCanvas.create_text(x + cgraSquareLength / 2 + 5, y + cgraSquareLength + 10,
+                                        font=customtkinter.CTkFont(weight="bold"),
+                                        text=f"CGRA {cgraId}", fill=MULTI_CGRA_TXT_COLOR)
             if (multiCgraParam.getCgraParam(row, col) == selectedCgraParam):
                 cgra_frame_clicked(None, cgraId=cgraId, frame=cgraFrame)
                 # current cgra param model is the selected one, hightlight it.
@@ -1136,7 +1155,8 @@ def create_multi_cgra_panel(master, cgraRows=2, cgraCols=2):
             multiCgraCanvas.create_oval(x + cgraSquareLength + distanceOfCgraAndRouter,
                                         y + cgraSquareLength + distanceOfCgraAndRouter,
                                         x + cgraSquareLength + distanceOfCgraAndRouter + routerDiameter,
-                                        y + cgraSquareLength + distanceOfCgraAndRouter + routerDiameter, fill=MULTI_CGRA_FRAME_COLOR)
+                                        y + cgraSquareLength + distanceOfCgraAndRouter + routerDiameter,
+                                        fill=MULTI_CGRA_FRAME_COLOR)
             # line between cgra and router
             multiCgraCanvas.create_line(x + cgraSquareLength, y + cgraSquareLength,
                                         x + cgraSquareLength + distanceOfCgraAndRouter + 5,
@@ -1147,20 +1167,21 @@ def create_multi_cgra_panel(master, cgraRows=2, cgraCols=2):
             if col != cgraCols - 1:
                 rightRouterLeftEdgeX = routerCenterX + distanceOfCgras - routerDiameter / 2
                 rightRouterCenterY = routerCenterY
-                multiCgraCanvas.create_line(routerCenterX + routerDiameter / 2, routerCenterY, rightRouterLeftEdgeX, rightRouterCenterY, fill=CANVAS_LINE_COLOR, arrow=tkinter.BOTH, width=2)
+                multiCgraCanvas.create_line(routerCenterX + routerDiameter / 2, routerCenterY, rightRouterLeftEdgeX,
+                                            rightRouterCenterY, fill=CANVAS_LINE_COLOR, arrow=tkinter.BOTH, width=2)
                 # multiCgraCanvas.create_line(rightRouterLeftEdgeX, rightRouterCenterY, routerCenterX + routerDiameter / 2, routerCenterY, fill=CANVAS_LINE_COLOR, arrow=tkinter.LAST, width=2)
             # if not last row: draws a vertical line, connects to down route
             if row != cgraRows - 1:
                 downRouterCenterX = routerCenterX
                 downRouterUpEdgeY = routerCenterY + distanceOfCgras - routerDiameter / 2
-                multiCgraCanvas.create_line(routerCenterX, routerCenterY + routerDiameter / 2, downRouterCenterX, downRouterUpEdgeY, fill=CANVAS_LINE_COLOR, arrow=tkinter.BOTH, width=2)
+                multiCgraCanvas.create_line(routerCenterX, routerCenterY + routerDiameter / 2, downRouterCenterX,
+                                            downRouterUpEdgeY, fill=CANVAS_LINE_COLOR, arrow=tkinter.BOTH, width=2)
                 # multiCgraCanvas.create_line(downRouterCenterX, downRouterUpEdgeY, routerCenterX, routerCenterY + routerDiameter / 2, fill=CANVAS_LINE_COLOR, arrow=tkinter.LAST, width=2)
 
             x = x + distanceOfCgras
         # new row
         x = xStartPos
         y = y + distanceOfCgras
-
 
     vbar = customtkinter.CTkScrollbar(multiCgraPanel, orientation="vertical", command=multiCgraCanvas.yview)
     vbar.pack(side=tkinter.RIGHT, fill="y")
@@ -1189,26 +1210,26 @@ def create_cgra_tiles_on_multi_cgra_panel(parentCanvas, rootX, rootY, rows, cols
 
     # n*tileLen + (n-1)*tileMargin = (cgraSquareLength - intraCgraTileMargin*2)
     tileXLength = ((cgraSquareLength - intraCgraTileMargin * 2) - (
-                intraCgraTileCols - 1) * tileXMargin) / intraCgraTileCols
+            intraCgraTileCols - 1) * tileXMargin) / intraCgraTileCols
     tileYLength = ((cgraSquareLength - intraCgraTileMargin * 2) - (
-                intraCgraTileRows - 1) * tileYMargin) / intraCgraTileRows
+            intraCgraTileRows - 1) * tileYMargin) / intraCgraTileRows
 
     tileSquareLength = min(tileXLength, tileYLength)
     # need adjust tileXMargin
     if tileXLength > tileYLength:
         tileXMargin = ((cgraSquareLength - intraCgraTileMargin * 2) - (tileSquareLength * intraCgraTileCols)) / (
-                    intraCgraTileCols - 1)
+                intraCgraTileCols - 1)
     else:
         tileYMargin = ((cgraSquareLength - intraCgraTileMargin * 2) - (tileSquareLength * intraCgraTileRows)) / (
-                    intraCgraTileRows - 1)
+                intraCgraTileRows - 1)
 
     tileX, tileY = rootX + intraCgraTileMargin, rootY + intraCgraTileMargin
     for cgraRow in range(intraCgraTileRows):
         for cgraCol in range(intraCgraTileCols):
             cgraTileFrame = tkinter.Frame(parentCanvas, bg=MULTI_CGRA_TILE_COLOR, border=4)
             parentCanvas.create_window(tileX, tileY, window=cgraTileFrame, height=tileSquareLength,
-                                          width=tileSquareLength,
-                                          anchor="nw")
+                                       width=tileSquareLength,
+                                       anchor="nw")
             tileX = tileX + tileSquareLength + tileXMargin
         tileX = rootX + intraCgraTileMargin
         tileY = tileY + tileSquareLength + tileYMargin
@@ -1225,7 +1246,7 @@ def create_multi_cgra_config_panel(master):
         multiCgraConfigPanel.columnconfigure(i, weight=1)
 
     multiCgraConfigLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Multi-CGRA Modeling',
-                                                font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
+                                                  font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
     multiCgraConfigLabel.grid(row=0, column=0, columnspan=2, ipadx=5, pady=(5, 0), sticky="nw")
 
     totalSRAMSizeLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Per-CGRA\nSRAM (KBs):')
@@ -1242,7 +1263,8 @@ def create_multi_cgra_config_panel(master):
     ]
     topologyVariable = tkinter.StringVar(multiCgraConfigPanel)
     topologyVariable.set(interCgraTopologyOptions[0])
-    topologyOptionMenu = customtkinter.CTkOptionMenu(multiCgraConfigPanel, variable=topologyVariable, values=interCgraTopologyOptions)
+    topologyOptionMenu = customtkinter.CTkOptionMenu(multiCgraConfigPanel, variable=topologyVariable,
+                                                     values=interCgraTopologyOptions)
     topologyOptionMenu.grid(row=2, column=1, padx=5)
 
     multiCgraRowsLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Multi-CGRA\nRows:')
@@ -1271,7 +1293,8 @@ def create_multi_cgra_config_panel(master):
     dataBitwidthEntry.grid(row=6, column=1, padx=5)
     dataBitwidthEntry.insert(0, str(32))
 
-    multiCgraConfigUpdateButton = customtkinter.CTkButton(multiCgraConfigPanel, text="Update", command=partial(clickMultiCgraUpdate, master))
+    multiCgraConfigUpdateButton = customtkinter.CTkButton(multiCgraConfigPanel, text="Update",
+                                                          command=partial(clickMultiCgraUpdate, master))
     multiCgraConfigUpdateButton.grid(row=7, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
 
     return multiCgraConfigPanel
@@ -1294,21 +1317,21 @@ def clickMultiCgraUpdate(root):
                                                updateXbarCheckbuttons=updateXbarCheckbuttons,
                                                updateXbarCheckVars=updateXbarCheckVars,
                                                getFunCheckVars=getFunCheckVars,
-                                               getXbarCheckVars= getXbarCheckVars)
+                                               getXbarCheckVars=getXbarCheckVars)
 
     multiCgraPanel = create_multi_cgra_panel(root, cgraRows, cgraCols)
-    multiCgraPanel.grid(row=0, column=0, padx=(0, 5), sticky="nsew")  
+    multiCgraPanel.grid(row=0, column=0, padx=(0, 5), sticky="nsew")
     create_cgra_pannel(root, selectedCgraParam.rows, selectedCgraParam.columns)
     create_param_pannel(root)
 
 
 def create_cgra_pannel(master, rows, columns):
-        # Clear previous CGRA panel if it exists
+    # Clear previous CGRA panel if it exists
     if 'cgraPannel' in widgets:
-        print("cgra_pannel exists, destroy the original view")
+        logging.info("cgra_pannel exists, destroy the original view")
         widgets["cgraPannel"].destroy()
 
-    print(f"create_cgra_pannel - ROWS: {rows}, COLS: {columns}")
+    logging.info(f"create_cgra_pannel - ROWS: {rows}, COLS: {columns}")
     # master.grid_propagate(0)
     # Use solid black board to let the pannel look better
     cgraPannel = customtkinter.CTkFrame(master)
@@ -1318,7 +1341,8 @@ def create_cgra_pannel(master, rows, columns):
     # cgraPannel.pack()
     # cgraPannel.grid_propagate(0)
     # create label for cgraPannel
-    cgraLabel = customtkinter.CTkLabel(cgraPannel, text='Per-CGRA (id: 0)', font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
+    cgraLabel = customtkinter.CTkLabel(cgraPannel, text='Per-CGRA (id: 0)',
+                                       font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
     widgets['cgraLabel'] = cgraLabel
 
     widgets["cgraLabel"].configure(text=f"Per-CGRA (id: {multiCgraParam.getSelectedCgraId()})")
@@ -1352,10 +1376,10 @@ def create_cgra_pannel(master, rows, columns):
     # spmLabel = tkinter.Button(canvas, text="Data\nSPM", fg='black', bg='gray', relief='raised', bd=BORDER,
     #                           command=clickSPM, highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS)
     spmLabel = customtkinter.CTkButton(canvas, text="Data\nSPM",
-                                       #fg='black', bg='gray', relief='raised', bd=BORDER,
-                                       command=clickSPM#,
-                                       #highlightbackground="black",
-                                       #highlightthickness=HIGHLIGHT_THICKNESS
+                                       # fg='black', bg='gray', relief='raised', bd=BORDER,
+                                       command=clickSPM  # ,
+                                       # highlightbackground="black",
+                                       # highlightthickness=HIGHLIGHT_THICKNESS
                                        )
     # Data memory will be placed in the upper left corner
     canvas.create_window(baseX + BORDER, BORDER, window=spmLabel, height=GRID_HEIGHT, width=MEM_WIDTH, anchor="nw")
@@ -1372,7 +1396,7 @@ def create_cgra_pannel(master, rows, columns):
                 selectedCgraParam.addTile(tile)
 
     # draw tiles
-    print(f"create_cgra_pannel - selectedCgraParam has : {selectedCgraParam.tiles} titles")
+    logging.info(f"create_cgra_pannel - selectedCgraParam has : {selectedCgraParam.tiles} titles")
 
     for tile in selectedCgraParam.tiles:
         if not tile.disabled:
@@ -1380,11 +1404,11 @@ def create_cgra_pannel(master, rows, columns):
             #                         bd=BORDER, command=partial(clickTile, tile.ID), highlightbackground="black",
             #                         highlightthickness=HIGHLIGHT_THICKNESS)
             button = customtkinter.CTkButton(canvas, text="Tile " + str(tile.ID),
-                                    # fg='black', bg='gray', relief='raised', bd=BORDER,
-                                    command=partial(clickTile, tile.ID)#,
-                                    # highlightbackground="black",
-                                    # highlightthickness=HIGHLIGHT_THICKNESS
-                                    )
+                                             # fg='black', bg='gray', relief='raised', bd=BORDER,
+                                             command=partial(clickTile, tile.ID)  # ,
+                                             # highlightbackground="black",
+                                             # highlightthickness=HIGHLIGHT_THICKNESS
+                                             )
             posX, posY = tile.getPosXY()
             # Tiles will be placed near the Data memory
             canvas.create_window(posX, posY, window=button, height=TILE_HEIGHT, width=TILE_WIDTH, anchor="nw")
@@ -1462,13 +1486,14 @@ def create_cgra_pannel(master, rows, columns):
 
     return cgraPannel
 
+
 def place_fu_options(master):
     fuCount = len(fuTypeList)
     for i in range(len(fuTypeList)):
         fuVar = tkinter.IntVar()
         fuCheckVars[fuTypeList[i]] = fuVar
         fuCheckbutton = customtkinter.CTkCheckBox(master, variable=fuVar, text=fuTypeList[i],
-                                            command=partial(clickFuCheckbutton, fuTypeList[i]))
+                                                  command=partial(clickFuCheckbutton, fuTypeList[i]))
         fuCheckbuttons[fuTypeList[i]] = fuCheckbutton
         fuCheckbutton.select()
         selectedCgraParam.updateFuCheckbutton(fuTypeList[i], fuVar.get())
@@ -1482,7 +1507,7 @@ def place_xbar_options(master):
         xbarVar = tkinter.IntVar()
         xbarCheckVars[xbarType] = xbarVar
         xbarCheckbutton = customtkinter.CTkCheckBox(master, variable=xbarVar, text=xbarType,
-                                              command=partial(clickXbarCheckbutton, xbarType))
+                                                    command=partial(clickXbarCheckbutton, xbarType))
         xbarCheckbuttons[xbarType] = xbarCheckbutton
 
         if selectedCgraParam.getTileOfID(0).xbarDict[xbarType] == 1:
@@ -1494,30 +1519,32 @@ def place_xbar_options(master):
             xbarCheckbutton.configure(state="disabled")
 
         # xbarCheckbutton.grid(row=(i // 3)+1, column=i % 3, padx=15, pady=15, sticky="nsew")
-        if i== PORT_NORTH:
+        if i == PORT_NORTH:
             xbarCheckbutton.grid(row=0, column=1, padx=5, pady=(6, 25))
-        elif i== PORT_SOUTH:
+        elif i == PORT_SOUTH:
             xbarCheckbutton.grid(row=2, column=1, padx=5, pady=25)
-        elif i== PORT_WEST:
+        elif i == PORT_WEST:
             xbarCheckbutton.grid(row=1, column=0, padx=5, pady=25)
-        elif i== PORT_EAST:
+        elif i == PORT_EAST:
             xbarCheckbutton.grid(row=1, column=2, padx=5, pady=25)
-        elif i== PORT_NORTHWEST:
+        elif i == PORT_NORTHWEST:
             xbarCheckbutton.grid(row=0, column=0, padx=5, pady=(6, 25))
-        elif i== PORT_NORTHEAST:
+        elif i == PORT_NORTHEAST:
             xbarCheckbutton.grid(row=0, column=2, padx=5, pady=(6, 25))
-        elif i== PORT_SOUTHEAST:
+        elif i == PORT_SOUTHEAST:
             xbarCheckbutton.grid(row=2, column=2, padx=5, pady=25)
-        elif i== PORT_SOUTHWEST:
+        elif i == PORT_SOUTHWEST:
             xbarCheckbutton.grid(row=2, column=0, padx=5, pady=25)
 
         # centralRadioButton = customtkinter.CTkRadioButton(master, text='Tile 0', variable=tkinter.IntVar(value=0))
         # centralRadioButton.configure(state="disabled")
         # centralRadioButton.grid(row=1, column=1, padx=5, pady=25)
         # widgets["centralRadioButton"] = centralRadioButton
-        xbarCentralTilelabel = customtkinter.CTkLabel(master, text='Tile 0', font=customtkinter.CTkFont(weight="bold", underline=True))
+        xbarCentralTilelabel = customtkinter.CTkLabel(master, text='Tile 0',
+                                                      font=customtkinter.CTkFont(weight="bold", underline=True))
         xbarCentralTilelabel.grid(row=1, column=1, padx=(0, 5), pady=25)
         widgets["xbarCentralTilelabel"] = xbarCentralTilelabel
+
 
 def create_param_pannel(master):
     # paramPannel = tkinter.LabelFrame(master, text='Configuration', bd=BORDER, relief='groove')
@@ -1531,21 +1558,22 @@ def create_param_pannel(master):
     for i in range(3):
         paramPannel.columnconfigure(i, weight=1)
     paramPannel.grid_propagate(0)
-    configurationLabel = customtkinter.CTkLabel(paramPannel, text='Per-CGRA Modeling', font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
-    configurationLabel.grid(row=0, column=0, columnspan=2, padx=(5,0), pady=(5,0), sticky="nw")
+    configurationLabel = customtkinter.CTkLabel(paramPannel, text='Per-CGRA Modeling',
+                                                font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
+    configurationLabel.grid(row=0, column=0, columnspan=2, padx=(5, 0), pady=(5, 0), sticky="nw")
 
     rowsLabel = customtkinter.CTkLabel(paramPannel, text='Rows  Columns:')
     rowsLabel.grid(row=1, column=0)
-    rowsEntry = customtkinter.CTkEntry(paramPannel, justify=tkinter.CENTER#,
-                                       #highlightbackground="black",
-                                       #highlightthickness=HIGHLIGHT_THICKNESS
+    rowsEntry = customtkinter.CTkEntry(paramPannel, justify=tkinter.CENTER  # ,
+                                       # highlightbackground="black",
+                                       # highlightthickness=HIGHLIGHT_THICKNESS
                                        )
     rowsEntry.grid(row=1, column=1, padx=5, pady=5)
     rowsEntry.insert(0, str(selectedCgraParam.rows))
     widgets["rowsEntry"] = rowsEntry
-    columnsEntry = customtkinter.CTkEntry(paramPannel, justify=tkinter.CENTER#,
-                                          #highlightbackground="black",
-                                          #highlightthickness=HIGHLIGHT_THICKNESS
+    columnsEntry = customtkinter.CTkEntry(paramPannel, justify=tkinter.CENTER  # ,
+                                          # highlightbackground="black",
+                                          # highlightthickness=HIGHLIGHT_THICKNESS
                                           )
     columnsEntry.grid(row=1, column=2, padx=2, pady=5)
     columnsEntry.insert(0, str(selectedCgraParam.columns))
@@ -1553,47 +1581,45 @@ def create_param_pannel(master):
 
     dataMemLabel = customtkinter.CTkLabel(paramPannel, text='Per-Bank SRAM (KBs):')
     dataMemLabel.grid(row=2, column=0)
-    dataMemEntry = customtkinter.CTkEntry(paramPannel, justify=tkinter.CENTER#,
-                                          #highlightbackground="black",
-                                          #highlightthickness=HIGHLIGHT_THICKNESS
+    dataMemEntry = customtkinter.CTkEntry(paramPannel, justify=tkinter.CENTER  # ,
+                                          # highlightbackground="black",
+                                          # highlightthickness=HIGHLIGHT_THICKNESS
                                           )
     dataMemEntry.grid(row=2, column=1, padx=5, pady=5)
     dataMemEntry.insert(0, str(selectedCgraParam.dataMemSize))
     widgets["dataMemEntry"] = dataMemEntry
     resetButton = customtkinter.CTkButton(paramPannel, text="Reset",
-                                          #relief='raised',
-                                          command=partial(clickReset, master)#,
-                                          #highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS
+                                          # relief='raised',
+                                          command=partial(clickReset, master)  # ,
+                                          # highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS
                                           )
     resetButton.grid(row=2, column=2, columnspan=2)
 
-
     configMemLabel = customtkinter.CTkLabel(paramPannel, text='Config Memory \n (entries/tile):')
     configMemLabel.grid(row=3, column=0)
-    configMemEntry = customtkinter.CTkEntry(paramPannel, justify=tkinter.CENTER#,
-                                            #highlightbackground="black",
-                                            #highlightthickness=HIGHLIGHT_THICKNESS
+    configMemEntry = customtkinter.CTkEntry(paramPannel, justify=tkinter.CENTER  # ,
+                                            # highlightbackground="black",
+                                            # highlightthickness=HIGHLIGHT_THICKNESS
                                             )
     configMemEntry.grid(row=3, column=1, pady=5)
     configMemEntry.insert(0, selectedCgraParam.configMemSize)
     widgets["configMemEntry"] = configMemEntry
     updateButton = customtkinter.CTkButton(paramPannel, text="Update",
-                                           #relief='raised',
-                                           command=partial(clickUpdate, master)#,
-                                           #highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS
+                                           # relief='raised',
+                                           command=partial(clickUpdate, master)  # ,
+                                           # highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS
                                            )
     updateButton.grid(row=3, column=2, columnspan=2)
 
-
     entireTileCheckVar.set(0)
-    entireTileCheckbutton = customtkinter.CTkCheckBox(paramPannel, variable=entireTileCheckVar, text="Disable entire Tile 0", command=clickEntireTileCheckbutton)
-    entireTileCheckbutton.grid(row=4, column=0, columnspan=2, padx=(5,0), sticky="w")
+    entireTileCheckbutton = customtkinter.CTkCheckBox(paramPannel, variable=entireTileCheckVar,
+                                                      text="Disable entire Tile 0", command=clickEntireTileCheckbutton)
+    entireTileCheckbutton.grid(row=4, column=0, columnspan=2, padx=(5, 0), sticky="w")
     widgets["entireTileCheckbutton"] = entireTileCheckbutton
-
 
     # Data SPM outgoing links
     spmConfigPannel = customtkinter.CTkScrollableFrame(paramPannel, label_text="Data SPM\noutgoing links", width=80)
-    spmConfigPannel.grid(row=5, column=0, rowspan=3, pady=(5,0), sticky="nsew")
+    spmConfigPannel.grid(row=5, column=0, rowspan=3, pady=(5, 0), sticky="nsew")
     widgets["spmConfigPannel"] = spmConfigPannel
     # spmConfigPannel.rowconfigure(0, weight=1)
     # spmConfigPannel.rowconfigure(1, weight=3)
@@ -1625,11 +1651,9 @@ def create_param_pannel(master):
         spmOutlinksSwitches.insert(0, switch)
     widgets['spmOutlinksSwitches'] = spmOutlinksSwitches
 
-
-
     # Tile x functional units
     fuConfigPannel = customtkinter.CTkScrollableFrame(paramPannel, label_text="Tile 0\nfunctional units")
-    fuConfigPannel.grid(row=5, column=1, rowspan=3, padx=(5,5), pady=(5,0), sticky="nsew")
+    fuConfigPannel.grid(row=5, column=1, rowspan=3, padx=(5, 5), pady=(5, 0), sticky="nsew")
     widgets["fuConfigPannel"] = fuConfigPannel
 
     # Use columnconfigure to partition the columns, so that each column fills the corresponding space
@@ -1647,7 +1671,6 @@ def create_param_pannel(master):
         fuConfigPannel.columnconfigure(i, weight=1)
     place_fu_options(fuConfigPannel)
     # fuConfigSubPannel.pack()
-
 
     # Tile x crossbar outgoing links
     xbarConfigPannel = customtkinter.CTkScrollableFrame(paramPannel, label_text="Tile 0\ncrossbar outgoing links")
@@ -1698,7 +1721,7 @@ def create_test_pannel(master):
                                              # width=100,
                                              font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
     testPannelLabel.grid(row=0, column=0, columnspan=3, ipadx=5, sticky="w")
-    testButton = customtkinter.CTkButton(testPannel, text="Run tests", # relief='raised',
+    testButton = customtkinter.CTkButton(testPannel, text="Run tests",  # relief='raised',
                                          command=clickTest,
                                          width=50
                                          # highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS
@@ -1715,16 +1738,16 @@ def create_test_pannel(master):
 
     # verilogPannel = tkinter.LabelFrame(dataPannel, text="SVerilog", bd=BORDER, relief="groove")
     verilogPannel = customtkinter.CTkFrame(dataPannel)
-    verilogPannel.grid(row=1, column=0, rowspan=1, columnspan=3, pady=(5,5), sticky="nsew")
+    verilogPannel.grid(row=1, column=0, rowspan=1, columnspan=3, pady=(5, 5), sticky="nsew")
     verilogPannelLabel = customtkinter.CTkLabel(verilogPannel, text='SVerilog ',
-                                             # width=100,
-                                             font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE,
-                                                                        weight="bold"))
-    verilogPannelLabel.pack(anchor="w", padx=(5,0))
+                                                # width=100,
+                                                font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE,
+                                                                           weight="bold"))
+    verilogPannelLabel.pack(anchor="w", padx=(5, 0))
     CreateToolTip(verilogPannel,
                   text="The code might be too big to be copied,\nthe generated verilog can be found in\nthe 'verilog' folder.")
     generateVerilogButton = customtkinter.CTkButton(verilogPannel, text="Generate", width=50,
-                                           command=clickGenerateVerilog)
+                                                    command=clickGenerateVerilog)
     generateVerilogButton.pack(side=tkinter.BOTTOM, anchor="sw", padx=BORDER, pady=BORDER)
     # verilogScroll = tkinter.Scrollbar(verilogPannel, orient="vertical")
     # verilogScroll.pack(side=tkinter.RIGHT, fill="y")
@@ -1741,9 +1764,9 @@ def create_test_pannel(master):
     reportPannel.columnconfigure(0, weight=1)
     reportPannel.columnconfigure(1, weight=1)
     reportPannelLabel = customtkinter.CTkLabel(reportPannel, text='Report Area/Power ',
-                                             # width=100,
-                                             font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE,
-                                                                        weight="bold"))
+                                               # width=100,
+                                               font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE,
+                                                                          weight="bold"))
 
     reportButton = customtkinter.CTkButton(reportPannel, text="Synthesize", command=clickSynthesize, width=60)
 
@@ -1781,7 +1804,7 @@ def create_test_pannel(master):
     reportSPMPowerData = customtkinter.CTkEntry(reportPannel, justify=tkinter.CENTER)
     widgets["reportSPMPowerData"] = reportSPMPowerData
 
-    reportPannelLabel.grid(row=0, column=0, columnspan=2, padx=(5,0), sticky="w")
+    reportPannelLabel.grid(row=0, column=0, columnspan=2, padx=(5, 0), sticky="w")
     reportButton.grid(row=1, column=0)
     reportProgress.grid(row=1, column=1)
 
@@ -1800,6 +1823,7 @@ def create_test_pannel(master):
 
     return dataPannel
 
+
 def create_layout_pannel(master):
     layoutPannel = customtkinter.CTkFrame(master, width=80)
     # layoutPannel.grid(row=1, column=5, padx=(5,0), pady=(5,0), sticky="nsew")
@@ -1812,7 +1836,7 @@ def create_layout_pannel(master):
     layoutPannelLabel = customtkinter.CTkLabel(layoutPannel, text='Layout ',
                                                # width=100,
                                                font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold"))
-    layoutPannelLabel.grid(row=0, column=0, padx=(5,0), sticky="nw")
+    layoutPannelLabel.grid(row=0, column=0, padx=(5, 0), sticky="nw")
 
     # Adds the entry for user to select constraint.sdc
     constraintLabel = customtkinter.CTkLabel(layoutPannel, text="Constraint.sdc")
@@ -1847,6 +1871,8 @@ def create_layout_pannel(master):
     layoutLabel.grid(row=5, column=0, padx=(0, 5), pady=(5, 5), columnspan=2)
 
     return layoutPannel
+
+
 """
     canvas = customtkinter.CTkCanvas(layoutPannel, bg=CANVAS_BG_COLOR, bd=0, highlightthickness=0)
     scrollbar = customtkinter.CTkScrollbar(layoutPannel, orientation="horizontal", command=canvas.xview)
@@ -1860,7 +1886,9 @@ def create_layout_pannel(master):
     showButton.place(relx=0.5, rely=0.1, anchor="center")
 """
 
-def constructDependencyFiles(cgraflow_basepath, standard_module_name, test_platform_name, verilog_srcfile_path, mk_sdc_file_path, orfs_basePath):
+
+def constructDependencyFiles(cgraflow_basepath, standard_module_name, test_platform_name, verilog_srcfile_path,
+                             mk_sdc_file_path, orfs_basePath):
     # Finds the target RTL design and transforms the format.
     files = os.listdir(cgraflow_basepath + "/build/verilog")
     for f in files:
@@ -1868,13 +1896,13 @@ def constructDependencyFiles(cgraflow_basepath, standard_module_name, test_platf
         if f == "design.v":
             os.chdir(cgraflow_basepath + "/build/verilog")
             # Manually copies design.v to design.sv to make sv2v work normally.
-            print("Renaming the system verilog file generated by PyMTL3.")
+            logging.info("Renaming the system verilog file generated by PyMTL3.")
             subprocess.run(["cp design.v design.sv"], shell=True, encoding="utf-8")
             # Uses sv2v to convert system verilog to verilg.
-            print("Converting the system verilog file to verilog file.")
+            logging.info("Converting the system verilog file to verilog file.")
             subprocess.run(["../../tools/sv2v/bin/sv2v --write=adjacent " + "design.sv"], shell=True, encoding="utf-8")
             # Changes the top module name in design.v to standard_module_name.
-            print("Standardizing the top module name in verilog file.")
+            logging.info("Standardizing the top module name in verilog file.")
             contents = ""
             with open("design.v", "r", encoding="utf-8") as lines:
                 for line in lines:
@@ -1889,7 +1917,9 @@ def constructDependencyFiles(cgraflow_basepath, standard_module_name, test_platf
     global constraintFilePath, configFilePath
     os.chdir(orfs_basePath)
     subprocess.run(["mkdir -p " + verilog_srcfile_path], shell=True, encoding="utf-8")
-    subprocess.run(["cp " + cgraflow_basepath + "/build/verilog/" + standard_module_name + ".v " + verilog_srcfile_path], shell=True, encoding="utf-8")
+    subprocess.run(
+        ["cp " + cgraflow_basepath + "/build/verilog/" + standard_module_name + ".v " + verilog_srcfile_path],
+        shell=True, encoding="utf-8")
     subprocess.run(["mkdir -p " + mk_sdc_file_path], shell=True, encoding="utf-8")
     subprocess.run(["cp " + constraintFilePath + " " + mk_sdc_file_path], shell=True, encoding="utf-8")
     subprocess.run(["cp " + configFilePath + " " + mk_sdc_file_path], shell=True, encoding="utf-8")
@@ -1903,6 +1933,7 @@ def constructDependencyFiles(cgraflow_basepath, standard_module_name, test_platf
     with open(mk_sdc_file_path + "config.mk", 'w') as file:
         # Writes the updated content back to config.mk.
         file.writelines(lines)
+
 
 def runOpenRoad(mk_sdc_file_path, cmd_path, odb_path, layout_path):
     # Runs the test module from RTL to GDSII.
@@ -1919,23 +1950,24 @@ def runOpenRoad(mk_sdc_file_path, cmd_path, odb_path, layout_path):
     # Runs openroad.
     subprocess.run(["openroad", cmd_path], shell=False, encoding="utf-8")
 
+
 def clickRTL2Layout():
     global constraintFilePath, configFilePath
     standard_module_name = "CgraTemplateRTL"
     cgraflow_basepath = os.path.dirname(os.path.abspath(__file__))
     test_platform_name = processOptions.get()
-    print("Test platform is %s" % (test_platform_name))
+    logging.info("Test platform is %s" % (test_platform_name))
     orfs_basePath = cgraflow_basepath + "/tools/OpenROAD-flow-scripts/flow/"
     layout_path = cgraflow_basepath + "/build/" + "layout.png"
     odb_path = orfs_basePath + "results/" + test_platform_name + "/" + standard_module_name + "/base/6_final.odb"
     cmd_path = orfs_basePath + "cmd.tcl"
     verilog_srcfile_path = "designs/src/" + standard_module_name + "/"
-    mk_sdc_file_path = "designs/" + test_platform_name + "/" + standard_module_name  + "/"
+    mk_sdc_file_path = "designs/" + test_platform_name + "/" + standard_module_name + "/"
 
-    if constraintFilePath == ""  or configFilePath == "":
-         tkinter.messagebox.showerror(title="Missing files for RTL->Layout",
+    if constraintFilePath == "" or configFilePath == "":
+        tkinter.messagebox.showerror(title="Missing files for RTL->Layout",
                                      message="constraint.sdc and config.mk need to be selected first.")
-         return
+        return
 
     # Checks if layout.png of target design already exists.
     # If yes, directly shows.
@@ -1945,40 +1977,46 @@ def clickRTL2Layout():
     else:
         # Generates all dependency files for openroad.
         constructDependencyFiles(cgraflow_basepath, standard_module_name, test_platform_name,
-                                verilog_srcfile_path, mk_sdc_file_path, orfs_basePath)
+                                 verilog_srcfile_path, mk_sdc_file_path, orfs_basePath)
         # Runs openroad.
         runOpenRoad(mk_sdc_file_path, cmd_path, odb_path, layout_path)
         # Shows the layout image on CGRA-Flow GUI.
         display_layout_image(layout_path)
 
+
 def clickSelectConstraintFile(event):
     global constraintFilePath
-    constraintFilePath = fd.askopenfilename(title="Chooses constraint.sdc for synthesis.", initialdir="./", filetypes=(("SDC file", "*.sdc"),))
+    constraintFilePath = fd.askopenfilename(title="Chooses constraint.sdc for synthesis.", initialdir="./",
+                                            filetypes=(("SDC file", "*.sdc"),))
     widgets["constraintPathEntry"].delete(0, tkinter.END)
     widgets["constraintPathEntry"].insert(0, constraintFilePath)
-    print(constraintFilePath)
+    logging.info(constraintFilePath)
+
 
 def clickSelectConfigFile(event):
     global configFilePath
-    configFilePath = fd.askopenfilename(title="Chooses config.mk for OpenRoad.", initialdir="./", filetypes=(("MK file", "*.mk"),))
+    configFilePath = fd.askopenfilename(title="Chooses config.mk for OpenRoad.", initialdir="./",
+                                        filetypes=(("MK file", "*.mk"),))
     widgets["configPathEntry"].delete(0, tkinter.END)
     widgets["configPathEntry"].insert(0, configFilePath)
-    print(configFilePath)
+    logging.info(configFilePath)
+
 
 def display_layout_image(image_path):
     layoutImage = customtkinter.CTkImage(light_image=Image.open(image_path),
-                                  dark_image=Image.open(image_path),
-                                  size=(320, 320))
+                                         dark_image=Image.open(image_path),
+                                         size=(320, 320))
     layoutLabel.configure(image=layoutImage)
+
 
 def create_mapping_pannel(master):
     # mappingPannel = tkinter.LabelFrame(master, text='Mapping', bd=BORDER, relief='groove')
     mappingPannel = customtkinter.CTkFrame(master)
     # mappingPannel.grid(row=1, column=1, rowspan=1, columnspan=3, padx=(0, 5), pady=(5, 0), sticky="nsew")
     mappingPannelLabel = customtkinter.CTkLabel(mappingPannel, text='Mapping ',
-                                               # width=100,
-                                               font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE,
-                                                                          weight="bold"))
+                                                # width=100,
+                                                font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE,
+                                                                           weight="bold"))
     mappingPannelLabel.pack(anchor="w", padx=(5, 0))
     mappingCanvas = customtkinter.CTkCanvas(mappingPannel, bg=CANVAS_BG_COLOR, bd=0, highlightthickness=0)
     widgets["mappingCanvas"] = mappingCanvas
@@ -2046,10 +2084,10 @@ def create_kernel_pannel(master):
     widgets["generateDFGShow"] = generateDFGShow
 
     dfgPannel = customtkinter.CTkFrame(kernelPannel)
-    dfgPannel.grid(row=3, column=0, rowspan=11, columnspan=2, padx=(0,5), pady=(5,0), sticky="nsew")
+    dfgPannel.grid(row=3, column=0, rowspan=11, columnspan=2, padx=(0, 5), pady=(5, 0), sticky="nsew")
     dfgPannelLabel = customtkinter.CTkLabel(dfgPannel, text='Data-Flow Graph ',
-                                             font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE,
-                                                                        weight="bold"))
+                                            font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE,
+                                                                       weight="bold"))
     dfgPannelLabel.pack(anchor="w", padx=(5, 0))
     dfgLabel = customtkinter.CTkLabel(dfgPannel, text="")
     widgets["dfgLabel"] = dfgLabel
@@ -2069,20 +2107,22 @@ def create_kernel_pannel(master):
     resMIIEntry.grid(row=4, column=3)
 
     mappingAlgoPannel = customtkinter.CTkFrame(kernelPannel)
-    mappingAlgoPannel.grid(row=5, column=2, rowspan=3, columnspan=2, pady=(5,10), sticky="nsew")
+    mappingAlgoPannel.grid(row=5, column=2, rowspan=3, columnspan=2, pady=(5, 10), sticky="nsew")
     for row in range(2):
         mappingAlgoPannel.grid_rowconfigure(row, weight=1)
     mappingAlgoPannel.grid_columnconfigure(0, weight=1)
     mappingAlgoPannel.grid_columnconfigure(1, weight=1)
     # mappingOptionLabel = customtkinter.CTkLabel(mappingAlgoPannel, text="Mapping algo:")
     mappingOptionLabel = customtkinter.CTkLabel(mappingAlgoPannel, text='Mapping Algorithm',
-                                            font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE,
-                                                                       weight="bold"))
+                                                font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE,
+                                                                           weight="bold"))
     mappingOptionLabel.grid(row=0, column=0, columnspan=2)
-    heuristicRadioButton = customtkinter.CTkRadioButton(mappingAlgoPannel, text="Heuristic", variable=mappingAlgoCheckVar, value=0)
+    heuristicRadioButton = customtkinter.CTkRadioButton(mappingAlgoPannel, text="Heuristic",
+                                                        variable=mappingAlgoCheckVar, value=0)
     widgets["heuristicRadioButton"] = heuristicRadioButton
     heuristicRadioButton.grid(row=1, column=0, pady=(0, 5), sticky="nsew")
-    exhaustiveRadioButton = customtkinter.CTkRadioButton(mappingAlgoPannel, text="Exhaustive", variable=mappingAlgoCheckVar, value=1)
+    exhaustiveRadioButton = customtkinter.CTkRadioButton(mappingAlgoPannel, text="Exhaustive",
+                                                         variable=mappingAlgoCheckVar, value=1)
     widgets["exhaustiveRadioButton"] = exhaustiveRadioButton
     exhaustiveRadioButton.grid(row=1, column=1, pady=(0, 5), sticky="nsew")
 
@@ -2093,10 +2133,10 @@ def create_kernel_pannel(master):
     targetCgraIdVariable = tkinter.StringVar(kernelPannel)
     targetCgraIdVariable.set(targetCgraIdOptions[0])
     targetCgraIdOptionMenu = customtkinter.CTkOptionMenu(kernelPannel, variable=targetCgraIdVariable,
-                                                     values=targetCgraIdOptions)
+                                                         values=targetCgraIdOptions)
     targetCgraIdOptionMenu.grid(row=8, column=3)
 
-    mapDFGButton = customtkinter.CTkButton(kernelPannel, text="Map DFG", command=clickMapDFG,)
+    mapDFGButton = customtkinter.CTkButton(kernelPannel, text="Map DFG", command=clickMapDFG, )
     mapDFGButton.grid(row=9, column=2, columnspan=2, sticky="new")
     terminateMapButton = customtkinter.CTkButton(kernelPannel, text="Terminate", command=clickTerminateMapping)
     terminateMapButton.grid(row=10, column=2, columnspan=2, sticky="new")
@@ -2127,16 +2167,16 @@ def create_kernel_pannel(master):
 
 # Performs a perodical checks on whether the UI components are drawn into the screen or not.
 def check_ui_ready(
-    master: customtkinter.CTk,
-    multiCgraPanel: customtkinter.CTkFrame,
-    multiCgraConfigPanel: customtkinter.CTkFrame,
-    kernel_panel: customtkinter.CTkFrame,
-    mapping_panel: customtkinter.CTkFrame,
-    cgra_panel: customtkinter.CTkFrame,
-    param_panel: customtkinter.CTkFrame,
-    data_panel: customtkinter.CTkFrame,
-    layout_panel: customtkinter.CTkFrame,
-    window: customtkinter.CTkToplevel,
+        master: customtkinter.CTk,
+        multiCgraPanel: customtkinter.CTkFrame,
+        multiCgraConfigPanel: customtkinter.CTkFrame,
+        kernel_panel: customtkinter.CTkFrame,
+        mapping_panel: customtkinter.CTkFrame,
+        cgra_panel: customtkinter.CTkFrame,
+        param_panel: customtkinter.CTkFrame,
+        data_panel: customtkinter.CTkFrame,
+        layout_panel: customtkinter.CTkFrame,
+        window: customtkinter.CTkToplevel,
 ):
     panels = [
         multiCgraPanel,
@@ -2154,6 +2194,7 @@ def check_ui_ready(
     else:
         master.after(200, lambda: check_ui_ready(master, *panels, window))
 
+
 # Display all the UI components by calling grid() and start a periodical checks on when they are ready.
 def show_all_ui(master: customtkinter.CTk, window: customtkinter.CTkToplevel):
     multiCgraConfigPanel = create_multi_cgra_config_panel(master)
@@ -2168,15 +2209,17 @@ def show_all_ui(master: customtkinter.CTk, window: customtkinter.CTkToplevel):
     multiCgraConfigPanel.grid(row=0, column=1, sticky="nsew")
     kernelPannel.grid(row=1, column=0, padx=(0, 5), pady=(5, 0), sticky="nsew")
     mappingPannel.grid(row=1, column=1, rowspan=1, columnspan=3, padx=(0, 5), pady=(5, 0), sticky="nsew")
-    #paramPannel.grid(row=0, column=4, columnspan=2, sticky="nsew")
-    dataPannel.grid(row=1, column=4, pady=(5,0), sticky="nsew")
-    layoutPannel.grid(row=1, column=5, padx=(5,0), pady=(5,0), sticky="nsew")
+    # paramPannel.grid(row=0, column=4, columnspan=2, sticky="nsew")
+    dataPannel.grid(row=1, column=4, pady=(5, 0), sticky="nsew")
+    layoutPannel.grid(row=1, column=5, padx=(5, 0), pady=(5, 0), sticky="nsew")
     # Once kernel is drawn stop the check loop after 100ms.
     if (kernelPannel.winfo_ismapped()):
         master.after(100, window.destroy())
     # Keeps checking if UI components are drawn in every 2 seconds.
     else:
-        master.after(2000, lambda: check_ui_ready(master, multiCgraPanel, multiCgraConfigPanel, kernelPannel, mappingPannel, cgraPannel, paramPannel, dataPannel, layoutPannel, window))
+        master.after(2000,
+                     lambda: check_ui_ready(master, multiCgraPanel, multiCgraConfigPanel, kernelPannel, mappingPannel,
+                                            cgraPannel, paramPannel, dataPannel, layoutPannel, window))
 
 
 # paramPadPosX = GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + INTERVAL * 3
@@ -2194,13 +2237,13 @@ GRID_HEIGHT = (TILE_HEIGHT + LINK_LENGTH) * ROWS - LINK_LENGTH
 
 # Sets size first to avoid window keep resizing during loading.
 w, h = master.winfo_screenwidth(), master.winfo_screenheight()
-master.geometry("%dx%d" % (w-10, h-70))
+master.geometry("%dx%d" % (w - 10, h - 70))
 master.geometry("+%d+%d" % (0, 0))
 
 main_frame = customtkinter.CTkFrame(master)
 
 overlay = customtkinter.CTkToplevel(master)
-overlay.geometry("%dx%d" % (w-10, h-70))
+overlay.geometry("%dx%d" % (w - 10, h - 70))
 overlay.transient(master)
 overlay.grab_set()
 
@@ -2242,9 +2285,9 @@ master.grid_columnconfigure(2, weight=5)
 master.grid_columnconfigure(3, weight=1)
 master.grid_columnconfigure(4, weight=1)
 master.grid_columnconfigure(5, weight=1)
-# print(master.winfo_width())
-# print(master.winfo_height())
+# logging.info(master.winfo_width())
+# logging.info(master.winfo_height())
 # w, h = master.winfo_screenwidth(), master.winfo_screenheight()
-master.geometry("%dx%d" % (w-10, h-70))
+master.geometry("%dx%d" % (w - 10, h - 70))
 master.geometry("+%d+%d" % (0, 0))
 master.mainloop()

@@ -1125,10 +1125,24 @@ def create_multi_cgra_panel(master, cgraRows=2, cgraCols=2):
     routerDiameter = cgraSquareLength / 4
     distanceOfCgras = 140  # 200
 
+    # Pre-calculate positions for all CGRAs
+    positions = []
     x, y = xStartPos, yStartPos
-    cgraId = 0
     for row in range(cgraRows):
+        row_positions = []
         for col in range(cgraCols):
+            row_positions.append((x, y))
+            x = x + distanceOfCgras
+        positions.append(row_positions)
+        x = xStartPos
+        y = y + distanceOfCgras
+
+    # Draw CGRAs in the new order (bottom to top, left to right)
+    cgraId = 0
+    for row in range(cgraRows-1, -1, -1):  # Start from bottom row
+        for col in range(cgraCols):  # Left to right
+            x, y = positions[row][col]
+            
             # draw
             logging.info(f"cgraFrame: {x} x {y}, cgraSquareLength: {cgraSquareLength}")
             cgraFrame = tkinter.Frame(multiCgraCanvas, bg=MULTI_CGRA_FRAME_COLOR, border=4)
@@ -1140,7 +1154,7 @@ def create_multi_cgra_panel(master, cgraRows=2, cgraCols=2):
             multiCgraCanvas.create_text(x + cgraSquareLength / 2 + 5, y + cgraSquareLength + 10,
                                         font=customtkinter.CTkFont(weight="bold"),
                                         text=f"CGRA {cgraId}", fill=MULTI_CGRA_TXT_COLOR)
-            if (multiCgraParam.getCgraParam(row, col) == selectedCgraParam):
+            if (multiCgraParam.getCgraParam(cgraRows-1-row, col) == selectedCgraParam):
                 cgra_frame_clicked(None, cgraId=cgraId, frame=cgraFrame)
                 # current cgra param model is the selected one, hightlight it.
             cgraId = cgraId + 1
@@ -1171,17 +1185,13 @@ def create_multi_cgra_panel(master, cgraRows=2, cgraCols=2):
                                             rightRouterCenterY, fill=CANVAS_LINE_COLOR, arrow=tkinter.BOTH, width=2)
                 # multiCgraCanvas.create_line(rightRouterLeftEdgeX, rightRouterCenterY, routerCenterX + routerDiameter / 2, routerCenterY, fill=CANVAS_LINE_COLOR, arrow=tkinter.LAST, width=2)
             # if not last row: draws a vertical line, connects to down route
-            if row != cgraRows - 1:
-                downRouterCenterX = routerCenterX
-                downRouterUpEdgeY = routerCenterY + distanceOfCgras - routerDiameter / 2
-                multiCgraCanvas.create_line(routerCenterX, routerCenterY + routerDiameter / 2, downRouterCenterX,
-                                            downRouterUpEdgeY, fill=CANVAS_LINE_COLOR, arrow=tkinter.BOTH, width=2)
-                # multiCgraCanvas.create_line(downRouterCenterX, downRouterUpEdgeY, routerCenterX, routerCenterY + routerDiameter / 2, fill=CANVAS_LINE_COLOR, arrow=tkinter.LAST, width=2)
-
-            x = x + distanceOfCgras
-        # new row
-        x = xStartPos
-        y = y + distanceOfCgras
+            # Note: since we're drawing bottom to top, we connect to the router above
+            if row != 0:  # Not the top row in display (which is bottom row logically)
+                upRouterCenterX = routerCenterX
+                upRouterDownEdgeY = routerCenterY - distanceOfCgras + routerDiameter / 2
+                multiCgraCanvas.create_line(routerCenterX, routerCenterY - routerDiameter / 2, upRouterCenterX,
+                                            upRouterDownEdgeY, fill=CANVAS_LINE_COLOR, arrow=tkinter.BOTH, width=2)
+                # multiCgraCanvas.create_line(upRouterCenterX, upRouterDownEdgeY, routerCenterX, routerCenterY - routerDiameter / 2, fill=CANVAS_LINE_COLOR, arrow=tkinter.LAST, width=2)
 
     vbar = customtkinter.CTkScrollbar(multiCgraPanel, orientation="vertical", command=multiCgraCanvas.yview)
     vbar.pack(side=tkinter.RIGHT, fill="y")

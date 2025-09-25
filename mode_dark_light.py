@@ -44,7 +44,7 @@ if args.theme:
         MULTI_CGRA_TILE_COLOR = "#3A7EBF"
         MULTI_CGRA_TXT_COLOR = "black"
 
-# from VectorCGRA.cgra.test.CgraTemplateRTL_test import *
+from VectorCGRA.cgra.test.CgraTemplateRTL_test import *
 # from VectorCGRA.multi_cgra.test.MeshMultiCgraTemplateRTL_test import *
 
 # importing module
@@ -458,7 +458,7 @@ def clickGenerateVerilog():
     # pymtl function that is used to generate synthesizable verilog
     cmdline_opts = {'test_verilog': 'zeros', 'test_yosys_verilog': '', 'dump_textwave': False, 'dump_vcd': False,
                     'dump_vtb': False, 'max_cycles': None}
-    # test_cgra_universal(cgraParam = selectedCgraParam)
+    test_cgra_universal(cmdline_opts, cgraParam = selectedCgraParam)
     logging.info("-------------  multiCgraParam  --------------")
     # test_multi_CGRA_universal(cmdline_opts, multiCgraParam=multiCgraParam)
 

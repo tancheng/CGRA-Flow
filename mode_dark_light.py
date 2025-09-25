@@ -796,7 +796,7 @@ def clickShowDFG():
     # with open("mappingParam.json", "w") as outfile:
         outfile.write(json_object)
 
-    dumpcgraParam2JSON("cgraParam.json")
+    dumpcgraParam2JSON("paramCGRA.json")
     # dumpcgraParam2JSON("param.json")
 
     genDFGCommand = "opt-12 -load ../../CGRA-Mapper/build/src/libmapperPass.so -mapperPass ./kernel.bc"
@@ -1052,7 +1052,7 @@ def clickMapDFG():
     # with open("mappingParam.json", "w") as outfile:
         outfile.write(mappingJsonObject)
 
-    dumpcgraParam2JSON("cgraParam.json")
+    dumpcgraParam2JSON("paramCGRA.json")
     # dumpcgraParam2JSON("param.json")
 
     mappingCommand = "opt-12 -load ../../CGRA-Mapper/build/src/libmapperPass.so -mapperPass ./kernel.bc"

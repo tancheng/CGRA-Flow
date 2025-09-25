@@ -792,12 +792,12 @@ def clickShowDFG():
 
     json_object = json.dumps(genDFGJson, indent=4)
 
-    # with open("param.json", "w") as outfile:
-    with open("mappingParam.json", "w") as outfile:
+    with open("param.json", "w") as outfile:
+    # with open("mappingParam.json", "w") as outfile:
         outfile.write(json_object)
 
-    # dumpcgraParam2JSON("cgraParam.json")
-    dumpcgraParam2JSON("param.json")
+    dumpcgraParam2JSON("cgraParam.json")
+    # dumpcgraParam2JSON("param.json")
 
     genDFGCommand = "opt-12 -load ../../CGRA-Mapper/build/src/libmapperPass.so -mapperPass ./kernel.bc"
     logging.info("trying to run opt-12")
@@ -1048,12 +1048,12 @@ def clickMapDFG():
 
     mappingJsonObject = json.dumps(mappingJson, indent=4)
 
-    # with open("param.json", "w") as outfile:
-    with open("mappingParam.json", "w") as outfile:
+    with open("param.json", "w") as outfile:
+    # with open("mappingParam.json", "w") as outfile:
         outfile.write(mappingJsonObject)
 
-    # dumpcgraParam2JSON("cgraParam.json")
-    dumpcgraParam2JSON("param.json")
+    dumpcgraParam2JSON("cgraParam.json")
+    # dumpcgraParam2JSON("param.json")
 
     mappingCommand = "opt-12 -load ../../CGRA-Mapper/build/src/libmapperPass.so -mapperPass ./kernel.bc"
 

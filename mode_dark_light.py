@@ -464,6 +464,7 @@ def clickGenerateVerilog():
 
     widgets["verilogText"].delete("1.0", tkinter.END)
     found = False
+    logging.info(f"Current directory: {os.getcwd()}")
     logging.info(os.listdir("./"))
     for fileName in os.listdir("./"):
         if "__" in fileName and ".v" in fileName:
@@ -555,6 +556,8 @@ def clickSynthesize():
     updatedReadPortPattern = str(selectedCgraParam.dataSPM.getNumOfValidReadPorts())
     updatedWritePortPattern = str(selectedCgraParam.dataSPM.getNumOfValidWritePorts())
 
+    # print current directory
+    logging.info(f"Current directory: {os.getcwd()}")
     with open(r'../../tools/cacti/spm_template.cfg', 'r') as file:
         data = file.read()
 

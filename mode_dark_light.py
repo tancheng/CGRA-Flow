@@ -468,7 +468,7 @@ def clickGenerateVerilog():
     logging.info(os.listdir("./"))
     for fileName in os.listdir("./"):
         if "__" in fileName and ".v" in fileName:
-            logging.info("Found the file: ", fileName)
+            logging.info("Found the file: " + fileName)
             f = open(fileName, "r")
             widgets["verilogText"].insert("1.0", f.read())
             found = True

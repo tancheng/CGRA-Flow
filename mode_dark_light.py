@@ -468,7 +468,7 @@ def clickGenerateVerilog():
     logging.info(os.listdir("./"))
     for fileName in os.listdir("./"):
         if "__" in fileName and ".v" in fileName:
-            logging.info("Found the file: " + fileName)
+            logging.info(f"Found the file: {fileName}")
             f = open(fileName, "r")
             widgets["verilogText"].insert("1.0", f.read())
             found = True
@@ -661,12 +661,12 @@ def clickCompileApp():
     if compileErr:
         widgets["compileAppShow"].configure(text=u'\u2717\u2717\u2717')
         os.chdir("..")
-        logging.info("Compile error message: ", compileErr)
+        logging.info(f"Compile error message: {compileErr}")
         return
     if disassembleErr:
         widgets["compileAppShow"].configure(text=u'\u2717\u2717\u2717')
         os.chdir("..")
-        logging.info("Disassemble error message: ", disassembleErr)
+        logging.info(f"Disassemble error message: {disassembleErr}")
         return
 
     widgets["compileAppShow"].configure(text=u'\u2713\u2713\u2713')
@@ -816,8 +816,8 @@ def clickShowDFG():
                 selectedCgraParam.recMII = int(outputLine.split("[RecMII: ")[1].split("]")[0])
 
     (out, err) = genDFGProc.communicate()
-    logging.info("opt-12 out: ", out)
-    logging.info("opt-12 err: ", err)
+    logging.info(f"opt-12 out: {out}")
+    logging.info(f"opt-12 err: {err}")
 
     selectedCgraParam.resMII = math.ceil(
         (selectedCgraParam.DFGNodeCount + 0.0) / len(selectedCgraParam.getValidTiles())) // 1
@@ -1071,7 +1071,7 @@ def clickMapDFG():
 
 def _on_mousewheel(canvas, event):
     platformSystem = platform.system()
-    logging.info("Current platform.system: %s", platformSystem)
+    logging.info(f"Current platform.system: {platformSystem}")
     if platformSystem == "Windows":
         canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
     elif platformSystem == "Linux":
@@ -1969,7 +1969,7 @@ def clickRTL2Layout():
     standard_module_name = "CgraTemplateRTL"
     cgraflow_basepath = os.path.dirname(os.path.abspath(__file__))
     test_platform_name = processOptions.get()
-    logging.info("Test platform is %s" % (test_platform_name))
+    logging.info(f"Test platform is {test_platform_name}")
     orfs_basePath = cgraflow_basepath + "/tools/OpenROAD-flow-scripts/flow/"
     layout_path = cgraflow_basepath + "/build/" + "layout.png"
     odb_path = orfs_basePath + "results/" + test_platform_name + "/" + standard_module_name + "/base/6_final.odb"

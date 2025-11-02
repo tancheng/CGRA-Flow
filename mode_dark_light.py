@@ -1519,6 +1519,11 @@ def clickMapDFG():
             tkinter.messagebox.showerror(title="DFG mapping", message="The kernel name is not selected yet.")
         return
 
+    if selectedCgraParam.rows == 1 and selectedCgraParam.columns == 1:
+        os.chdir("..")
+        tkinter.messagebox.showerror(title="DFG mapping", message="Please model the CGRA architecture with more than 1 tile.")
+        return
+
     mappingJson = {
         "kernel": paramCGRA.targetKernelName,
         "targetFunction": False,
@@ -2516,3 +2521,4 @@ master.grid_columnconfigure(3, weight=1)
 master.geometry("%dx%d" % (w-10, h-70))
 master.geometry("+%d+%d" % (0, 0))
 master.mainloop()
+

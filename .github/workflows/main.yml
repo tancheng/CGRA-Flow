@@ -15,11 +15,11 @@ jobs:
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
     # You can convert this to a matrix build if you need cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.7.13", "3.9.20", "3.12.8"]
+        python-version: ["3.9.20", "3.12.8"]
 
     steps:
     - uses: actions/checkout@v3
@@ -33,10 +33,15 @@ jobs:
         
 
     - name: Install LLVM and Clang for CGRA-Mapper
-      uses: egor-tensin/setup-clang@v1
-      with:
-        version: 12
-        platform: x64
+      run: |
+        dpkg -l | grep llvm
+        sudo apt-get purge llvm-13
+        sudo apt-get purge llvm-14
+        sudo apt-get purge llvm-15
+        sudo apt-get -y update
+        sudo apt-get -y install cmake
+        sudo apt-get -y install llvm-12 llvm-12-dev llvm-12-tools clang-12
+        sudo apt-get -y install build-essential
 
     - name: Configure CMake for CGRA-Mapper
       run: cd CGRA-Mapper && mkdir build && cd build && cmake ..

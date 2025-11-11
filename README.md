@@ -40,7 +40,7 @@ The docker image is available
 
 As CGRA-Flow requires GUI, a script is provided for setting up the display:
 ```sh
- docker pull cgra/cgra-flow:20241028
+ docker pull cgra/cgra-flow:20251112
 
  # For Mac users:
  sh ./run_mac_docker.sh
@@ -55,8 +55,8 @@ As CGRA-Flow requires GUI, a script is provided for setting up the display:
 
 Otherwise, if you don't need the GUI, development can be performed in the container with the environment well set up:
 ```sh
- docker pull cgra/cgra-flow:20241028
- docker run -it cgra/cgra-flow:20241028
+ docker pull cgra/cgra-flow:20251112
+ docker run -it cgra/cgra-flow:20251112
  source /WORK_REPO/venv/bin/activate
 ```
 

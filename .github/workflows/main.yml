@@ -87,6 +87,7 @@ jobs:
         pip install -U git+https://github.com/tancheng/pymtl3.1@yo-struct-list-fix
         pip install hypothesis
         pip install pytest
+        pip install py-markdown-table
         pip list
     - name: Test with pytest for VectorCGRA
       run: |

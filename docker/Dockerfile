@@ -75,7 +75,9 @@ RUN mkdir /WORK_REPO \
     && pip install customtkinter \
     # Test for tkinter
     && cd /WORK_REPO/CGRA-Flow \
-    && mkdir build && cd build
+    && mkdir build && cd build \
+    && cp ../docker/config.mk ./ \
+    && cp ../docker/constraint.sdc ./
 
 WORKDIR "/WORK_REPO/CGRA-Flow/build"
 #CMD ["/WORK_REPO/venv/bin/python", "../mode_dark_light.py"]

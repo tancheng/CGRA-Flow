@@ -1,3 +1,0 @@
-https://github.com/Precision-Innovations/OpenROAD/releases/download/2024-08-05/openroad_2.0_amd64-ubuntu22.04-2024-08-05.deb
-https://www.klayout.org/downloads/Ubuntu-22/klayout_0.29.6-1_amd64.deb
-https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2024-09-20/oss-cad-suite-linux-x64-20240920.tgz

@@ -3,10 +3,13 @@ FROM ubuntu:22.04
 SHELL ["/bin/bash", "-c"]
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV PATH="/WORK_REPO/verilator/bin:$PATH"
 ENV VERILATOR_ROOT=/WORK_REPO/verilator
 ENV PYMTL_VERILATOR_INCLUDE_DIR=/WORK_REPO/verilator/share/verilator/include
 ENV PATH="/WORK_REPO/CGRA-Flow/tools/sv2v/bin:$PATH"
+ENV PATH="/WORK_REPO/CGRA-Flow/tools/oss-cad-suite/bin:$PATH"
+ENV YOSYS_EXE="/WORK_REPO/CGRA-Flow/tools/oss-cad-suite/bin/yosys"
+ENV OPENROAD_EXE="/usr/bin/openroad"
+ENV PATH="/WORK_REPO/verilator/bin:$PATH"
 
 RUN mkdir /WORK_REPO \
     && cd /WORK_REPO \
@@ -77,7 +80,20 @@ RUN mkdir /WORK_REPO \
     && cd /WORK_REPO/CGRA-Flow \
     && mkdir build && cd build \
     && cp ../docker/config.mk ./ \
-    && cp ../docker/constraint.sdc ./
+    && cp ../docker/constraint.sdc ./ \
+    # Install OpenROAD
+    && cd /WORK_REPO/CGRA-Flow/tools \
+    && wget https://github.com/Precision-Innovations/OpenROAD/releases/download/2024-08-05/openroad_2.0_amd64-ubuntu22.04-2024-08-05.deb \
+    && wget https://www.klayout.org/downloads/Ubuntu-22/klayout_0.29.6-1_amd64.deb \
+    && wget https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2024-09-20/oss-cad-suite-linux-x64-20240920.tgz \
+    && apt-get update \
+    && apt-get install -y --fix-broken \
+    && dpkg -i klayout_0.29.6-1_amd64.deb || true \
+    && apt-get install -y --fix-broken \
+    && tar zxvf oss-cad-suite-linux-x64-20240920.tgz -C ./ \
+    && apt-get install -y ./openroad_2.0_amd64-ubuntu22.04-2024-08-05.deb \
+    && apt-get install -y time \
+    && rm -f *.deb *.tgz
 
 WORKDIR "/WORK_REPO/CGRA-Flow/build"
 #CMD ["/WORK_REPO/venv/bin/python", "../mode_dark_light.py"]

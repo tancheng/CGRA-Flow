@@ -793,12 +793,6 @@ def clickShowDFG():
         "enablePowerGating"     : False
     }
 
-    # json_object = json.dumps(genDFGJson, indent=4)
-
-    # with open("param.json", "w") as outfile:
-    #     outfile.write(json_object)
-
-    # dumpCgraParam2JSON("paramCGRA.json")
     dumpCgraParam2JSON("param.json", genDFGJson)
 
     genDFGCommand = "opt-12 -load ../../CGRA-Mapper/build/src/libmapperPass.so -mapperPass ./kernel.bc"
@@ -1053,12 +1047,6 @@ def clickMapDFG():
         "enablePowerGating"     : False,
     }
 
-    # mappingJsonObject = json.dumps(mappingJson, indent=4)
-
-    # with open("param.json", "w") as outfile:
-        # outfile.write(mappingJsonObject)?
-
-    # dumpCgraParam2JSON("paramCGRA.json")
     dumpCgraParam2JSON("param.json", mappingJson)
 
     mappingCommand = "opt-12 -load ../../CGRA-Mapper/build/src/libmapperPass.so -mapperPass ./kernel.bc"

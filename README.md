@@ -60,6 +60,15 @@ Otherwise, if you don't need the GUI, development can be performed in the contai
  source /WORK_REPO/venv/bin/activate
 ```
 
+Building Docker Image from Dockerfile
+--------------------------------------------------------
+If you prefer to build the Docker image locally:
+
+```sh
+ # Build the Docker image
+ docker build -t cgra-flow:latest .
+```
+
 Execution
 --------------------------------------------------------
 ```sh

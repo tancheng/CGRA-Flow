@@ -712,9 +712,9 @@ def clickKernelMenu(*args):
     selectedCgraParam.targetKernelName = name
 
 
-def dumpcgraParam2JSON(fileName):
+def dumpCgraParam2JSON(fileName, cgraParamJson):
     global selectedCgraParam
-    cgraParamJson = {}
+    # cgraParamJson = {}
     cgraParamJson["tiles"] = {}
     for tile in selectedCgraParam.tiles:
         curDict = {}
@@ -793,14 +793,7 @@ def clickShowDFG():
         "enablePowerGating"     : False
     }
 
-    json_object = json.dumps(genDFGJson, indent=4)
-
-    with open("param.json", "w") as outfile:
-    # with open("mappingParam.json", "w") as outfile:
-        outfile.write(json_object)
-
-    dumpcgraParam2JSON("paramCGRA.json")
-    # dumpcgraParam2JSON("param.json")
+    dumpCgraParam2JSON("param.json", genDFGJson)
 
     genDFGCommand = "opt-12 -load ../../CGRA-Mapper/build/src/libmapperPass.so -mapperPass ./kernel.bc"
     logging.info("trying to run opt-12")
@@ -1054,14 +1047,7 @@ def clickMapDFG():
         "enablePowerGating"     : False,
     }
 
-    mappingJsonObject = json.dumps(mappingJson, indent=4)
-
-    with open("param.json", "w") as outfile:
-    # with open("mappingParam.json", "w") as outfile:
-        outfile.write(mappingJsonObject)
-
-    dumpcgraParam2JSON("paramCGRA.json")
-    # dumpcgraParam2JSON("param.json")
+    dumpCgraParam2JSON("param.json", mappingJson)
 
     mappingCommand = "opt-12 -load ../../CGRA-Mapper/build/src/libmapperPass.so -mapperPass ./kernel.bc"
 

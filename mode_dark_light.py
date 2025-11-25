@@ -512,12 +512,12 @@ def clickGenerateVerilog():
     os.system("mkdir verilog")
     os.chdir("verilog")
 
+    dumpParamCGRA2YAML("arch.yaml")
+
     # pymtl function that is used to generate synthesizable verilog
     cmdline_opts = {'test_verilog': 'zeros', 'test_yosys_verilog': '', 'dump_textwave': False, 'dump_vcd': False,
                     'dump_vtb': False, 'max_cycles': None}
-    test_cgra_universal(cmdline_opts, paramCGRA = selectedCgraParam)
-    logging.info("-------------  multiCgraParam  --------------")
-    # test_multi_CGRA_universal(cmdline_opts, multiCgraParam=multiCgraParam)
+    test_cgra_universal(paramCGRA = paramCGRA)
 
     widgets["verilogText"].delete("1.0", tkinter.END)
     found = False
@@ -762,18 +762,122 @@ def clickCompileApp():
 
 
 def clickKernelMenu(*args):
-    global selectedCgraParam
+    global paramCGRA
     name = kernelOptions.get()
     if name == None or name == " " or name == "Not selected yet":
         return
-    selectedCgraParam.targetKernelName = name
+    paramCGRA.targetKernelName = name
 
 
-def dumpCgraParam2JSON(fileName, cgraParamJson):
-    global selectedCgraParam
-    # cgraParamJson = {}
-    cgraParamJson["tiles"] = {}
-    for tile in selectedCgraParam.tiles:
+def _collect_tile_operations(tile):
+    # Map GUI FU names to the operation strings used in the shared arch.yaml schema.
+    fu_to_ops_map = {
+        "Phi": ["phi"],
+        "Add": ["add"],
+        "Shift": ["shl"],
+        "Ld": ["load"],
+        "St": ["store"],
+        "Sel": ["sel"],
+        "Cmp": ["icmp"],
+        "MAC": ["mac"],
+        "Ret": ["ret"],
+        "Mul": ["mul"],
+        "Logic": ["logic"],
+        "Br": ["br"],
+    }
+    ops = []
+    for fu_name, enabled in tile.fuDict.items():
+        if enabled != 1:
+            continue
+        mapped_ops = fu_to_ops_map.get(fu_name, [fu_name.lower()])
+        if isinstance(mapped_ops, list):
+            ops.extend(mapped_ops)
+        else:
+            ops.append(mapped_ops)
+    return sorted(set(ops))
+
+
+def build_arch_spec_from_paramcgra():
+    global paramCGRA
+    default_ops = _collect_tile_operations(paramCGRA.tiles[0]) if paramCGRA.tiles else []
+    mem_capacity_bytes = paramCGRA.dataMemSize * 1024
+    mem_banks = paramCGRA.dataSPM.getNumOfValidReadPorts() if paramCGRA.dataSPM else paramCGRA.rows
+
+    arch_spec = {
+        "architecture": {"name": "CGRAFlow", "version": "1.0"},
+        "multi_cgra_defaults": {
+            "base_topology": "mesh",
+            "rows": 1,
+            "columns": 1,
+            "memory": {"capacity": mem_capacity_bytes},
+        },
+        "cgra_defaults": {
+            "rows": paramCGRA.rows,
+            "columns": paramCGRA.columns,
+            "ctrl_mem_items": paramCGRA.configMemSize,
+            "base_topology": "mesh",
+            "memory": {"banks": mem_banks},
+        },
+        "tile_defaults": {"num_registers": paramCGRA.configMemSize, "operations": default_ops},
+        "link_defaults": {"latency": 1, "bandwidth": 32},
+        "link_overrides": [],
+        "tile_overrides": [],
+        "extensions": {"placeholder": False},
+    }
+
+    for tile in paramCGRA.tiles:
+        tile_entry = {
+            "cgra_x": 0,
+            "cgra_y": 0,
+            "tile_x": tile.dimX,
+            "tile_y": tile.dimY,
+            "existence": not tile.disabled,
+        }
+        if not tile.disabled:
+            tile_entry["operations"] = _collect_tile_operations(tile)
+            tile_entry["num_registers"] = paramCGRA.configMemSize
+        arch_spec["tile_overrides"].append(tile_entry)
+
+    seen_links = set()
+    for link in paramCGRA.updatedLinks:
+        if isinstance(link.srcTile, ParamSPM) or isinstance(link.dstTile, ParamSPM):
+            continue
+        key = (link.srcTile.dimX, link.srcTile.dimY, link.dstTile.dimX, link.dstTile.dimY)
+        if key in seen_links:
+            continue
+        seen_links.add(key)
+        arch_spec["link_overrides"].append(
+            {
+                "src_cgra_x": 0,
+                "src_cgra_y": 0,
+                "dst_cgra_x": 0,
+                "dst_cgra_y": 0,
+                "src_tile_x": link.srcTile.dimX,
+                "src_tile_y": link.srcTile.dimY,
+                "dst_tile_x": link.dstTile.dimX,
+                "dst_tile_y": link.dstTile.dimY,
+                "latency": 1,
+                "bandwidth": 32,
+                "existence": not (link.disabled or link.srcTile.disabled or link.dstTile.disabled),
+            }
+        )
+
+    return arch_spec
+
+
+def dumpParamCGRA2YAML(fileName):
+    arch_spec = build_arch_spec_from_paramcgra()
+    yaml_text = json.dumps(arch_spec, indent=2)
+
+    with open(fileName, "w") as outfile:
+        outfile.write(yaml_text)
+
+
+def dumpParamCGRA2JSON(fileName):
+    global paramCGRA
+    paramCGRAJson = {}
+    paramCGRAJson["tiles"] = {}
+    for tile in paramCGRA.tiles:
         curDict = {}
         if tile.disabled:
             curDict["disabled"] = True
@@ -803,13 +907,16 @@ def dumpCgraParam2JSON(fileName, cgraParamJson):
                 dstTile) != ParamSPM:
             curDict["srcTile"] = srcTile.ID
             curDict["dstTile"] = dstTile.ID
-            cgraParamJson["links"].append(curDict)
+            paramCGRAJson["links"].append(curDict)
 
-    cgraParamJsonObject = json.dumps(cgraParamJson, indent=4)
+    paramCGRAJsonObject = json.dumps(paramCGRAJson, indent=4)
 
     # Writing to sample.json
     with open(fileName, "w") as outfile:
-        outfile.write(cgraParamJsonObject)
+        outfile.write(paramCGRAJsonObject)
+    yaml_dir = os.path.dirname(fileName)
+    yaml_path = os.path.join(yaml_dir if yaml_dir else ".", "arch.yaml")
+    dumpParamCGRA2YAML(yaml_path)
 
 
 def clickShowDFG():

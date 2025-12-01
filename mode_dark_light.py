@@ -2249,6 +2249,7 @@ main_frame = customtkinter.CTkFrame(master)
 overlay = customtkinter.CTkToplevel(master)
 overlay.geometry("%dx%d" % (w - 10, h - 70))
 overlay.transient(master)
+overlay.wait_visibility()
 overlay.grab_set()
 
 loading_label = customtkinter.CTkLabel(overlay, text="Loading...", font=("Arial", 24, "bold"))

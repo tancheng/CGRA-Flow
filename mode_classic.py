@@ -12,7 +12,7 @@ from tkinter import filedialog as fd
 from PIL import Image, ImageTk, ImageFile
 from functools import partial
 
-from VectorCGRA.cgra.translate.CGRATemplateRTL_test import *
+from VectorCGRA.cgra.test.CGRATemplateRTL_test import *
 
 PORT_NORTH     = 0
 PORT_SOUTH     = 1

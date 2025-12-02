@@ -832,8 +832,67 @@ def clickReset(root):
     else:
         widgets["resMIIEntry"].insert(0, 0)
 
+def dumpArchYaml(yamlPath):
+    """
+    Dumps the architecture to a YAML file.
+    """
+    # Extract values from widgets
+    # Multi-CGRA Defaults
+    topo = widgets["topologyVariable"].get() if "topologyVariable" in widgets else "mesh"
+    mc_rows_str = widgets["multiCgraRowsLabelEntry"].get()
+    mc_rows = int(mc_rows_str)
+    mc_cols_str = widgets["multiCgraColumnsEntry"].get()
+    mc_cols = int(mc_cols_str)
+    mem_cap_str = widgets["totalSRAMSizeLabelEntry"].get()
+    mem_cap = int(mem_cap_str)
+    data_bw_str = widgets["dataBitwidthEntry"].get()
+    data_bw = int(data_bw_str)
+    vec_lanes_str = widgets["vectorLanesEntry"].get()
+    vec_lanes = int(vec_lanes_str)
+
+    # CGRA Defaults
+    cgra_rows_str = widgets["rowsEntry"].get()
+    cgra_rows = int(cgra_rows_str)
+    cgra_cols_str = widgets["columnsEntry"].get()
+    cgra_cols = int(cgra_cols_str)
+    
+    cfg_mem_str = widgets["configMemEntry"].get()
+    cfg_mem = int(cfg_mem_str)
+    sram_str = widgets["dataMemEntry"].get()
+    sram = int(sram_str)
+
+    data = {
+        "architecture": {
+            "name": "NeuraMultiCgra",
+            "version": "1.0"
+        },
+        "multi_cgra_defaults": {
+            "base_topology": topo,
+            "rows": mc_rows,
+            "columns": mc_cols,
+            "memory": {
+                "capacity": mem_cap,
+                "data bitwidth": data_bw,
+                "vector lanes": vec_lanes
+            }
+        },
+        "cgra_defaults": {
+            "rows": cgra_rows,
+            "columns": cgra_cols,
+            "configMemSize": cfg_mem,
+            "per bank sram": sram
+        }
+    }
+
+    import yaml
+    with open(yamlPath, 'w') as file:
+        yaml.dump(data, file, sort_keys=False, default_flow_style=False)
+        
+    logging.info(f"Successfully dumped architecture config to {yamlPath}")
 
 def clickTest():
+    # Dumps the architecture to `build/arch.yaml`.
+    dumpArchYaml('arch.yaml')
     # need to provide the paths for lib.so and kernel.bc
     os.system("mkdir test")
     # os.system("cd test")
@@ -875,8 +934,6 @@ def clickGenerateVerilog():
 
     os.system("mkdir verilog")
     os.chdir("verilog")
-
-    dumpParamCGRA2YAML("arch.yaml")
 
     # pymtl function that is used to generate synthesizable verilog
     test_cgra_universal(paramCGRA)
@@ -1112,111 +1169,6 @@ def clickKernelMenu(*args):
         return
     paramCGRA.targetKernelName = name
 
-
-def _collect_tile_operations(tile):
-    # Map GUI FU names to the operation strings used in the shared arch.yaml schema.
-    fu_to_ops_map = {
-        "Phi": ["phi"],
-        "Add": ["add"],
-        "Shift": ["shl"],
-        "Ld": ["load"],
-        "St": ["store"],
-        "Sel": ["sel"],
-        "Cmp": ["icmp"],
-        "MAC": ["mac"],
-        "Ret": ["ret"],
-        "Mul": ["mul"],
-        "Logic": ["logic"],
-        "Br": ["br"],
-    }
-    ops = []
-    for fu_name, enabled in tile.fuDict.items():
-        if enabled != 1:
-            continue
-        mapped_ops = fu_to_ops_map.get(fu_name, [fu_name.lower()])
-        if isinstance(mapped_ops, list):
-            ops.extend(mapped_ops)
-        else:
-            ops.append(mapped_ops)
-    return sorted(set(ops))
-
-
-def build_arch_spec_from_paramcgra():
-    global paramCGRA
-    default_ops = _collect_tile_operations(paramCGRA.tiles[0]) if paramCGRA.tiles else []
-    mem_capacity_bytes = paramCGRA.dataMemSize * 1024
-    mem_banks = paramCGRA.dataSPM.getNumOfValidReadPorts() if paramCGRA.dataSPM else paramCGRA.rows
-
-    arch_spec = {
-        "architecture": {"name": "CGRAFlow", "version": "1.0"},
-        "multi_cgra_defaults": {
-            "base_topology": "mesh",
-            "rows": 1,
-            "columns": 1,
-            "memory": {"capacity": mem_capacity_bytes},
-        },
-        "cgra_defaults": {
-            "rows": paramCGRA.rows,
-            "columns": paramCGRA.columns,
-            "ctrl_mem_items": paramCGRA.configMemSize,
-            "base_topology": "mesh",
-            "memory": {"banks": mem_banks},
-        },
-        "tile_defaults": {"num_registers": paramCGRA.configMemSize, "operations": default_ops},
-        "link_defaults": {"latency": 1, "bandwidth": 32},
-        "link_overrides": [],
-        "tile_overrides": [],
-        "extensions": {"placeholder": False},
-    }
-
-    for tile in paramCGRA.tiles:
-        tile_entry = {
-            "cgra_x": 0,
-            "cgra_y": 0,
-            "tile_x": tile.dimX,
-            "tile_y": tile.dimY,
-            "existence": not tile.disabled,
-        }
-        if not tile.disabled:
-            tile_entry["operations"] = _collect_tile_operations(tile)
-            tile_entry["num_registers"] = paramCGRA.configMemSize
-        arch_spec["tile_overrides"].append(tile_entry)
-
-    seen_links = set()
-    for link in paramCGRA.updatedLinks:
-        if isinstance(link.srcTile, ParamSPM) or isinstance(link.dstTile, ParamSPM):
-            continue
-        key = (link.srcTile.dimX, link.srcTile.dimY, link.dstTile.dimX, link.dstTile.dimY)
-        if key in seen_links:
-            continue
-        seen_links.add(key)
-        arch_spec["link_overrides"].append(
-            {
-                "src_cgra_x": 0,
-                "src_cgra_y": 0,
-                "dst_cgra_x": 0,
-                "dst_cgra_y": 0,
-                "src_tile_x": link.srcTile.dimX,
-                "src_tile_y": link.srcTile.dimY,
-                "dst_tile_x": link.dstTile.dimX,
-                "dst_tile_y": link.dstTile.dimY,
-                "latency": 1,
-                "bandwidth": 32,
-                "existence": not (link.disabled or link.srcTile.disabled or link.dstTile.disabled),
-            }
-        )
-
-    return arch_spec
-
-
-def dumpParamCGRA2YAML(fileName):
-    arch_spec = build_arch_spec_from_paramcgra()
-    yaml_text = json.dumps(arch_spec, indent=2)
-
-    with open(fileName, "w") as outfile:
-        outfile.write(yaml_text)
-
-
 def dumpParamCGRA2JSON(fileName):
     global paramCGRA
     paramCGRAJson = {}
@@ -1257,9 +1209,6 @@ def dumpParamCGRA2JSON(fileName):
     # Writing to sample.json
     with open(fileName, "w") as outfile:
         outfile.write(paramCGRAJsonObject)
-    yaml_dir = os.path.dirname(fileName)
-    yaml_path = os.path.join(yaml_dir if yaml_dir else ".", "arch.yaml")
-    dumpParamCGRA2YAML(yaml_path)
 
 
 
@@ -1706,6 +1655,11 @@ def create_multi_cgra_config_panel(master):
                                  highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS)
     multiCgraConfigUpdateButton.grid(row=4, column=1, sticky="ew", padx=5, pady=5)
 
+    # Stores varibles into the widgets.
+    widgets["totalSRAMSizeLabelEntry"] = totalSRAMSizeLabelEntry
+    widgets["topologyVariable"] = topologyVariable
+    widgets["vectorLanesEntry"] = vectorLanesEntry
+    widgets["dataBitwidthEntry"] = dataBitwidthEntry
 
 def create_cgra_pannel(master, rows, columns):
 

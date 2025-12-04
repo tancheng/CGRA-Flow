@@ -10,6 +10,7 @@ sudo docker run \
     -it \
     --name=$CONTAINER \
     -v $XSOCK:$XSOCK:rw \
-    -e DISPLAY=unix$DISPLAY \
-    $IMAGE
+    -e DISPLAY=$DISPLAY \
+    $IMAGE \
+    /bin/bash
 

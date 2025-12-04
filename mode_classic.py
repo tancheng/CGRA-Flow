@@ -12,7 +12,7 @@ from tkinter import filedialog as fd
 from PIL import Image, ImageTk, ImageFile
 from functools import partial
 
-from VectorCGRA.cgra.translate.CGRATemplateRTL_test import *
+from VectorCGRA.cgra.test.CGRATemplateRTL_test import *
 
 PORT_NORTH     = 0
 PORT_SOUTH     = 1
@@ -832,8 +832,67 @@ def clickReset(root):
     else:
         widgets["resMIIEntry"].insert(0, 0)
 
+def dumpArchYaml(yamlPath):
+    """
+    Dumps the architecture to a YAML file.
+    """
+    # Extract values from widgets
+    # Multi-CGRA Defaults
+    topo = widgets["topologyVariable"].get() if "topologyVariable" in widgets else "mesh"
+    mc_rows_str = widgets["multiCgraRowsLabelEntry"].get()
+    mc_rows = int(mc_rows_str)
+    mc_cols_str = widgets["multiCgraColumnsEntry"].get()
+    mc_cols = int(mc_cols_str)
+    mem_cap_str = widgets["totalSRAMSizeLabelEntry"].get()
+    mem_cap = int(mem_cap_str)
+    data_bw_str = widgets["dataBitwidthEntry"].get()
+    data_bw = int(data_bw_str)
+    vec_lanes_str = widgets["vectorLanesEntry"].get()
+    vec_lanes = int(vec_lanes_str)
+
+    # CGRA Defaults
+    cgra_rows_str = widgets["rowsEntry"].get()
+    cgra_rows = int(cgra_rows_str)
+    cgra_cols_str = widgets["columnsEntry"].get()
+    cgra_cols = int(cgra_cols_str)
+    
+    cfg_mem_str = widgets["configMemEntry"].get()
+    cfg_mem = int(cfg_mem_str)
+    sram_str = widgets["dataMemEntry"].get()
+    sram = int(sram_str)
+
+    data = {
+        "architecture": {
+            "name": "NeuraMultiCgra",
+            "version": "1.0"
+        },
+        "multi_cgra_defaults": {
+            "base_topology": topo,
+            "rows": mc_rows,
+            "columns": mc_cols,
+            "memory": {
+                "capacity": mem_cap,
+                "data bitwidth": data_bw,
+                "vector lanes": vec_lanes
+            }
+        },
+        "cgra_defaults": {
+            "rows": cgra_rows,
+            "columns": cgra_cols,
+            "configMemSize": cfg_mem,
+            "per bank sram": sram
+        }
+    }
+
+    import yaml
+    with open(yamlPath, 'w') as file:
+        yaml.dump(data, file, sort_keys=False, default_flow_style=False)
+        
+    logging.info(f"Successfully dumped architecture config to {yamlPath}")
 
 def clickTest():
+    # Dumps the architecture to `build/arch.yaml`.
+    dumpArchYaml('arch.yaml')
     # need to provide the paths for lib.so and kernel.bc
     os.system("mkdir test")
     # os.system("cd test")
@@ -1596,6 +1655,11 @@ def create_multi_cgra_config_panel(master):
                                  highlightbackground="black", highlightthickness=HIGHLIGHT_THICKNESS)
     multiCgraConfigUpdateButton.grid(row=4, column=1, sticky="ew", padx=5, pady=5)
 
+    # Stores varibles into the widgets.
+    widgets["totalSRAMSizeLabelEntry"] = totalSRAMSizeLabelEntry
+    widgets["topologyVariable"] = topologyVariable
+    widgets["vectorLanesEntry"] = vectorLanesEntry
+    widgets["dataBitwidthEntry"] = dataBitwidthEntry
 
 def create_cgra_pannel(master, rows, columns):
 

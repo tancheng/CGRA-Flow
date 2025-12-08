@@ -440,6 +440,11 @@ def dumpArchYaml(yamlPath):
     sram_str = widgets["dataMemEntry"].get()
     sram = int(sram_str)
 
+    # Custom class to force flow style dump.
+    class FlowList(list):
+        pass
+
+    tile_default_operations = ["add", "mul", "sub", "div", "rem", "fadd", "fmul", "fsub", "fdiv", "or", "not", "icmp", "fcmp", "sel", "cast", "sext", "zext", "shl", "vfmul", "fadd_fadd", "fmul_fadd", "data_mov", "ctrl_mov", "reserve", "grant_predicate", "grant_once", "grant_always", "loop_control", "phi", "constant"]  # comprehensive operation set
     data = {
         "architecture": {
             "name": "NeuraMultiCgra",
@@ -462,7 +467,7 @@ def dumpArchYaml(yamlPath):
             "per bank sram": sram
         },
         "tile_defaults": {
-            "operations": ["add", "mul", "sub", "div", "rem", "fadd", "fmul", "fsub", "fdiv", "or", "not", "icmp", "fcmp", "sel", "cast", "sext", "zext", "shl", "vfmul", "fadd_fadd", "fmul_fadd", "data_mov", "ctrl_mov", "reserve", "grant_predicate", "grant_once", "grant_always", "loop_control", "phi", "constant"]  # comprehensive operation set
+            "operations": FlowList(tile_default_operations)
         }
     }
 
@@ -520,7 +525,7 @@ def dumpArchYaml(yamlPath):
                         "cgra_y": r,
                         "tile_x": tile.dimX,
                         "tile_y": tile.dimY,
-                        "operations": ops,
+                        "operations": FlowList(ops),
                         "existence": True
                     })
 
@@ -528,6 +533,10 @@ def dumpArchYaml(yamlPath):
         data["tile_overrides"] = tile_overrides
 
     import yaml
+    def flow_list_representer(dumper, data):
+        return dumper.represent_sequence('tag:yaml.org,2002:seq', data, flow_style=True)
+    # Force to dump the FlowList in the flow style.
+    yaml.add_representer(FlowList, flow_list_representer)
     with open(yamlPath, 'w') as file:
         yaml.dump(data, file, sort_keys=False, default_flow_style=False)
         

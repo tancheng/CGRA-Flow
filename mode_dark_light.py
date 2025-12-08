@@ -411,9 +411,10 @@ def clickReset(root):
     else:
         widgets["resMIIEntry"].insert(0, 0)
 
-def dumpArchYaml(yamlPath):
+def dumpArchYaml(yamlPath = 'arch.yaml'):
     """
     Dumps the architecture to a YAML file.
+    The default path is `build/arch.yaml`.
     """
     # Extract values from widgets
     # Multi-CGRA Defaults
@@ -547,7 +548,7 @@ def clickTest():
     # Dumps the architecture to `build/arch.yaml`.
     dumpArchYaml('arch.yaml')
     # need to provide the paths for lib.so and kernel.bc
-    os.system("mkdir test")
+    os.system("mkdir -p test")
     # os.system("cd test")
     os.chdir("test")
 
@@ -585,7 +586,7 @@ def clickGenerateVerilog():
         tkinter.messagebox.showerror(title="CGRA Model Checking", message=message)
         return
 
-    os.system("mkdir verilog")
+    os.system("mkdir -p verilog")
     os.chdir("verilog")
 
     # pymtl function that is used to generate synthesizable verilog
@@ -679,7 +680,7 @@ def clickSynthesize():
     synthesisTimerRun = threading.Thread(target=countSynthesisTime)
     synthesisTimerRun.start()
 
-    os.system("mkdir verilog")
+    os.system("mkdir -p verilog")
     os.chdir("verilog")
 
     # Cacti SPM power/area estimation:
@@ -747,7 +748,7 @@ def clickSynthesize():
     # os.system("mv design.v ../../mflowgen1/designs/cgra/rtl/outputs/design.v")
     os.system("cp design_sv2v.v ../../tools/mflowgen/designs/cgra/rtl/outputs/design.v")
     os.chdir("../../tools/mflowgen")
-    os.system("mkdir ./build")
+    os.system("mkdir -p ./build")
     os.chdir("./build")
     os.system("rm -r ./*")
     os.system("mflowgen run --design ../designs/cgra")
@@ -781,7 +782,7 @@ def clickCompileApp():
     if not fileName or fileName == "   Not selected yet":
         return
 
-    os.system("mkdir kernel")
+    os.system("mkdir -p kernel")
     os.chdir("kernel")
 
     compileCommand = "clang-12 -emit-llvm -fno-unroll-loops -O3 -o kernel.bc -c " + fileName
@@ -891,7 +892,7 @@ def dumpCgraParam2JSON(fileName, cgraParamJson):
 
 
 def clickShowDFG():
-    os.system("mkdir kernel")
+    os.system("mkdir -p kernel")
     os.chdir("kernel")
     fileExist = os.path.exists("kernel.bc")
     global selectedCgraParam
@@ -1137,7 +1138,7 @@ def clickMapDFG():
     mappingProc = None
     heuristic = mappingAlgoCheckVar.get() == 0
 
-    os.system("mkdir kernel")
+    os.system("mkdir -p kernel")
     os.chdir("kernel")
     fileExist = os.path.exists("kernel.bc")
     global selectedCgraParam

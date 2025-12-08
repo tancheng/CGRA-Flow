@@ -460,6 +460,9 @@ def dumpArchYaml(yamlPath):
             "columns": cgra_cols,
             "configMemSize": cfg_mem,
             "per bank sram": sram
+        },
+        "tile_defaults": {
+            "operations": ["add", "mul", "sub", "div", "rem", "fadd", "fmul", "fsub", "fdiv", "or", "not", "icmp", "fcmp", "sel", "cast", "sext", "zext", "shl", "vfmul", "fadd_fadd", "fmul_fadd", "data_mov", "ctrl_mov", "reserve", "grant_predicate", "grant_once", "grant_always", "loop_control", "phi", "constant"]  # comprehensive operation set
         }
     }
 
@@ -486,6 +489,43 @@ def dumpArchYaml(yamlPath):
 
     if link_overrides:
         data["link_overrides"] = link_overrides
+
+    # Collects the tile information.
+    tile_overrides = []
+    for r in range(multiCgraParam.rows):
+        for c in range(multiCgraParam.cols):
+            target_cgra = multiCgraParam.getCgraParam(r, c)
+            for tile in target_cgra.tiles:
+                # Case 1: Tile is totally disabled.
+                if tile.disabled:
+                    tile_overrides.append({
+                        "cgra_x": c,
+                        "cgra_y": r,
+                        "tile_x": tile.dimX,
+                        "tile_y": tile.dimY,
+                        "existence": False
+                    })
+                # Case 2: Tile is enabled but has non-default functional units.
+                elif not tile.isDefaultFus():
+                    ops = []
+                    for fu in fuTypeList:
+                        if tile.fuDict[fu] == 1:
+                            # Map to lowercase name, and "Ld" -> "load", "St" -> "store".
+                            # Aligned with https://github.com/coredac/dataflow/blob/4f815fc86020a60aad14089b1cf0d05288a15b97/test/arch_spec/arch_spec_example.yaml#L58-L66
+                            fu_name = "load" if fu == "Ld" else "store" if fu == "St" else fu.lower()
+                            ops.append(fu_name)
+                    
+                    tile_overrides.append({
+                        "cgra_x": c,
+                        "cgra_y": r,
+                        "tile_x": tile.dimX,
+                        "tile_y": tile.dimY,
+                        "operations": ops,
+                        "existence": True
+                    })
+
+    if tile_overrides:
+        data["tile_overrides"] = tile_overrides
 
     import yaml
     with open(yamlPath, 'w') as file:

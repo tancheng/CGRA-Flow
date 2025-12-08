@@ -463,6 +463,30 @@ def dumpArchYaml(yamlPath):
         }
     }
 
+    # Collects the links information.
+    link_overrides = []
+    for r in range(multiCgraParam.rows):
+        for c in range(multiCgraParam.cols):
+            target_cgra = multiCgraParam.getCgraParam(r, c)
+            # Check all template links in the CGRA.
+            for link in target_cgra.templateLinks:
+                if link.disabled:
+                    if isinstance(link.srcTile, ParamTile) and isinstance(link.dstTile, ParamTile):
+                        link_overrides.append({
+                            "src_cgra_x": c,
+                            "src_cgra_y": r,
+                            "dst_cgra_x": c,
+                            "dst_cgra_y": r,
+                            "src_tile_x": link.srcTile.dimX,
+                            "src_tile_y": link.srcTile.dimY,
+                            "dst_tile_x": link.dstTile.dimX,
+                            "dst_tile_y": link.dstTile.dimY,
+                            "existence": False
+                        })
+
+    if link_overrides:
+        data["link_overrides"] = link_overrides
+
     import yaml
     with open(yamlPath, 'w') as file:
         yaml.dump(data, file, sort_keys=False, default_flow_style=False)

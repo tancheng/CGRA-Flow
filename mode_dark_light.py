@@ -416,7 +416,7 @@ def dumpArchYaml(yamlPath = 'arch.yaml'):
     Dumps the architecture to a YAML file.
     The default path is `build/arch.yaml`.
     """
-    # Extract values from widgets
+    # Extracts values from widgets
     # Multi-CGRA Defaults
     topo = widgets["topologyVariable"].get() if "topologyVariable" in widgets else "mesh"
     mc_rows_str = widgets["multiCgraRowsLabelEntry"].get()
@@ -441,7 +441,7 @@ def dumpArchYaml(yamlPath = 'arch.yaml'):
     sram_str = widgets["dataMemEntry"].get()
     sram = int(sram_str)
 
-    # Custom class to force flow style dump.
+    # Customizes class to force flow style dump.
     class FlowList(list):
         pass
 
@@ -477,7 +477,7 @@ def dumpArchYaml(yamlPath = 'arch.yaml'):
     for r in range(multiCgraParam.rows):
         for c in range(multiCgraParam.cols):
             target_cgra = multiCgraParam.getCgraParam(r, c)
-            # Check all template links in the CGRA.
+            # Checks all template links in the CGRA.
             for link in target_cgra.templateLinks:
                 if link.disabled:
                     if isinstance(link.srcTile, ParamTile) and isinstance(link.dstTile, ParamTile):
@@ -536,7 +536,7 @@ def dumpArchYaml(yamlPath = 'arch.yaml'):
     import yaml
     def flow_list_representer(dumper, data):
         return dumper.represent_sequence('tag:yaml.org,2002:seq', data, flow_style=True)
-    # Force to dump the FlowList in the flow style.
+    # Forces dumping the FlowList in the flow style.
     yaml.add_representer(FlowList, flow_list_representer)
     with open(yamlPath, 'w') as file:
         yaml.dump(data, file, sort_keys=False, default_flow_style=False)

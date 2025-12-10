@@ -468,6 +468,7 @@ def dumpArchYaml(yamlPath = 'arch.yaml'):
             "per bank sram": sram
         },
         "tile_defaults": {
+            "num_registers": 16,
             "operations": FlowList(tile_default_operations)
         }
     }
@@ -555,8 +556,8 @@ def clickTest():
     widgets["testShow"].configure(text="0%")
     master.update_idletasks()
 
-    # os.system("pytest ../../VectorCGRA")
-    testProc = subprocess.Popen(["pytest ../../VectorCGRA --ignore=../../VectorCGRA/noc/PyOCN", '-u'], stdout=subprocess.PIPE, shell=True, bufsize=1)
+    # os.system("pytest ../../test/MultiCgraTemplateRTL_test.py --tb=short")
+    testProc = subprocess.Popen(["pytest ../../test/MultiCgraTemplateRTL_test.py --tb=short", '-u'], stdout=subprocess.PIPE, shell=True, bufsize=1)
     failed = 0
     total = 0
     with testProc.stdout:

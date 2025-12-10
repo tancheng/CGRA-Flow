@@ -1412,14 +1412,14 @@ def create_multi_cgra_config_panel(master):
     multiCgraRowsLabel.grid(row=3, column=0, padx=5, sticky="w")
     multiCgraRowsLabelEntry = customtkinter.CTkEntry(multiCgraConfigPanel, justify=tkinter.CENTER)
     multiCgraRowsLabelEntry.grid(row=3, column=1, padx=5)
-    multiCgraRowsLabelEntry.insert(0, str(3))
+    multiCgraRowsLabelEntry.insert(0, str(CGRA_ROWS))
     widgets["multiCgraRowsLabelEntry"] = multiCgraRowsLabelEntry
 
     multiCgraColumnsLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Multi-CGRA\nColumns:')
     multiCgraColumnsLabel.grid(row=4, column=0, padx=5, sticky="w")
     multiCgraColumnsEntry = customtkinter.CTkEntry(multiCgraConfigPanel, justify=tkinter.CENTER)
     multiCgraColumnsEntry.grid(row=4, column=1, padx=5)
-    multiCgraColumnsEntry.insert(0, str(3))
+    multiCgraColumnsEntry.insert(0, str(CGRA_COLS))
     widgets["multiCgraColumnsEntry"] = multiCgraColumnsEntry
 
     vectorLanesLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Vector Lanes:')

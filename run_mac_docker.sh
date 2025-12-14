@@ -21,4 +21,7 @@ docker run \
     -v $XAUTH:$XAUTH:rw \
     -e DISPLAY=$IPADDR:$DISP_NUM \
     -e XAUTHORITY=$XAUTH \
+    -e QT_X11_NO_MITSHM=1 \
+    -e _X11_NO_MITSHM=1 \
+    -e NO_AT_BRIDGE=1 \
     $CONTAINER

@@ -415,7 +415,6 @@ def clickReset(root):
 class FlowList(list):
     pass
 
-tile_default_fu = ["Phi", "Add", "Shift", "Ld", "Sel", "Cmp", "MAC", "St", "Ret", "Mul", "Logic", "Br"]
 
 import yaml
 def flow_list_representer(dumper, data):
@@ -476,7 +475,7 @@ def dumpArchYaml(yamlPath = 'arch.yaml'):
         },
         "tile_defaults": {
             "num_registers": 16,
-            "operations": FlowList(tile_default_fu)
+            "operations": FlowList(tileDefaultOperations)
         }
     }
 
@@ -521,11 +520,11 @@ def dumpArchYaml(yamlPath = 'arch.yaml'):
                     })
                 # Case 2: Tile is enabled but has non-default functional units.
                 elif not tile.isDefaultFus():
-                    ops = []
+                    fuTypes = []
                     for fu in fuTypeList:
                         if tile.fuDict[fu] == 1:
-                            ops.append(fu)
-                    
+                            fuTypes.append(fu)
+                    ops = [op for fu in fuTypes for op in fuType2Operation[fu]]
                     tile_overrides.append({
                         "cgra_x": c,
                         "cgra_y": r,

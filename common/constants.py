@@ -39,7 +39,8 @@ CONFIG_MEM_SIZE = 16
 DATA_MEM_SIZE = 4
 
 
-fuTypeList = ["Phi", "Add", "Shift", "Ld", "Sel", "Cmp", "MAC", "St", "Ret", "Mul", "Logic", "Br"]
+fuTypeList = ["Phi", "Add", "Shift", "Ld", "Sel",
+              "Cmp", "MAC", "St", "Ret", "Mul", "Logic", "Br"]
 xbarTypeList = ["W", "E", "N", "S", "NE", "NW", "SE", "SW"]
 
 xbarType2Port = {
@@ -64,4 +65,25 @@ xbarPortOpposites = {
     PORT_NORTHEAST: PORT_SOUTHWEST,
     PORT_SOUTHWEST: PORT_NORTHEAST,
     PORT_SOUTHEAST: PORT_NORTHWEST
+}
+
+tileDefaultOperations = ["add", "mul", "sub", "div", "load", "store", "ret", "rem", "fadd", "fmul", "fsub", "fdiv", "or", "not", "icmp", "fcmp", "sel", "cast", "sext", "zext", "shl",
+                         "vfmul", "fadd_fadd", "fmul_fadd", "data_mov", "ctrl_mov", "reserve", "grant_predicate", "grant_once", "grant_always", "loop_control", "phi", "constant"]  # comprehensive operation set
+
+# The fuType here is aligned with GUI.
+fuType2Operation = {
+    "Phi": ["phi"],
+    "Add": ["add", "sub", "fadd", "fsub", "fadd_fadd"], # Integer and Float addition/subtraction
+    "Shift": ["shl"],
+    "Ld": ["load"], # Changed from 'ld' to match tileDefaultOperations
+    "Sel": ["sel"],
+    "Cmp": ["icmp", "fcmp"], # Integer and Float comparisons
+    "MAC": ["fmul_fadd"], # Multiply-Accumulate
+    "St": ["store"], # Changed from 'st' to match tileDefaultOperations
+    "Ret": ["ret"],
+    "Mul": ["mul", "fmul", "vfmul", "div", "rem", "fdiv"], # Multipliers often handle Div/Rem
+    "Logic": ["or", "not", "cast", "sext", "zext", "data_mov", "ctrl_mov"],
+    "Br": ["grant_predicate", "grant_once", "grant_always"],
+    "Loop_Control": ["loop_control"],
+    "Constant": ["constant"]
 }

@@ -1,12 +1,12 @@
 <pre>
 ========================================================
 
-   ________________  ___         ________             
+   ________________  ___         ________
   / ____/ ____/ __ \/   |       / ____/ /___ _      __
  / /   / / __/ /_/ / /| |______/ /_  / / __ \ | /| / /
-/ /___/ /_/ / _, _/ ___ /_____/ __/ / / /_/ / |/ |/ / 
-\____/\____/_/ |_/_/  |_|    /_/   /_/\____/|__/|__/  
-                                                      
+/ /___/ /_/ / _, _/ ___ /_____/ __/ / / /_/ / |/ |/ /
+\____/\____/_/ |_/_/  |_|    /_/   /_/\____/|__/|__/
+
 
 ========================================================
 </pre>
@@ -30,17 +30,17 @@ The docker image is available
 > **Recommended machine configuration**
 > * CPU: >= 6 cores
 > * Memory: 25~30G
-> 
-> **2x2 tiles run time**:  
-> | clk_period (ps) | frequency (Hz) | time (hour) |  
-> |-------|-------|-------|  
+>
+> **2x2 tiles run time**:
+> | clk_period (ps) | frequency (Hz) | time (hour) |
+> |-------|-------|-------|
 > | 1000            | 1G             | ~40         |
-> | 10,000          | 100M           | ~7          |  
+> | 10,000          | 100M           | ~7          |
 > | 100,000         | 10M            | ~7          |
 
 As CGRA-Flow requires GUI, a script is provided for setting up the display:
 ```sh
- docker pull cgra/cgra-flow:20251112
+ docker pull cgra/cgra-flow:20251214_demo
 
  # For Mac users:
  sh ./run_mac_docker.sh
@@ -55,8 +55,8 @@ As CGRA-Flow requires GUI, a script is provided for setting up the display:
 
 Otherwise, if you don't need the GUI, development can be performed in the container with the environment well set up:
 ```sh
- docker pull cgra/cgra-flow:20251112
- docker run -it cgra/cgra-flow:20251112
+ docker pull cgra/cgra-flow:20251214_demo
+ docker run -it cgra/cgra-flow:20251214_demo
  source /WORK_REPO/venv/bin/activate
 ```
 

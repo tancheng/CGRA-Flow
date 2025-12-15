@@ -518,7 +518,8 @@ def clickGenerateVerilog():
     # pymtl function that is used to generate synthesizable verilog
     cmdline_opts = {'test_verilog': 'zeros', 'test_yosys_verilog': '', 'dump_textwave': False, 'dump_vcd': False,
                     'dump_vtb': False, 'max_cycles': None}
-    test_cgra_universal(cmdline_opts, paramCGRA = selectedCgraParam)
+    # test_cgra_universal(cmdline_opts, paramCGRA = selectedCgraParam)
+    test_cgra_universal(cmdline_opts)
     logging.info("-------------  multiCgraParam  --------------")
     # test_multi_CGRA_universal(cmdline_opts, multiCgraParam=multiCgraParam)
 

@@ -45,7 +45,7 @@ if args.theme:
         MULTI_CGRA_TXT_COLOR = "black"
 
 from VectorCGRA.cgra.test.CgraTemplateRTL_test import *
-# from VectorCGRA.multi_cgra.test.MeshMultiCgraTemplateRTL_test import *
+from VectorCGRA.multi_cgra.test.MeshMultiCgraTemplateRTL_test import *
 
 # importing module
 import logging
@@ -518,17 +518,18 @@ def clickGenerateVerilog():
     # pymtl function that is used to generate synthesizable verilog
     cmdline_opts = {'test_verilog': 'zeros', 'test_yosys_verilog': '', 'dump_textwave': False, 'dump_vcd': False,
                     'dump_vtb': False, 'max_cycles': None}
-    # test_cgra_universal(cmdline_opts, paramCGRA = selectedCgraParam)
+    # Generate 2x2 single CGRA SVerilog for synthesize and layout
     test_cgra_universal(cmdline_opts)
-    logging.info("-------------  multiCgraParam  --------------")
-    # test_multi_CGRA_universal(cmdline_opts, multiCgraParam=multiCgraParam)
+    
+    # Generate 2x2 2x2 CGRA Sverilog for SVerilog text area
+    test_mesh_multi_cgra_universal(cmdline_opts)
 
     widgets["verilogText"].delete("1.0", tkinter.END)
     found = False
     logging.info(f"Current directory: {os.getcwd()}")
     logging.info(os.listdir("./"))
     for fileName in os.listdir("./"):
-        if "__" in fileName and ".v" in fileName:
+        if "__" in fileName and ".v" in fileName and "MeshMultiCgraTemplateRTL" in fileName:
             logging.info(f"Found the file: {fileName}")
             f = open(fileName, "r")
             widgets["verilogText"].insert("1.0", f.read())

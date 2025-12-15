@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-IMAGE=cgra/cgra-flow::20251214_demo
+IMAGE=cgra/cgra-flow:20251214_demo
 
 CONTAINER=mycgraflow
 

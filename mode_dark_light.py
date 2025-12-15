@@ -44,7 +44,7 @@ if args.theme:
         MULTI_CGRA_TILE_COLOR = "#3A7EBF"
         MULTI_CGRA_TXT_COLOR = "black"
 
-from VectorCGRA.cgra.test.CgraTemplateRTL_test import *
+# from VectorCGRA.cgra.test.CgraTemplateRTL_test import *
 from VectorCGRA.multi_cgra.test.MeshMultiCgraTemplateRTL_test import *
 
 # importing module
@@ -519,7 +519,7 @@ def clickGenerateVerilog():
     cmdline_opts = {'test_verilog': 'zeros', 'test_yosys_verilog': '', 'dump_textwave': False, 'dump_vcd': False,
                     'dump_vtb': False, 'max_cycles': None}
     # Generate 2x2 single CGRA SVerilog for synthesize and layout
-    test_cgra_universal(cmdline_opts)
+    # test_cgra_universal(cmdline_opts)
     
     # Generate 2x2 2x2 CGRA Sverilog for SVerilog text area
     test_mesh_multi_cgra_universal(cmdline_opts)
@@ -541,7 +541,7 @@ def clickGenerateVerilog():
         selectedCgraParam.verilogDone = False
         widgets["verilogText"].insert(tkinter.END, "Error exists during Verilog generation")
 
-    os.system("mv CgraTemplateRTL__*.v design.v")
+    # os.system("mv CgraTemplateRTL__*.v design.v")
     # os.system("rename s/\.v/\.log/g *")
 
     os.chdir("..")

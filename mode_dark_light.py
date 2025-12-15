@@ -529,7 +529,7 @@ def clickGenerateVerilog():
     logging.info(f"Current directory: {os.getcwd()}")
     logging.info(os.listdir("./"))
     for fileName in os.listdir("./"):
-        if "__" in fileName and ".v" in fileName and "MeshMultiCgraTemplateRTL" in fileName:
+        if "__" in fileName and ".v" in fileName:
             logging.info(f"Found the file: {fileName}")
             f = open(fileName, "r")
             widgets["verilogText"].insert("1.0", f.read())

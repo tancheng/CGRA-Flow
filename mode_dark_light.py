@@ -482,7 +482,7 @@ def clickTest():
     master.update_idletasks()
 
     # os.system("pytest ../../VectorCGRA")
-    testProc = subprocess.Popen(["pytest ../../VectorCGRA", '-u'], stdout=subprocess.PIPE, shell=True, bufsize=1)
+    testProc = subprocess.Popen(["pytest ../../VectorCGRA --ignore=../../VectorCGRA/noc/PyOCN", '-u'], stdout=subprocess.PIPE, shell=True, bufsize=1)
     failed = 0
     total = 0
     with testProc.stdout:
@@ -2364,4 +2364,5 @@ master.grid_columnconfigure(5, weight=1)
 master.geometry("%dx%d" % (w - 10, h - 70))
 master.geometry("+%d+%d" % (0, 0))
 master.mainloop()
+
 

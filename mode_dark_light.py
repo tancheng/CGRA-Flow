@@ -44,8 +44,8 @@ if args.theme:
         MULTI_CGRA_TILE_COLOR = "#3A7EBF"
         MULTI_CGRA_TXT_COLOR = "black"
 
-# from VectorCGRA.cgra.test.CgraTemplateRTL_test import *
-from VectorCGRA.multi_cgra.test.MeshMultiCgraTemplateRTL_test import *
+from VectorCGRA.cgra.test.CgraTemplateRTL_test import test_cgra_universal
+from VectorCGRA.multi_cgra.test.MeshMultiCgraTemplateRTL_test import test_mesh_multi_cgra_universal
 
 # importing module
 import logging
@@ -411,12 +411,24 @@ def clickReset(root):
     else:
         widgets["resMIIEntry"].insert(0, 0)
 
+# Customizes class to force flow style dump.
+class FlowList(list):
+    pass
+
+tile_default_fu = ["Phi", "Add", "Shift", "Ld", "Sel", "Cmp", "MAC", "St", "Ret", "Mul", "Logic", "Br"]
+
+import yaml
+def flow_list_representer(dumper, data):
+    return dumper.represent_sequence('tag:yaml.org,2002:seq', data, flow_style=True)
+# Forces dumping the FlowList in the flow style.
+yaml.add_representer(FlowList, flow_list_representer)
+
 def dumpArchYaml(yamlPath = 'arch.yaml'):
     """
     Dumps the architecture to a YAML file.
     The default path is `build/arch.yaml`.
     """
-    # Extracts values from widgets
+    # Extract values from widgets
     # Multi-CGRA Defaults
     topo = widgets["topologyVariable"].get() if "topologyVariable" in widgets else "mesh"
     mc_rows_str = widgets["multiCgraRowsLabelEntry"].get()
@@ -441,11 +453,6 @@ def dumpArchYaml(yamlPath = 'arch.yaml'):
     sram_str = widgets["dataMemEntry"].get()
     sram = int(sram_str)
 
-    # Customizes class to force flow style dump.
-    class FlowList(list):
-        pass
-
-    tile_default_operations = ["add", "mul", "sub", "div", "rem", "fadd", "fmul", "fsub", "fdiv", "or", "not", "icmp", "fcmp", "sel", "cast", "sext", "zext", "shl", "vfmul", "fadd_fadd", "fmul_fadd", "data_mov", "ctrl_mov", "reserve", "grant_predicate", "grant_once", "grant_always", "loop_control", "phi", "constant"]  # comprehensive operation set
     data = {
         "architecture": {
             "name": "NeuraMultiCgra",
@@ -469,7 +476,7 @@ def dumpArchYaml(yamlPath = 'arch.yaml'):
         },
         "tile_defaults": {
             "num_registers": 16,
-            "operations": FlowList(tile_default_operations)
+            "operations": FlowList(tile_default_fu)
         }
     }
 
@@ -517,10 +524,7 @@ def dumpArchYaml(yamlPath = 'arch.yaml'):
                     ops = []
                     for fu in fuTypeList:
                         if tile.fuDict[fu] == 1:
-                            # Map to lowercase name, and "Ld" -> "load", "St" -> "store".
-                            # Aligned with https://github.com/coredac/dataflow/blob/4f815fc86020a60aad14089b1cf0d05288a15b97/test/arch_spec/arch_spec_example.yaml#L58-L66
-                            fu_name = "load" if fu == "Ld" else "store" if fu == "St" else fu.lower()
-                            ops.append(fu_name)
+                            ops.append(fu)
                     
                     tile_overrides.append({
                         "cgra_x": c,
@@ -534,11 +538,6 @@ def dumpArchYaml(yamlPath = 'arch.yaml'):
     if tile_overrides:
         data["tile_overrides"] = tile_overrides
 
-    import yaml
-    def flow_list_representer(dumper, data):
-        return dumper.represent_sequence('tag:yaml.org,2002:seq', data, flow_style=True)
-    # Forces dumping the FlowList in the flow style.
-    yaml.add_representer(FlowList, flow_list_representer)
     with open(yamlPath, 'w') as file:
         yaml.dump(data, file, sort_keys=False, default_flow_style=False)
         
@@ -549,15 +548,15 @@ def clickTest():
     # Dumps the architecture to `build/arch.yaml`.
     dumpArchYaml('arch.yaml')
     # need to provide the paths for lib.so and kernel.bc
-    os.system("mkdir -p test")
+    os.system("mkdir test")
     # os.system("cd test")
     os.chdir("test")
 
     widgets["testShow"].configure(text="0%")
     master.update_idletasks()
 
-    # os.system("pytest ../../test/MultiCgraTemplateRTL_test.py --tb=short")
-    testProc = subprocess.Popen(["pytest ../../test/MultiCgraTemplateRTL_test.py --tb=short", '-u'], stdout=subprocess.PIPE, shell=True, bufsize=1)
+    # os.system("pytest ../../VectorCGRA")
+    testProc = subprocess.Popen(["pytest ../../VectorCGRA", '-u'], stdout=subprocess.PIPE, shell=True, bufsize=1)
     failed = 0
     total = 0
     with testProc.stdout:
@@ -581,13 +580,41 @@ def clickTest():
     os.chdir("..")
 
 
+def dumpSelectedCgraParam(yaml_path = "build/arch_selected_cgra.yaml"):
+    """
+    Dumps the selected CGRA parameter to a YAML file.
+    """
+    global selectedCgraParam
+    data = {
+        "multi_cgra_defaults": {
+            "rows": 1,
+            "columns": 1
+        },
+        "cgra_defaults": {
+            "rows": selectedCgraParam.rows,
+            "columns": selectedCgraParam.columns,
+            "configMemSize": selectedCgraParam.configMemSize
+        },
+        "tile_defaults": {
+            "num_registers": 16,
+            "operations": FlowList(tile_default_fu)
+        },
+        "link_overrides": [],
+        "tile_overrides": []
+    }
+    yaml_path = os.path.join(os.path.dirname(__file__), "build/arch_selected_cgra.yaml")
+    with open(yaml_path, "w") as file:
+        yaml.dump(data, file, sort_keys=False, default_flow_style=False)
+    logging.info(f"Successfully dumped selected CGRA parameter to {yaml_path}")
+
 def clickGenerateVerilog():
     message = selectedCgraParam.getErrorMessage()
     if message != "":
         tkinter.messagebox.showerror(title="CGRA Model Checking", message=message)
         return
 
-    os.system("mkdir -p verilog")
+    dumpArchYaml('arch.yaml')
+    os.system("mkdir verilog")
     os.chdir("verilog")
 
     # pymtl function that is used to generate synthesizable verilog
@@ -681,7 +708,7 @@ def clickSynthesize():
     synthesisTimerRun = threading.Thread(target=countSynthesisTime)
     synthesisTimerRun.start()
 
-    os.system("mkdir -p verilog")
+    os.system("mkdir verilog")
     os.chdir("verilog")
 
     # Cacti SPM power/area estimation:
@@ -749,7 +776,7 @@ def clickSynthesize():
     # os.system("mv design.v ../../mflowgen1/designs/cgra/rtl/outputs/design.v")
     os.system("cp design_sv2v.v ../../tools/mflowgen/designs/cgra/rtl/outputs/design.v")
     os.chdir("../../tools/mflowgen")
-    os.system("mkdir -p ./build")
+    os.system("mkdir ./build")
     os.chdir("./build")
     os.system("rm -r ./*")
     os.system("mflowgen run --design ../designs/cgra")
@@ -783,7 +810,7 @@ def clickCompileApp():
     if not fileName or fileName == "   Not selected yet":
         return
 
-    os.system("mkdir -p kernel")
+    os.system("mkdir kernel")
     os.chdir("kernel")
 
     compileCommand = "clang-12 -emit-llvm -fno-unroll-loops -O3 -o kernel.bc -c " + fileName
@@ -893,7 +920,7 @@ def dumpCgraParam2JSON(fileName, cgraParamJson):
 
 
 def clickShowDFG():
-    os.system("mkdir -p kernel")
+    os.system("mkdir kernel")
     os.chdir("kernel")
     fileExist = os.path.exists("kernel.bc")
     global selectedCgraParam
@@ -1139,7 +1166,7 @@ def clickMapDFG():
     mappingProc = None
     heuristic = mappingAlgoCheckVar.get() == 0
 
-    os.system("mkdir -p kernel")
+    os.system("mkdir kernel")
     os.chdir("kernel")
     fileExist = os.path.exists("kernel.bc")
     global selectedCgraParam
@@ -1412,14 +1439,14 @@ def create_multi_cgra_config_panel(master):
     multiCgraRowsLabel.grid(row=3, column=0, padx=5, sticky="w")
     multiCgraRowsLabelEntry = customtkinter.CTkEntry(multiCgraConfigPanel, justify=tkinter.CENTER)
     multiCgraRowsLabelEntry.grid(row=3, column=1, padx=5)
-    multiCgraRowsLabelEntry.insert(0, str(CGRA_ROWS))
+    multiCgraRowsLabelEntry.insert(0, str(3))
     widgets["multiCgraRowsLabelEntry"] = multiCgraRowsLabelEntry
 
     multiCgraColumnsLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Multi-CGRA\nColumns:')
     multiCgraColumnsLabel.grid(row=4, column=0, padx=5, sticky="w")
     multiCgraColumnsEntry = customtkinter.CTkEntry(multiCgraConfigPanel, justify=tkinter.CENTER)
     multiCgraColumnsEntry.grid(row=4, column=1, padx=5)
-    multiCgraColumnsEntry.insert(0, str(CGRA_COLS))
+    multiCgraColumnsEntry.insert(0, str(3))
     widgets["multiCgraColumnsEntry"] = multiCgraColumnsEntry
 
     vectorLanesLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Vector Lanes:')
@@ -2439,5 +2466,4 @@ master.grid_columnconfigure(5, weight=1)
 master.geometry("%dx%d" % (w - 10, h - 70))
 master.geometry("+%d+%d" % (0, 0))
 master.mainloop()
-
 

@@ -286,12 +286,6 @@ def clickEntireTileCheckbutton():
 
 
 def clickFuCheckbutton(fuType):
-    if fuType == "Ld":
-        fuCheckVars["St"].set(fuCheckVars["Ld"].get())
-        selectedCgraParam.updateFuCheckbutton("St", fuCheckVars["St"].get())
-    elif fuType == "St":
-        fuCheckVars["Ld"].set(fuCheckVars["St"].get())
-        selectedCgraParam.updateFuCheckbutton("Ld", fuCheckVars["Ld"].get())
     selectedCgraParam.updateFuCheckbutton(fuType, fuCheckVars[fuType].get())
 
 
@@ -475,7 +469,7 @@ def dumpArchYaml(yamlPath = 'arch.yaml'):
         },
         "tile_defaults": {
             "num_registers": 16,
-            "operations": FlowList(tileDefaultOperations)
+            "fu_types": FlowList(fuTypeList)
         }
     }
 
@@ -524,13 +518,12 @@ def dumpArchYaml(yamlPath = 'arch.yaml'):
                     for fu in fuTypeList:
                         if tile.fuDict[fu] == 1:
                             fuTypes.append(fu)
-                    ops = [op for fu in fuTypes for op in fuType2Operation[fu]]
                     tile_overrides.append({
                         "cgra_x": c,
                         "cgra_y": r,
                         "tile_x": tile.dimX,
                         "tile_y": tile.dimY,
-                        "operations": FlowList(ops),
+                        "fu_types": FlowList(fuTypes),
                         "existence": True
                     })
 
@@ -596,7 +589,7 @@ def dumpSelectedCgraParam(yaml_path = "build/arch_selected_cgra.yaml"):
         },
         "tile_defaults": {
             "num_registers": 16,
-            "operations": FlowList(tile_default_fu)
+            "fu_types": FlowList(fuTypeList)
         },
         "link_overrides": [],
         "tile_overrides": []

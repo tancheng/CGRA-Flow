@@ -22,10 +22,10 @@ PORT_SOUTHWEST = 7
 PORT_DIRECTION_COUNTS = 8
 
 # === Default CGRA Dimensions ===
-CGRA_ROWS = 3
-CGRA_COLS = 3
-ROWS = 4
-COLS = 4
+CGRA_ROWS = 2
+CGRA_COLS = 2
+ROWS = 2
+COLS = 2
 
 # === Layout Settings ===
 INTERVAL = 10
@@ -35,11 +35,11 @@ FRAME_LABEL_FONT_SIZE = 15
 
 # === Memory Sizes ===
 MEM_WIDTH = 50
-CONFIG_MEM_SIZE = 6
+CONFIG_MEM_SIZE = 16
 DATA_MEM_SIZE = 4
 
 
-fuTypeList = ["Phi", "Add", "Shift", "Ld", "Sel", "Cmp", "MAC", "St", "Ret", "Mul", "Logic", "Br"]
+fuTypeList = ["add", "mul", "div", "fadd", "fmul", "fdiv", "logic", "cmp", "sel", "type_conv", "vfmul", "fadd_fadd", "fmul_fadd", "grant", "loop_control", "phi", "constant", "mem", "return", "mem_indexed", "alloca", "shift"]
 xbarTypeList = ["W", "E", "N", "S", "NE", "NW", "SE", "SW"]
 
 xbarType2Port = {

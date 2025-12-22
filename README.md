@@ -87,6 +87,30 @@ CGRA-Flow requires Python3.7.
 
 Refer to the build [scripts](https://github.com/tancheng/CGRA-Flow/blob/master/.github/workflows/main.yml) or look into specific repo for the manual installation if you don't want to use docker.
 
+Contribution Guide
+--------------------------------------------------------
+👋 Welcome Contributors!
+
+To contribute to this project, you can clone the Github repository and mount it as a volume 
+in the Docker container. This allow you to edit code on your host machine while testing changes inside
+the container environment.
+Update the Docker run command to mount your local repository(take `run_windows_docker.sh` as an example):
+```shell
+IMAGE=cgra/cgra-flow:20251112
+CONTAINER=mycgraflow
+XSOCK=/tmp/.X11-unix
+# for developer: mount the upstream repo to the container.
+# Please update the path to the actual path on your machine.
+MOUNT_PATH=/path/to/your/cloned/CGRA-Flow:/path/to/container
+sudo docker run \
+    -it \
+    --name=$CONTAINER \
+    -v $XSOCK:$XSOCK:rw \
+    -v $MOUNT_PATH \
+    -e DISPLAY=$DISPLAY \
+    $IMAGE \
+    /bin/bash
+```
 
 Citation
 --------------------------------------------------------------------------

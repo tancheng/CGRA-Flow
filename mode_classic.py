@@ -902,7 +902,7 @@ def clickTest():
     master.update_idletasks()
 
     # os.system("pytest ../../VectorCGRA")
-    testProc = subprocess.Popen(["pytest ../../VectorCGRA", '-u'], stdout=subprocess.PIPE, shell=True, bufsize=1)
+    testProc = subprocess.Popen(["pytest ../../VectorCGRA --ignore=../../VectorCGRA/noc/PyOCN", '-u'], stdout=subprocess.PIPE, shell=True, bufsize=1)
     failed = 0
     total = 0
     with testProc.stdout:

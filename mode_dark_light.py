@@ -44,8 +44,8 @@ if args.theme:
         MULTI_CGRA_TILE_COLOR = "#3A7EBF"
         MULTI_CGRA_TXT_COLOR = "black"
 
-# from VectorCGRA.cgra.test.CgraTemplateRTL_test import *
-from VectorCGRA.multi_cgra.test.MeshMultiCgraTemplateRTL_test import *
+from VectorCGRA.cgra.test.CgraTemplateRTL_test import test_cgra_universal
+from VectorCGRA.multi_cgra.test.MeshMultiCgraTemplateRTL_test import test_mesh_multi_cgra_universal
 
 # importing module
 import logging
@@ -286,12 +286,6 @@ def clickEntireTileCheckbutton():
 
 
 def clickFuCheckbutton(fuType):
-    if fuType == "Ld":
-        fuCheckVars["St"].set(fuCheckVars["Ld"].get())
-        selectedCgraParam.updateFuCheckbutton("St", fuCheckVars["St"].get())
-    elif fuType == "St":
-        fuCheckVars["Ld"].set(fuCheckVars["St"].get())
-        selectedCgraParam.updateFuCheckbutton("Ld", fuCheckVars["Ld"].get())
     selectedCgraParam.updateFuCheckbutton(fuType, fuCheckVars[fuType].get())
 
 
@@ -411,9 +405,21 @@ def clickReset(root):
     else:
         widgets["resMIIEntry"].insert(0, 0)
 
-def dumpArchYaml(yamlPath):
+# Customizes class to force flow style dump.
+class FlowList(list):
+    pass
+
+
+import yaml
+def flow_list_representer(dumper, data):
+    return dumper.represent_sequence('tag:yaml.org,2002:seq', data, flow_style=True)
+# Forces dumping the FlowList in the flow style.
+yaml.add_representer(FlowList, flow_list_representer)
+
+def dumpArchYaml(yamlPath = 'arch.yaml'):
     """
     Dumps the architecture to a YAML file.
+    The default path is `build/arch.yaml`.
     """
     # Extract values from widgets
     # Multi-CGRA Defaults
@@ -460,10 +466,70 @@ def dumpArchYaml(yamlPath):
             "columns": cgra_cols,
             "configMemSize": cfg_mem,
             "per bank sram": sram
+        },
+        "tile_defaults": {
+            "num_registers": 16,
+            "fu_types": FlowList(fuTypeList)
         }
     }
 
-    import yaml
+    # Collects the links information.
+    link_overrides = []
+    for r in range(multiCgraParam.rows):
+        for c in range(multiCgraParam.cols):
+            target_cgra = multiCgraParam.getCgraParam(r, c)
+            # Checks all template links in the CGRA.
+            for link in target_cgra.templateLinks:
+                if link.disabled:
+                    if isinstance(link.srcTile, ParamTile) and isinstance(link.dstTile, ParamTile):
+                        link_overrides.append({
+                            "src_cgra_x": c,
+                            "src_cgra_y": r,
+                            "dst_cgra_x": c,
+                            "dst_cgra_y": r,
+                            "src_tile_x": link.srcTile.dimX,
+                            "src_tile_y": link.srcTile.dimY,
+                            "dst_tile_x": link.dstTile.dimX,
+                            "dst_tile_y": link.dstTile.dimY,
+                            "existence": False
+                        })
+
+    if link_overrides:
+        data["link_overrides"] = link_overrides
+
+    # Collects the tile information.
+    tile_overrides = []
+    for r in range(multiCgraParam.rows):
+        for c in range(multiCgraParam.cols):
+            target_cgra = multiCgraParam.getCgraParam(r, c)
+            for tile in target_cgra.tiles:
+                # Case 1: Tile is totally disabled.
+                if tile.disabled:
+                    tile_overrides.append({
+                        "cgra_x": c,
+                        "cgra_y": r,
+                        "tile_x": tile.dimX,
+                        "tile_y": tile.dimY,
+                        "existence": False
+                    })
+                # Case 2: Tile is enabled but has non-default functional units.
+                elif not tile.isDefaultFus():
+                    fuTypes = []
+                    for fu in fuTypeList:
+                        if tile.fuDict[fu] == 1:
+                            fuTypes.append(fu)
+                    tile_overrides.append({
+                        "cgra_x": c,
+                        "cgra_y": r,
+                        "tile_x": tile.dimX,
+                        "tile_y": tile.dimY,
+                        "fu_types": FlowList(fuTypes),
+                        "existence": True
+                    })
+
+    if tile_overrides:
+        data["tile_overrides"] = tile_overrides
+
     with open(yamlPath, 'w') as file:
         yaml.dump(data, file, sort_keys=False, default_flow_style=False)
         
@@ -506,12 +572,40 @@ def clickTest():
     os.chdir("..")
 
 
+def dumpSelectedCgraParam(yaml_path = "build/arch_selected_cgra.yaml"):
+    """
+    Dumps the selected CGRA parameter to a YAML file.
+    """
+    global selectedCgraParam
+    data = {
+        "multi_cgra_defaults": {
+            "rows": 1,
+            "columns": 1
+        },
+        "cgra_defaults": {
+            "rows": selectedCgraParam.rows,
+            "columns": selectedCgraParam.columns,
+            "configMemSize": selectedCgraParam.configMemSize
+        },
+        "tile_defaults": {
+            "num_registers": 16,
+            "fu_types": FlowList(fuTypeList)
+        },
+        "link_overrides": [],
+        "tile_overrides": []
+    }
+    yaml_path = os.path.join(os.path.dirname(__file__), "build/arch_selected_cgra.yaml")
+    with open(yaml_path, "w") as file:
+        yaml.dump(data, file, sort_keys=False, default_flow_style=False)
+    logging.info(f"Successfully dumped selected CGRA parameter to {yaml_path}")
+
 def clickGenerateVerilog():
     message = selectedCgraParam.getErrorMessage()
     if message != "":
         tkinter.messagebox.showerror(title="CGRA Model Checking", message=message)
         return
 
+    dumpArchYaml('arch.yaml')
     os.system("mkdir verilog")
     os.chdir("verilog")
 
@@ -2364,5 +2458,4 @@ master.grid_columnconfigure(5, weight=1)
 master.geometry("%dx%d" % (w - 10, h - 70))
 master.geometry("+%d+%d" % (0, 0))
 master.mainloop()
-
 

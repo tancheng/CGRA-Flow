@@ -63,7 +63,7 @@ class CGRAParam:
                 # the tile connect to mem need to able to access mem
                 if tile.hasToMem() or tile.hasFromMem():
                     # for now, the compiler doesn't support seperate read or write, both of them need to locate in the same tile
-                    if tile.hasToMem() and tile.hasFromMem() and tile.fuDict["Ld"] == 1 and tile.fuDict["St"] == 1:
+                    if tile.hasToMem() and tile.hasFromMem() and (tile.fuDict["mem"] == 1 or tile.fuDict["mem_indexed"] == 1):
                         memExist = True
                     else:
                         return "Tile " + str(tile.ID) + " needs to contain the Load/Store functional units."

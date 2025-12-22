@@ -887,8 +887,8 @@ def dumpCgraParam2JSON(fileName, cgraParamJson):
                     if tile.fuDict[fuType] == 1:
                         curDict["supportedFUs"].append(fuType)
 
-            if (tile.hasFromMem() and tile.fuDict["Ld"] == 1) and \
-                    (tile.hasToMem() and tile.fuDict["St"] == 1):
+            if tile.hasFromMem() and (tile.fuDict["mem"] == 1 or tile.fuDict["mem_indexed"] == 1) and \
+                    tile.hasToMem() and (tile.fuDict["mem"] == 1 or tile.fuDict["mem_indexed"] == 1):
                 curDict["accessMem"] = True
 
         cgraParamJson["tiles"][str(tile.ID)] = curDict

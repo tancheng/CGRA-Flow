@@ -24,8 +24,8 @@ PORT_DIRECTION_COUNTS = 8
 # === Default CGRA Dimensions ===
 CGRA_ROWS = 2
 CGRA_COLS = 2
-ROWS = 2
-COLS = 2
+ROWS = 4
+COLS = 4
 
 # === Layout Settings ===
 INTERVAL = 10

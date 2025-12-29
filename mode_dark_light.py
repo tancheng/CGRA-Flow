@@ -549,7 +549,7 @@ def clickTest():
     widgets["testProgress"].set(0)
     master.update_idletasks()
 
-    pytest_cmd = pytest_cmd = "pytest ../../VectorCGRA/cgra/test ../../VectorCGRA/tile/test \
+    pytest_cmd = pytest_cmd = "pytest ../../VectorCGRA/cgra/test \
                                 ../../VectorCGRA/multi_cgra/test/MeshMultiCgraTemplateRTL_test.py --tb=short -v"
     
     testProc = subprocess.Popen(

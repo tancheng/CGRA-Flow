@@ -686,7 +686,7 @@ def runYosys():
 
 
 def clickSynthesize():
-    dumpArchYaml('arch.yaml')
+    dumpArchYaml('customized_arch.yaml')
     global selectedCgraParam
     global synthesisRunning
 
@@ -759,7 +759,7 @@ def clickSynthesize():
     os.chdir("../../build/verilog")
     cur_dir = os.getcwd()
 
-    arch_file_path = os.path.join(cur_dir, '../arch.yaml')
+    arch_file_path = os.path.join(cur_dir, '../customized_arch.yaml')
     cmdline_opts = {'test_verilog': 'zeros'}
     logging.info("⏳⏳⏳ Generating CgraTemplateRTL__provided__pickled.v......")
     test_simplified_multi_cgra(cmdline_opts, arch_file_path)

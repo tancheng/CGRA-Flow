@@ -45,7 +45,7 @@ if args.theme:
         MULTI_CGRA_TXT_COLOR = "black"
 
 from VectorCGRA.cgra.test.CgraTemplateRTL_test import test_cgra_universal
-from VectorCGRA.multi_cgra.test.MeshMultiCgraTemplateRTL_test import test_mesh_multi_cgra_universal
+from VectorCGRA.multi_cgra.test.MeshMultiCgraTemplateRTL_test import test_mesh_multi_cgra_universal, test_simplified_multi_cgra
 
 # importing module
 import logging
@@ -686,21 +686,22 @@ def runYosys():
 
 
 def clickSynthesize():
+    dumpArchYaml('customized_arch.yaml')
     global selectedCgraParam
     global synthesisRunning
 
     if synthesisRunning:
         return
 
-    if not selectedCgraParam.verilogDone:
-        tkinter.messagebox.showerror(title="Sythesis", message="The verilog generation needs to be done first.")
-        return
+    # if not selectedCgraParam.verilogDone:
+    #     tkinter.messagebox.showerror(title="Sythesis", message="The verilog generation needs to be done first.")
+    #     return
 
     synthesisRunning = True
     synthesisTimerRun = threading.Thread(target=countSynthesisTime)
     synthesisTimerRun.start()
 
-    os.system("mkdir verilog")
+    os.system("mkdir -p verilog")
     os.chdir("verilog")
 
     # Cacti SPM power/area estimation:
@@ -756,6 +757,13 @@ def clickSynthesize():
     progress.start()
 
     os.chdir("../../build/verilog")
+    cur_dir = os.getcwd()
+
+    arch_file_path = os.path.join(cur_dir, '../customized_arch.yaml')
+    cmdline_opts = {'test_verilog': 'zeros'}
+    logging.info("⏳⏳⏳ Generating CgraTemplateRTL__provided__pickled.v......")
+    test_simplified_multi_cgra(cmdline_opts, arch_file_path)
+    os.system('cp CgraTemplateRTL__provided__pickled.v design.v')
     # mflowgen synthesis:
     os.system("../../tools/sv2v/bin/sv2v design.v > design_sv2v.v")
     progress = threading.Thread(target=setReportProgress, args=[40])
@@ -1431,14 +1439,14 @@ def create_multi_cgra_config_panel(master):
     multiCgraRowsLabel.grid(row=3, column=0, padx=5, sticky="w")
     multiCgraRowsLabelEntry = customtkinter.CTkEntry(multiCgraConfigPanel, justify=tkinter.CENTER)
     multiCgraRowsLabelEntry.grid(row=3, column=1, padx=5)
-    multiCgraRowsLabelEntry.insert(0, str(3))
+    multiCgraRowsLabelEntry.insert(0, str(CGRA_ROWS))
     widgets["multiCgraRowsLabelEntry"] = multiCgraRowsLabelEntry
 
     multiCgraColumnsLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Multi-CGRA\nColumns:')
     multiCgraColumnsLabel.grid(row=4, column=0, padx=5, sticky="w")
     multiCgraColumnsEntry = customtkinter.CTkEntry(multiCgraConfigPanel, justify=tkinter.CENTER)
     multiCgraColumnsEntry.grid(row=4, column=1, padx=5)
-    multiCgraColumnsEntry.insert(0, str(3))
+    multiCgraColumnsEntry.insert(0, str(CGRA_COLS))
     widgets["multiCgraColumnsEntry"] = multiCgraColumnsEntry
 
     vectorLanesLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Vector Lanes:')

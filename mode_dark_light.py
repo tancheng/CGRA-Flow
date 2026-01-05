@@ -2,6 +2,7 @@ import json
 import math
 import os
 import platform
+import re
 import subprocess
 import threading
 import time
@@ -545,29 +546,73 @@ def clickTest():
     os.chdir("test")
 
     widgets["testShow"].configure(text="0%")
+    widgets["testProgress"].set(0)
     master.update_idletasks()
 
-    # os.system("pytest ../../VectorCGRA")
-    testProc = subprocess.Popen(["pytest ../../VectorCGRA --ignore=../../VectorCGRA/noc/PyOCN", '-u'], stdout=subprocess.PIPE, shell=True, bufsize=1)
+    pytest_cmd = pytest_cmd = "pytest ../../VectorCGRA/cgra/test \
+                                ../../VectorCGRA/multi_cgra/test/MeshMultiCgraTemplateRTL_test.py --tb=short -v"
+    
+    testProc = subprocess.Popen(
+        pytest_cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        shell=True,
+        universal_newlines=True,
+        bufsize=1,
+        env={**os.environ, 'PYTHONUNBUFFERED': '1'}
+    )
+    
     failed = 0
     total = 0
-    with testProc.stdout:
-        for line in iter(testProc.stdout.readline, b''):
-            outputLine = line.decode("ISO-8859-1")
+    last_progress = 0
+    
+    # Regex pattern to match pytest progress: [ 12%] or [12%] or [100%]
+    progress_pattern = re.compile(r'\[\s*(\d+)\s*%\]')
+    
+    try:
+        for line in iter(testProc.stdout.readline, ''):
+            if not line:
+                break
+                
+            outputLine = line.rstrip()
             logging.info(outputLine)
-            if "%]" in outputLine:
-                value = int(outputLine.split("[")[1].split("%]")[0])
-                # logging.info(f'testProgress value: {value}')
-                widgets["testProgress"].set(value / 100)
-                widgets["testShow"].configure(text=str(value) + "%")
-                master.update_idletasks()
-                total += 1
-                if ".py F" in outputLine:
-                    failed += 1
-
-    widgets["testShow"].configure(text=" PASSED " if failed == 0 else str(total - failed) + "/" + str(total))
-    # (out, err) = testProc.communicate()
-    # logging.info("check test output:", out)
+            
+            # Checks for progress percentage using regex.
+            match = progress_pattern.search(outputLine)
+            if match:
+                try:
+                    value = int(match.group(1))
+                    if value != last_progress:
+                        widgets["testProgress"].set(value / 100.0)
+                        widgets["testShow"].configure(text=f"{value}%")
+                        master.update_idletasks()
+                        last_progress = value
+                    total += 1
+                except (ValueError, AttributeError) as e:
+                    logging.warning(f"Failed to parse progress from line: {outputLine}, error: {e}")
+            
+            # Checks for test failures.
+            if ".py" in outputLine and ("FAILED" in outputLine or "ERROR" in outputLine or " F " in outputLine):
+                failed += 1
+                logging.warning(f"Test failure detected: {outputLine}")
+        
+        # Waits for process to complete.
+        testProc.wait()
+        
+        # Final status updates.
+        if testProc.returncode == 0:
+            widgets["testShow"].configure(text=" PASSED ")
+        else:
+            widgets["testShow"].configure(text=f" FAILED ({failed} failures)" if failed > 0 else " FAILED")
+            
+    except Exception as e:
+        logging.error(f"Error reading pytest output: {e}")
+        widgets["testShow"].configure(text=" ERROR ")
+    finally:
+        # Ensures the process is terminated.
+        if testProc.poll() is None:
+            testProc.terminate()
+            testProc.wait()
 
     os.chdir("..")
 

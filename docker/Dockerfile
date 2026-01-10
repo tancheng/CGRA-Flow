@@ -7,7 +7,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     YOSYS_EXE="/OpenROAD-flow-scripts/tools/install/yosys/bin/yosys" \
     OPENROAD_EXE="/OpenROAD-flow-scripts/tools/install/OpenROAD/bin/openroad" \
     PATH="/WORK_REPO/CGRA-Flow/tools/sv2v/bin:/WORK_REPO/verilator/bin:$PATH" \
-    PATH="/WORK_REPO/CGRA-Flow/tools/OpenROAD-flow-scripts/tools/install/OpenROAD/bin:$PATH"
+    PATH="/WORK_REPO/CGRA-Flow/tools/OpenROAD-flow-scripts/tools/install/OpenROAD/bin:$PATH" \
+    PATH="/WORK_REPO/verilator/bin/:$PATH"
 
 SHELL ["/bin/bash", "-c"]
 

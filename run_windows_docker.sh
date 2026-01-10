@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-IMAGE=cgra/cgra-flow:20251214_demo
+IMAGE=cgra-flow:20260110
 
-CONTAINER=mycgraflow
+CONTAINER=cgraflow20260110
 
 XSOCK=/tmp/.X11-unix
 

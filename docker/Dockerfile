@@ -5,10 +5,11 @@ ENV DEBIAN_FRONTEND=noninteractive \
     VERILATOR_ROOT=/WORK_REPO/verilator \
     PYMTL_VERILATOR_INCLUDE_DIR=/WORK_REPO/verilator/share/verilator/include \
     YOSYS_EXE="/OpenROAD-flow-scripts/tools/install/yosys/bin/yosys" \
-    OPENROAD_EXE="/OpenROAD-flow-scripts/tools/install/OpenROAD/bin/openroad" \
-    PATH="/WORK_REPO/CGRA-Flow/tools/sv2v/bin:/WORK_REPO/verilator/bin:$PATH" \
-    PATH="/WORK_REPO/CGRA-Flow/tools/OpenROAD-flow-scripts/tools/install/OpenROAD/bin:$PATH" \
-    PATH="/WORK_REPO/verilator/bin/:$PATH"
+    OPENROAD_EXE="/OpenROAD-flow-scripts/tools/install/OpenROAD/bin/openroad"
+    
+ENV PATH="/WORK_REPO/CGRA-Flow/tools/sv2v/bin:$PATH"
+ENV PATH="/WORK_REPO/CGRA-Flow/tools/OpenROAD-flow-scripts/tools/install/OpenROAD/bin:$PATH"
+ENV PATH="/WORK_REPO/verilator/bin/:$PATH"
 
 SHELL ["/bin/bash", "-c"]
 

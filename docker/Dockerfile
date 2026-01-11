@@ -16,7 +16,7 @@ SHELL ["/bin/bash", "-c"]
 # Install System Dependencies.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     llvm-12 llvm-12-dev llvm-12-tools \
-    graphviz libffi-dev python3-tk \
+    graphviz libffi-dev python3-tk vim \
     wget curl git cmake make build-essential \
     && curl -sSL https://get.haskellstack.org/ | sh \
     && apt-get clean \

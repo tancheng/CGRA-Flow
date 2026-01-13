@@ -2155,20 +2155,9 @@ def constructDependencyFiles(cgraflow_basepath, standard_module_name, test_platf
         file.writelines(lines)
 
 
-def runOpenRoad(mk_sdc_file_path, cmd_path, odb_path, layout_path):
+def runOpenRoad(mk_sdc_file_path):
     # Runs the test module from RTL to GDSII.
     subprocess.run(["make DESIGN_CONFIG=./" + mk_sdc_file_path + "config.mk"], shell=True, encoding="utf-8")
-    # Generates a cmd.tcl file for openroad
-    if os.path.exists(cmd_path):
-        os.remove(cmd_path)
-    with open(cmd_path, mode="a", encoding="utf-8") as file:
-        # Load the test module layout file.
-        file.write("read_db " + odb_path + "\n")
-        # Saves layout to image.
-        file.write("save_image " + layout_path + "\n")
-        file.write("exit")
-    # Runs openroad.
-    subprocess.run(["openroad", cmd_path], shell=False, encoding="utf-8")
 
 
 def clickRTL2Layout():
@@ -2178,7 +2167,7 @@ def clickRTL2Layout():
     test_platform_name = processOptions.get()
     logging.info(f"Test platform is {test_platform_name}")
     orfs_basePath = cgraflow_basepath + "/tools/OpenROAD-flow-scripts/flow/"
-    layout_path = cgraflow_basepath + "/build/" + "layout.png"
+    layout_path = orfs_basePath + f"reports/{test_platform_name}/{standard_module_name}/base" + "final_all.webp"
     odb_path = orfs_basePath + "results/" + test_platform_name + "/" + standard_module_name + "/base/6_final.odb"
     cmd_path = orfs_basePath + "cmd.tcl"
     verilog_srcfile_path = "designs/src/" + standard_module_name + "/"

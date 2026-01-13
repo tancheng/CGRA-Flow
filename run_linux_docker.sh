@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-CONTAINER=cgra/cgra-flow:20251214_demo
+CONTAINER=cgra/cgra-flow:20260110
 
 # Allow local connections to X server
 xhost +local:docker

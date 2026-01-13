@@ -43,7 +43,7 @@ The Neura artifact is available on the [neura-asplos-ae](https://github.com/tanc
 > If you encounter an OOM (out of memory) error during the RTL2Layout stage, this indicates insufficient memory on your machine.
 > Based on our experience, routing for a single CGRA with 2×2 tiles requires approximately 100 GB of memory.
 > You can switch to a machine with larger memory capacity to proceed with RTL2Layout.
-> We provided a RTL2Layout [script](https://github.com/tancheng/CGRA-Flow/blob/master/Rtl2Layout.sh). Please ensure to modify any custom parameters accordingly.
+> We provided a RTL2Layout [script](https://github.com/tancheng/CGRA-Flow/blob/master/Rtl2Layout.sh) without invoking the GUI. Please ensure to modify any custom parameters accordingly.
 
 As CGRA-Flow requires GUI, a script is provided for setting up the display:
 ```sh

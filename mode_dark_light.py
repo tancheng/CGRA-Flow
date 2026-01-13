@@ -2167,7 +2167,7 @@ def clickRTL2Layout():
     test_platform_name = processOptions.get()
     logging.info(f"Test platform is {test_platform_name}")
     orfs_basePath = cgraflow_basepath + "/tools/OpenROAD-flow-scripts/flow/"
-    layout_path = orfs_basePath + f"reports/{test_platform_name}/{standard_module_name}/base" + "final_all.webp"
+    layout_path = orfs_basePath + f"reports/{test_platform_name}/{standard_module_name}/base/" + "final_all.webp"
     odb_path = orfs_basePath + "results/" + test_platform_name + "/" + standard_module_name + "/base/6_final.odb"
     cmd_path = orfs_basePath + "cmd.tcl"
     verilog_srcfile_path = "designs/src/" + standard_module_name + "/"

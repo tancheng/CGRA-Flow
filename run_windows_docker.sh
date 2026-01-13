@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-IMAGE=cgra-flow:20260110
+IMAGE=cgra/cgra-flow:20260110
 
 CONTAINER=cgraflow20260110
 

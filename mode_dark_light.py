@@ -2154,7 +2154,7 @@ def constructDependencyFiles(cgraflow_basepath, standard_module_name, test_platf
         file.writelines(lines)
 
 
-def runOpenRoad(mk_sdc_file_path, cmd_path, odb_path, layout_path):
+def runOpenRoad(mk_sdc_file_path):
     # Runs the test module from RTL to GDSII.
     subprocess.run(["make DESIGN_CONFIG=./" + mk_sdc_file_path + "config.mk"], shell=True, encoding="utf-8")
 

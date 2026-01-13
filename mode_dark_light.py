@@ -651,6 +651,7 @@ def clickGenerateVerilog():
         return
 
     dumpArchYaml('arch.yaml')
+    os.system("rm -r verilog")
     os.system("mkdir verilog")
     os.chdir("verilog")
 

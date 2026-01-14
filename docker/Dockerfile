@@ -5,11 +5,12 @@ ENV DEBIAN_FRONTEND=noninteractive \
     VERILATOR_ROOT=/WORK_REPO/verilator \
     PYMTL_VERILATOR_INCLUDE_DIR=/WORK_REPO/verilator/share/verilator/include \
     YOSYS_EXE="/OpenROAD-flow-scripts/tools/install/yosys/bin/yosys" \
-    OPENROAD_EXE="/OpenROAD-flow-scripts/tools/install/OpenROAD/bin/openroad"
-    
+    OPENROAD_EXE="/OpenROAD-flow-scripts/tools/install/OpenROAD/bin/openroad" \
+    LLVM_RELEASE_URL="https://github.com/tancheng/CGRA-Flow/releases/download/llvm-project-6146a88-prebuild/llvm-project-6146a88-prebuild.tar.xz"
 ENV PATH="/WORK_REPO/CGRA-Flow/tools/sv2v/bin:$PATH"
 ENV PATH="/WORK_REPO/CGRA-Flow/tools/OpenROAD-flow-scripts/tools/install/OpenROAD/bin:$PATH"
 ENV PATH="/WORK_REPO/verilator/bin/:$PATH"
+ENV PATH="/WORK_REPO/llvm-project/build/bin:$PATH"
 
 SHELL ["/bin/bash", "-c"]
 
@@ -17,7 +18,7 @@ SHELL ["/bin/bash", "-c"]
 RUN apt-get update && apt-get install -y --no-install-recommends \
     llvm-12 llvm-12-dev llvm-12-tools clang-12 \
     graphviz libffi-dev python3-tk vim \
-    wget curl git cmake make build-essential \
+    wget curl git cmake make build-essential ninja-build \
     && curl -sSL https://get.haskellstack.org/ | sh \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -52,6 +53,23 @@ RUN source /WORK_REPO/venv/bin/activate && \
     mkdir -p build && cd build && \
     mflowgen run --design ../designs/GcdUnit && \
     make 3
+
+# Download and extract pre-built LLVM.
+RUN wget ${LLVM_RELEASE_URL} \
+    && tar -xJf llvm-project-6146a88.tar.xz \
+    && rm llvm-project-6146a88.tar.xz
+
+# Build dataflow
+RUN source /WORK_REPO/venv/bin/activate && \
+    cd /WORK_REPO/CGRA-Flow/dataflow && \
+    mkdir -p build && cd build \
+    && cmake -G Ninja .. \
+      -DLLVM_DIR=/WORK_REPO/llvm-project/build/lib/cmake/llvm \
+      -DMLIR_DIR=/WORK_REPO/llvm-project/build/lib/cmake/mlir \
+      -DMLIR_SOURCE_DIR=/WORK_REPO/llvm-project/mlir \
+      -DMLIR_BINARY_DIR=/WORK_REPO/llvm-project/build \
+      -DCMAKE_CXX_FLAGS="-std=c++17" \
+    && ninja
 
 WORKDIR /WORK_REPO/CGRA-Flow/build
 CMD ["tail", "-f", "/dev/null"]

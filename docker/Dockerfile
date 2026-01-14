@@ -70,5 +70,15 @@ RUN source /WORK_REPO/venv/bin/activate && \
       -DCMAKE_CXX_FLAGS="-std=c++17" \
     && ninja
 
+# Install dependencies for dataflow testing (torch, torch-mlir, numpy)
+RUN source /WORK_REPO/venv/bin/activate && \
+    pip3 install --no-cache-dir "numpy<2.0" && \
+    wget -q https://github.com/llvm/torch-mlir/releases/download/snapshot-20231229.1067/torch-2.2.0.dev20231204+cpu-cp311-cp311-linux_x86_64.whl && \
+    pip3 install torch-2.2.0.dev20231204+cpu-cp311-cp311-linux_x86_64.whl && \
+    rm torch-2.2.0.dev20231204+cpu-cp311-cp311-linux_x86_64.whl && \
+    wget -q https://github.com/llvm/torch-mlir/releases/download/snapshot-20231229.1067/torch_mlir-20231229.1067-cp311-cp311-linux_x86_64.whl && \
+    pip3 install torch_mlir-20231229.1067-cp311-cp311-linux_x86_64.whl && \
+    rm torch_mlir-20231229.1067-cp311-cp311-linux_x86_64.whl && \
+
 WORKDIR /WORK_REPO/CGRA-Flow/build
 CMD ["tail", "-f", "/dev/null"]

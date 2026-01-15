@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-CONTAINER=cgra/cgra-flow:20260110
+CONTAINER=cgra/neura-flow:20260114
 
 # Allow local connections to X server
 xhost +local:docker

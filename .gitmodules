@@ -19,3 +19,6 @@
 [submodule "tools/cacti"]
 	path = tools/cacti
 	url = https://github.com/tancheng/cacti.git
+[submodule "dataflow"]
+	path = dataflow
+	url = https://github.com/coredac/dataflow

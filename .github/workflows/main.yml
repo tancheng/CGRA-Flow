@@ -24,12 +24,29 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        submodules: true
+        fetch-depth: 0
+        submodules: recursive
     
     # Update references
     - name: Git Sumbodule Update
       run: |
-        git submodule update --init
+        git submodule sync --recursive
+        git submodule update --init --recursive
+        # Zeonica_Testbench 在 zeonica 内是嵌套 submodule；用 --remote 拉到远端最新
+        git -C zeonica submodule update --init --recursive --remote test/Zeonica_Testbench
+        
+    - name: Set up Go (for Zeonica)
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: zeonica/go.mod
+        cache: true
+
+    - name: Run FIR testbench (Zeonica)
+      working-directory: ${{github.workspace}}/zeonica
+      run: |
+        go mod download
+        go build -o fir_testbench ./test/testbench/fir
+        ./fir_testbench
         
 
     - name: Install LLVM and Clang for CGRA-Mapper

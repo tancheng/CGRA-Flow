@@ -17,11 +17,9 @@ SHELL ["/bin/bash", "-c"]
 # Install System Dependencies.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     llvm-12 llvm-12-dev llvm-12-tools clang-12 \
-    graphviz libffi-dev python3-tk vim \
+    graphviz libffi-dev python3-tk vim python3.11 python3.11-venv \
     wget curl git cmake make build-essential ninja-build \
-    && curl -sSL https://get.haskellstack.org/ | sh \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && curl -sSL https://get.haskellstack.org/ | sh
 
 # Setups Workspace and Clones Repo.
 WORKDIR /WORK_REPO
@@ -40,9 +38,9 @@ RUN wget https://github.com/tancheng/pymtl-verilator/raw/master/verilator-travis
     && rm verilator-travis-4.036.tar.gz
 
 # Python Environment Setup
-RUN python3 -m venv /WORK_REPO/venv \
+RUN python3.11 -m venv /WORK_REPO/venv \
     && source /WORK_REPO/venv/bin/activate \
-    && pip3 install --no-cache-dir py==1.11.0 wheel py-markdown-table pillow customtkinter PyYAML \
+    && pip3 install --no-cache-dir py==1.11.0 wheel py-markdown-table pillow customtkinter PyYAML lit \
     && pip3 install --no-cache-dir -U git+https://github.com/tancheng/pymtl3.1@yo-struct-list-fix \
     && cd /WORK_REPO/CGRA-Flow/tools/mflowgen && pip3 install -e . \
     && rm -rf /root/.cache/pip
@@ -78,7 +76,7 @@ RUN source /WORK_REPO/venv/bin/activate && \
     rm torch-2.2.0.dev20231204+cpu-cp311-cp311-linux_x86_64.whl && \
     wget -q https://github.com/llvm/torch-mlir/releases/download/snapshot-20231229.1067/torch_mlir-20231229.1067-cp311-cp311-linux_x86_64.whl && \
     pip3 install torch_mlir-20231229.1067-cp311-cp311-linux_x86_64.whl && \
-    rm torch_mlir-20231229.1067-cp311-cp311-linux_x86_64.whl && \
+    rm torch_mlir-20231229.1067-cp311-cp311-linux_x86_64.whl
 
 WORKDIR /WORK_REPO/CGRA-Flow/build
 CMD ["tail", "-f", "/dev/null"]

@@ -47,7 +47,7 @@ The Neura artifact is available on the [neura-asplos-ae](https://github.com/tanc
 
 As CGRA-Flow requires GUI, a script is provided for setting up the display:
 ```sh
- docker pull cgra/cgra-flow:20251214_demo
+ docker pull cgra/neura-flow:20260114
 
  # For Mac users:
  sh ./run_mac_docker.sh
@@ -62,8 +62,8 @@ As CGRA-Flow requires GUI, a script is provided for setting up the display:
 
 Otherwise, if you don't need the GUI, development can be performed in the container with the environment well set up:
 ```sh
- docker pull cgra/cgra-flow:20251214_demo
- docker run -it cgra/cgra-flow:20251214_demo
+ docker pull cgra/neura-flow:20260114
+ docker run -it cgra/neura-flow:20260114
  source /WORK_REPO/venv/bin/activate
 ```
 

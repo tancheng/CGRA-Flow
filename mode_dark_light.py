@@ -651,6 +651,7 @@ def clickGenerateVerilog():
         return
 
     dumpArchYaml('arch.yaml')
+    arch_file_path = os.path.join(os.getcwd(), './arch.yaml')
     os.system("rm -r verilog")
     os.system("mkdir verilog")
     os.chdir("verilog")
@@ -662,7 +663,10 @@ def clickGenerateVerilog():
     # test_cgra_universal(cmdline_opts)
     
     # Generate 2x2 2x2 CGRA Sverilog for SVerilog text area
-    test_mesh_multi_cgra_universal(cmdline_opts)
+    print(f"⏳ Generating verilog...")
+    test_mesh_multi_cgra_universal(cmdline_opts, arch_file_path)
+    test_simplified_multi_cgra(cmdline_opts, arch_file_path)
+    os.system("cp CgraTemplateRTL__provided__pickled.v design.v")
 
     widgets["verilogText"].delete("1.0", tkinter.END)
     found = False
@@ -803,13 +807,6 @@ def clickSynthesize():
     progress.start()
 
     os.chdir("../../build/verilog")
-    cur_dir = os.getcwd()
-
-    arch_file_path = os.path.join(cur_dir, '../customized_arch.yaml')
-    cmdline_opts = {'test_verilog': 'zeros'}
-    logging.info("⏳⏳⏳ Generating CgraTemplateRTL__provided__pickled.v......")
-    test_simplified_multi_cgra(cmdline_opts, arch_file_path)
-    os.system('cp CgraTemplateRTL__provided__pickled.v design.v')
     # mflowgen synthesis:
     os.system("../../tools/sv2v/bin/sv2v design.v > design_sv2v.v")
     progress = threading.Thread(target=setReportProgress, args=[40])
@@ -2188,14 +2185,14 @@ def clickRTL2Layout():
         constructDependencyFiles(cgraflow_basepath, standard_module_name, test_platform_name,
                                  verilog_srcfile_path, mk_sdc_file_path, orfs_basePath)
         # Runs openroad.
-        runOpenRoad(mk_sdc_file_path, cmd_path, odb_path, layout_path)
+        runOpenRoad(mk_sdc_file_path)
         # Shows the layout image on CGRA-Flow GUI.
         display_layout_image(layout_path)
 
 
 def clickSelectConstraintFile(event):
     global constraintFilePath
-    constraintFilePath = fd.askopenfilename(title="Chooses constraint.sdc for synthesis.", initialdir="./",
+    constraintFilePath = fd.askopenfilename(title="Chooses constraint.sdc for synthesis.", initialdir="../docker",
                                             filetypes=(("SDC file", "*.sdc"),))
     widgets["constraintPathEntry"].delete(0, tkinter.END)
     widgets["constraintPathEntry"].insert(0, constraintFilePath)
@@ -2204,7 +2201,7 @@ def clickSelectConstraintFile(event):
 
 def clickSelectConfigFile(event):
     global configFilePath
-    configFilePath = fd.askopenfilename(title="Chooses config.mk for OpenRoad.", initialdir="./",
+    configFilePath = fd.askopenfilename(title="Chooses config.mk for OpenRoad.", initialdir="../docker",
                                         filetypes=(("MK file", "*.mk"),))
     widgets["configPathEntry"].delete(0, tkinter.END)
     widgets["configPathEntry"].insert(0, configFilePath)

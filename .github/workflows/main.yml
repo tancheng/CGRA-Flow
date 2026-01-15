@@ -28,7 +28,7 @@ jobs:
         submodules: recursive
     
     # Update references
-    - name: Git Sumbodule Update
+    - name: Git Submodule Update
       run: |
         git submodule sync --recursive
         git submodule update --init --recursive

@@ -196,5 +196,8 @@ jobs:
       working-directory: ${{github.workspace}}/dataflow
       run: |
         pip install lit
+        export PATH="${{github.workspace}}/llvm-project/bin:$PATH"
+        echo $PATH
+        which llvm-extract
         cd ${{github.workspace}}/dataflow/test
         lit . -v

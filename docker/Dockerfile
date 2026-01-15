@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Setups Workspace and Clones Repo.
 WORKDIR /WORK_REPO
-RUN git clone --recurse-submodules -b integrate-dataflow --single-branch https://github.com/BenkangPeng/CGRA-Flow.git \
+RUN git clone --recursive https://github.com/tancheng/CGRA-Flow.git \
     && ln -s /OpenROAD-flow-scripts/ /WORK_REPO/CGRA-Flow/tools/
 
 # Builds C++ Tools (CGRA-Mapper, Cacti, sv2v)

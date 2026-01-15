@@ -149,8 +149,7 @@ jobs:
 
     - name: Git Submodule Update
       run: |
-        git submodule init
-        git submodule update --recursive
+        git submodule update --init --recursive dataflow/
 
     - name: Set up Python 3.11.13 for dataflow
       uses: actions/setup-python@v4

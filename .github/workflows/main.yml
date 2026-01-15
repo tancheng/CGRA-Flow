@@ -139,3 +139,63 @@ jobs:
         mkdir build && cd build
         source ${HOME}/venv/bin/activate
 
+  dataflow:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: Git Submodule Update
+      run: |
+        git submodule init
+        git submodule update --recursive
+
+    - name: Set up Python 3.11.13 for dataflow
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11.13"
+
+    - name: Download pre-built LLVM for dataflow
+      env:
+        LLVM_RELEASE_URL: "https://github.com/tancheng/CGRA-Flow/releases/download/LLVM%406146a88/llvm-project-6146a88-prebuild.tar.xz"
+      run: |
+        mkdir -p ${{ github.workspace }}/llvm-project
+        wget ${LLVM_RELEASE_URL}
+        tar -xJf llvm-project-6146a88-prebuild.tar.xz -C ./llvm-project
+        rm llvm-project-6146a88-prebuild.tar.xz
+
+    - name: Install dependencies for dataflow
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ninja-build graphviz
+
+    - name: Build dataflow
+      working-directory: ${{github.workspace}}/dataflow
+      run: |
+        mkdir -p build && cd build
+        cmake -G Ninja .. \
+          -DCMAKE_PREFIX_PATH=${{github.workspace}}/llvm-project \
+          -DCMAKE_CXX_FLAGS="-std=c++17"
+        ninja
+
+    - name: Install NumPy 1.x for torch-mlir
+      run: pip install "numpy<2.0"
+
+    - name: Install PyTorch
+      run: |
+        wget https://github.com/llvm/torch-mlir/releases/download/snapshot-20231229.1067/torch-2.2.0.dev20231204+cpu-cp311-cp311-linux_x86_64.whl
+        pip install torch-2.2.0.dev20231204+cpu-cp311-cp311-linux_x86_64.whl
+
+    - name: Install torch-mlir
+      run: |
+        wget https://github.com/llvm/torch-mlir/releases/download/snapshot-20231229.1067/torch_mlir-20231229.1067-cp311-cp311-linux_x86_64.whl
+        pip install torch_mlir-20231229.1067-cp311-cp311-linux_x86_64.whl
+
+    - name: Run dataflow tests
+      working-directory: ${{github.workspace}}/dataflow
+      run: |
+        pip install lit
+        cd ${{github.workspace}}/dataflow/test
+        lit . -v

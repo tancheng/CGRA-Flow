@@ -24,29 +24,12 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        fetch-depth: 0
-        submodules: recursive
+        submodules: true
     
     # Update references
     - name: Git Submodule Update
       run: |
-        git submodule sync --recursive
-        git submodule update --init --recursive
-        # Zeonica_Testbench is a nested submodule in zeonica; use --remote to pull the latest from remote
-        git -C zeonica submodule update --init --recursive --remote test/Zeonica_Testbench
-        
-    - name: Set up Go (for Zeonica)
-      uses: actions/setup-go@v5
-      with:
-        go-version-file: zeonica/go.mod
-        cache: true
-
-    - name: Run FIR testbench (Zeonica)
-      working-directory: ${{github.workspace}}/zeonica
-      run: |
-        go mod download
-        go build -o fir_testbench ./test/testbench/fir
-        ./fir_testbench
+        git submodule update --init
         
 
     - name: Install LLVM and Clang for CGRA-Mapper
@@ -156,3 +139,94 @@ jobs:
         mkdir build && cd build
         source ${HOME}/venv/bin/activate
 
+  zeonica:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        submodules: true
+
+    - name: Git Submodule Update (Zeonica)
+      run: |
+        git submodule sync --recursive
+        git submodule update --init --recursive zeonica
+        # Zeonica_Testbench is a nested submodule in zeonica; use --remote to pull the latest from remote
+        git -C zeonica submodule update --init --recursive --remote test/Zeonica_Testbench
+
+    - name: Set up Go (for Zeonica)
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: zeonica/go.mod
+        cache: true
+
+    - name: Run FIR testbench (Zeonica)
+      working-directory: ${{github.workspace}}/zeonica
+      run: |
+        go mod download
+        go build -o fir_testbench ./test/testbench/fir
+        ./fir_testbench
+
+  dataflow:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: Git Submodule Update
+      run: |
+        git submodule update --init --recursive dataflow/
+
+    - name: Set up Python 3.11.13 for dataflow
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11.13"
+
+    - name: Download pre-built LLVM for dataflow
+      env:
+        LLVM_RELEASE_URL: "https://github.com/tancheng/CGRA-Flow/releases/download/LLVM%406146a88/llvm-project-6146a88-prebuild.tar.xz"
+      run: |
+        mkdir -p ${{ github.workspace }}/llvm-project
+        wget ${LLVM_RELEASE_URL}
+        tar -xJf llvm-project-6146a88-prebuild.tar.xz -C ./llvm-project
+        rm llvm-project-6146a88-prebuild.tar.xz
+
+    - name: Install dependencies for dataflow
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ninja-build graphviz
+
+    - name: Build dataflow
+      working-directory: ${{github.workspace}}/dataflow
+      run: |
+        mkdir -p build && cd build
+        cmake -G Ninja .. \
+          -DCMAKE_PREFIX_PATH=${{github.workspace}}/llvm-project \
+          -DCMAKE_CXX_FLAGS="-std=c++17"
+        ninja
+
+    - name: Install NumPy 1.x for torch-mlir
+      run: pip install "numpy<2.0"
+
+    - name: Install PyTorch
+      run: |
+        wget https://github.com/llvm/torch-mlir/releases/download/snapshot-20231229.1067/torch-2.2.0.dev20231204+cpu-cp311-cp311-linux_x86_64.whl
+        pip install torch-2.2.0.dev20231204+cpu-cp311-cp311-linux_x86_64.whl
+
+    - name: Install torch-mlir
+      run: |
+        wget https://github.com/llvm/torch-mlir/releases/download/snapshot-20231229.1067/torch_mlir-20231229.1067-cp311-cp311-linux_x86_64.whl
+        pip install torch_mlir-20231229.1067-cp311-cp311-linux_x86_64.whl
+
+    - name: Run dataflow tests
+      working-directory: ${{github.workspace}}/dataflow
+      run: |
+        pip install lit
+        export PATH="${{github.workspace}}/llvm-project/bin:$PATH"
+        echo $PATH
+        which llvm-extract
+        cd ${{github.workspace}}/dataflow/test
+        lit . -v

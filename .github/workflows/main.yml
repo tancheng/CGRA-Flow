@@ -139,61 +139,6 @@ jobs:
         mkdir build && cd build
         source ${HOME}/venv/bin/activate
 
-  zeonica:
-    needs: dataflow
-    runs-on: ubuntu-22.04
-
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-        submodules: true
-
-    - name: Git Submodule Update (Zeonica)
-      run: |
-        git submodule sync --recursive
-        git submodule update --init --recursive zeonica
-        # Zeonica_Testbench is a nested submodule in zeonica; use --remote to pull the latest from remote
-        git -C zeonica submodule update --init --recursive --remote test/Zeonica_Testbench
-
-    - name: Set up Go (for Zeonica)
-      uses: actions/setup-go@v5
-      with:
-        go-version-file: zeonica/go.mod
-        cache: true
-
-    - name: Download dataflow e2e outputs
-      uses: actions/download-artifact@v4
-      with:
-        name: dataflow-e2e
-        path: ${{github.workspace}}/dataflow/test/e2e
-
-    - name: Run testbenches from dataflow outputs (Zeonica)
-      working-directory: ${{github.workspace}}/zeonica
-      run: |
-        go mod download
-        WORKDIR="${{github.workspace}}/dataflow/test/e2e"
-        mapfile -t YAML_FILES < <(find "$WORKDIR" -name tmp-generated-instructions.yaml -print)
-        if [ "${#YAML_FILES[@]}" -eq 0 ]; then
-          echo "No tmp-generated-instructions.yaml found under $WORKDIR; skipping testbenches."
-          exit 0
-        fi
-        for f in "${YAML_FILES[@]}"; do
-          kernel="$(basename "$(dirname "$f")")"
-          echo "=== Run testbench for kernel: $kernel ==="
-          case "$kernel" in
-            fir)
-              ZEONICA_PROGRAM_YAML="$f" go run ./test/testbench/fir
-              ;;
-            histogram)
-              ZEONICA_PROGRAM_YAML="$f" go run ./test/testbench/histogram
-              ;;
-            *)
-              echo "Skip unknown kernel: $kernel"
-              ;;
-          esac
-        done
-
   dataflow:
     runs-on: ubuntu-22.04
 
@@ -264,3 +209,58 @@ jobs:
       with:
         name: dataflow-e2e
         path: ${{github.workspace}}/dataflow/test/e2e
+
+  zeonica:
+    needs: dataflow
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        submodules: true
+
+    - name: Git Submodule Update (Zeonica)
+      run: |
+        git submodule sync --recursive
+        git submodule update --init --recursive zeonica
+        # Zeonica_Testbench is a nested submodule in zeonica; use --remote to pull the latest from remote
+        git -C zeonica submodule update --init --recursive --remote test/Zeonica_Testbench
+
+    - name: Set up Go (for Zeonica)
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: zeonica/go.mod
+        cache: true
+
+    - name: Download dataflow e2e outputs
+      uses: actions/download-artifact@v4
+      with:
+        name: dataflow-e2e
+        path: ${{github.workspace}}/dataflow/test/e2e
+
+    - name: Run testbenches from dataflow outputs (Zeonica)
+      working-directory: ${{github.workspace}}/zeonica
+      run: |
+        go mod download
+        WORKDIR="${{github.workspace}}/dataflow/test/e2e"
+        mapfile -t YAML_FILES < <(find "$WORKDIR" -name tmp-generated-instructions.yaml -print)
+        if [ "${#YAML_FILES[@]}" -eq 0 ]; then
+          echo "No tmp-generated-instructions.yaml found under $WORKDIR; skipping testbenches."
+          exit 0
+        fi
+        for f in "${YAML_FILES[@]}"; do
+          kernel="$(basename "$(dirname "$f")")"
+          echo "=== Run testbench for kernel: $kernel ==="
+          case "$kernel" in
+            fir)
+              ZEONICA_PROGRAM_YAML="$f" go run ./test/testbench/fir
+              ;;
+            histogram)
+              ZEONICA_PROGRAM_YAML="$f" go run ./test/testbench/histogram
+              ;;
+            *)
+              echo "Skip unknown kernel: $kernel"
+              ;;
+          esac
+        done

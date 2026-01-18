@@ -140,6 +140,7 @@ jobs:
         source ${HOME}/venv/bin/activate
 
   zeonica:
+    needs: dataflow
     runs-on: ubuntu-22.04
 
     steps:
@@ -161,12 +162,37 @@ jobs:
         go-version-file: zeonica/go.mod
         cache: true
 
-    - name: Run FIR testbench (Zeonica)
+    - name: Download dataflow e2e outputs
+      uses: actions/download-artifact@v4
+      with:
+        name: dataflow-e2e
+        path: ${{github.workspace}}/dataflow/test/e2e
+
+    - name: Run testbenches from dataflow outputs (Zeonica)
       working-directory: ${{github.workspace}}/zeonica
       run: |
         go mod download
-        go build -o fir_testbench ./test/testbench/fir
-        ./fir_testbench
+        WORKDIR="${{github.workspace}}/dataflow/test/e2e"
+        mapfile -t YAML_FILES < <(find "$WORKDIR" -name tmp-generated-instructions.yaml -print)
+        if [ "${#YAML_FILES[@]}" -eq 0 ]; then
+          echo "No tmp-generated-instructions.yaml found under $WORKDIR; skipping testbenches."
+          exit 0
+        fi
+        for f in "${YAML_FILES[@]}"; do
+          kernel="$(basename "$(dirname "$f")")"
+          echo "=== Run testbench for kernel: $kernel ==="
+          case "$kernel" in
+            fir)
+              ZEONICA_PROGRAM_YAML="$f" go run ./test/testbench/fir
+              ;;
+            histogram)
+              ZEONICA_PROGRAM_YAML="$f" go run ./test/testbench/histogram
+              ;;
+            *)
+              echo "Skip unknown kernel: $kernel"
+              ;;
+          esac
+        done
 
   dataflow:
     runs-on: ubuntu-22.04
@@ -228,5 +254,13 @@ jobs:
         export PATH="${{github.workspace}}/llvm-project/bin:$PATH"
         echo $PATH
         which llvm-extract
+        export TMPDIR="${{github.workspace}}/dataflow/test/e2e/.lit_tmp"
+        mkdir -p "${TMPDIR}"
         cd ${{github.workspace}}/dataflow/test
-        lit . -v
+        lit . -v --no-cleanup
+
+    - name: Upload dataflow e2e outputs
+      uses: actions/upload-artifact@v4
+      with:
+        name: dataflow-e2e
+        path: ${{github.workspace}}/dataflow/test/e2e

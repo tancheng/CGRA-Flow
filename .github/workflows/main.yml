@@ -224,6 +224,8 @@ jobs:
       run: |
         git submodule sync --recursive
         git submodule update --init --recursive zeonica
+        # Ensure Zeonica_Testbench uses HTTPS URL (public repo, no SSH key needed)
+        git -C zeonica config submodule.test/Zeonica_Testbench.url https://github.com/sarchlab/Zeonica_Testbench.git
         # Zeonica_Testbench is a nested submodule in zeonica; use --remote to pull the latest from remote
         git -C zeonica submodule update --init --recursive --remote test/Zeonica_Testbench
 

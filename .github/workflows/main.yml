@@ -222,16 +222,9 @@ jobs:
 
     - name: Git Submodule Update (Zeonica)
       run: |
-        # First, configure Zeonica_Testbench to use HTTPS before any submodule operations
-        git submodule sync --recursive
-        # Update zeonica submodule first
+        # Update zeonica submodule only (skip nested Zeonica_Testbench submodule)
+        # CI reads YAML files from dataflow/test/e2e
         git submodule update --init zeonica
-        # Configure nested submodule URL to HTTPS before updating
-        git -C zeonica config submodule.test/Zeonica_Testbench.url https://github.com/sarchlab/Zeonica_Testbench.git
-        # Sync the nested submodule URL
-        git -C zeonica submodule sync test/Zeonica_Testbench
-        # Now update the nested submodule with HTTPS URL
-        git -C zeonica submodule update --init --recursive test/Zeonica_Testbench
 
     - name: Set up Go (for Zeonica)
       uses: actions/setup-go@v5

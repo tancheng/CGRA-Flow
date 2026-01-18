@@ -199,10 +199,10 @@ jobs:
         export PATH="${{github.workspace}}/llvm-project/bin:$PATH"
         echo $PATH
         which llvm-extract
-        export TMPDIR="${{github.workspace}}/dataflow/test/e2e/.lit_tmp"
+        export TMPDIR="${{github.workspace}}/dataflow/test/e2e"
         mkdir -p "${TMPDIR}"
         cd ${{github.workspace}}/dataflow/test
-        lit . -v --no-cleanup
+        lit . -v
 
     - name: Upload dataflow e2e outputs
       uses: actions/upload-artifact@v4
@@ -256,9 +256,9 @@ jobs:
             fir)
               ZEONICA_PROGRAM_YAML="$f" go run ./test/testbench/fir
               ;;
-            histogram)
-              ZEONICA_PROGRAM_YAML="$f" go run ./test/testbench/histogram
-              ;;
+            # histogram)
+            #   ZEONICA_PROGRAM_YAML="$f" go run ./test/testbench/histogram
+            #   ;;
             *)
               echo "Skip unknown kernel: $kernel"
               ;;

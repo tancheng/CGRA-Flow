@@ -204,6 +204,16 @@ jobs:
         cd ${{github.workspace}}/dataflow/test
         lit . -v
 
+    - name: Fix fir output (re-run fir_kernel after fir_vec)
+      working-directory: ${{github.workspace}}/dataflow
+      run: |
+        # fir_vec runs after fir and overwrites the output
+        # Re-run fir_kernel.mlir to restore the correct fir output
+        export PATH="${{github.workspace}}/llvm-project/bin:$PATH"
+        export TMPDIR="${{github.workspace}}/dataflow/test/e2e"
+        cd ${{github.workspace}}/dataflow/test
+        lit e2e/fir/fir_kernel.mlir -v
+
     - name: Upload dataflow e2e outputs
       uses: actions/upload-artifact@v4
       with:

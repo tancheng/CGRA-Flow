@@ -213,6 +213,17 @@ jobs:
         export TMPDIR="${{github.workspace}}/dataflow/test/e2e"
         cd ${{github.workspace}}/dataflow/test
         lit e2e/fir/fir_kernel.mlir -v
+        # Copy the newly generated FIR output to a deterministic location for downstream consumption
+        latest_dir="$(find "${TMPDIR}" -path "*fir_kernel.mlir.tmp.dir" -type d | sort | tail -n 1)"
+        if [ -z "${latest_dir}" ]; then
+          echo "Failed to locate fir_kernel.mlir.tmp.dir after rerun" >&2
+          exit 1
+        fi
+        mkdir -p "${TMPDIR}/fir"
+        cp "${latest_dir}/tmp-generated-instructions.yaml" "${TMPDIR}/fir/tmp-generated-instructions.yaml"
+        if [ -f "${latest_dir}/tmp-generated-instructions.asm" ]; then
+          cp "${latest_dir}/tmp-generated-instructions.asm" "${TMPDIR}/fir/tmp-generated-instructions.asm"
+        fi
 
     - name: Upload dataflow e2e outputs
       uses: actions/upload-artifact@v4

@@ -2,6 +2,7 @@ import json
 import math
 import os
 import platform
+import re
 import subprocess
 import threading
 import time
@@ -44,8 +45,8 @@ if args.theme:
         MULTI_CGRA_TILE_COLOR = "#3A7EBF"
         MULTI_CGRA_TXT_COLOR = "black"
 
-# from VectorCGRA.cgra.test.CgraTemplateRTL_test import *
-from VectorCGRA.multi_cgra.test.MeshMultiCgraTemplateRTL_test import *
+from VectorCGRA.cgra.test.CgraTemplateRTL_test import test_cgra_universal
+from VectorCGRA.multi_cgra.test.MeshMultiCgraTemplateRTL_test import test_mesh_multi_cgra_universal, test_simplified_multi_cgra
 
 # importing module
 import logging
@@ -286,12 +287,6 @@ def clickEntireTileCheckbutton():
 
 
 def clickFuCheckbutton(fuType):
-    if fuType == "Ld":
-        fuCheckVars["St"].set(fuCheckVars["Ld"].get())
-        selectedCgraParam.updateFuCheckbutton("St", fuCheckVars["St"].get())
-    elif fuType == "St":
-        fuCheckVars["Ld"].set(fuCheckVars["St"].get())
-        selectedCgraParam.updateFuCheckbutton("Ld", fuCheckVars["Ld"].get())
     selectedCgraParam.updateFuCheckbutton(fuType, fuCheckVars[fuType].get())
 
 
@@ -411,9 +406,21 @@ def clickReset(root):
     else:
         widgets["resMIIEntry"].insert(0, 0)
 
-def dumpArchYaml(yamlPath):
+# Customizes class to force flow style dump.
+class FlowList(list):
+    pass
+
+
+import yaml
+def flow_list_representer(dumper, data):
+    return dumper.represent_sequence('tag:yaml.org,2002:seq', data, flow_style=True)
+# Forces dumping the FlowList in the flow style.
+yaml.add_representer(FlowList, flow_list_representer)
+
+def dumpArchYaml(yamlPath = 'arch.yaml'):
     """
     Dumps the architecture to a YAML file.
+    The default path is `build/arch.yaml`.
     """
     # Extract values from widgets
     # Multi-CGRA Defaults
@@ -460,10 +467,70 @@ def dumpArchYaml(yamlPath):
             "columns": cgra_cols,
             "configMemSize": cfg_mem,
             "per bank sram": sram
+        },
+        "tile_defaults": {
+            "num_registers": 16,
+            "fu_types": FlowList(fuTypeList)
         }
     }
 
-    import yaml
+    # Collects the links information.
+    link_overrides = []
+    for r in range(multiCgraParam.rows):
+        for c in range(multiCgraParam.cols):
+            target_cgra = multiCgraParam.getCgraParam(r, c)
+            # Checks all template links in the CGRA.
+            for link in target_cgra.templateLinks:
+                if link.disabled:
+                    if isinstance(link.srcTile, ParamTile) and isinstance(link.dstTile, ParamTile):
+                        link_overrides.append({
+                            "src_cgra_x": c,
+                            "src_cgra_y": r,
+                            "dst_cgra_x": c,
+                            "dst_cgra_y": r,
+                            "src_tile_x": link.srcTile.dimX,
+                            "src_tile_y": link.srcTile.dimY,
+                            "dst_tile_x": link.dstTile.dimX,
+                            "dst_tile_y": link.dstTile.dimY,
+                            "existence": False
+                        })
+
+    if link_overrides:
+        data["link_overrides"] = link_overrides
+
+    # Collects the tile information.
+    tile_overrides = []
+    for r in range(multiCgraParam.rows):
+        for c in range(multiCgraParam.cols):
+            target_cgra = multiCgraParam.getCgraParam(r, c)
+            for tile in target_cgra.tiles:
+                # Case 1: Tile is totally disabled.
+                if tile.disabled:
+                    tile_overrides.append({
+                        "cgra_x": c,
+                        "cgra_y": r,
+                        "tile_x": tile.dimX,
+                        "tile_y": tile.dimY,
+                        "existence": False
+                    })
+                # Case 2: Tile is enabled but has non-default functional units.
+                elif not tile.isDefaultFus():
+                    fuTypes = []
+                    for fu in fuTypeList:
+                        if tile.fuDict[fu] == 1:
+                            fuTypes.append(fu)
+                    tile_overrides.append({
+                        "cgra_x": c,
+                        "cgra_y": r,
+                        "tile_x": tile.dimX,
+                        "tile_y": tile.dimY,
+                        "fu_types": FlowList(fuTypes),
+                        "existence": True
+                    })
+
+    if tile_overrides:
+        data["tile_overrides"] = tile_overrides
+
     with open(yamlPath, 'w') as file:
         yaml.dump(data, file, sort_keys=False, default_flow_style=False)
         
@@ -479,32 +546,103 @@ def clickTest():
     os.chdir("test")
 
     widgets["testShow"].configure(text="0%")
+    widgets["testProgress"].set(0)
     master.update_idletasks()
 
-    # os.system("pytest ../../VectorCGRA")
-    testProc = subprocess.Popen(["pytest ../../VectorCGRA --ignore=../../VectorCGRA/noc/PyOCN", '-u'], stdout=subprocess.PIPE, shell=True, bufsize=1)
+    pytest_cmd = pytest_cmd = "pytest ../../VectorCGRA/cgra/test \
+                                ../../VectorCGRA/multi_cgra/test/MeshMultiCgraTemplateRTL_test.py --tb=short -v"
+    
+    testProc = subprocess.Popen(
+        pytest_cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        shell=True,
+        universal_newlines=True,
+        bufsize=1,
+        env={**os.environ, 'PYTHONUNBUFFERED': '1'}
+    )
+    
     failed = 0
     total = 0
-    with testProc.stdout:
-        for line in iter(testProc.stdout.readline, b''):
-            outputLine = line.decode("ISO-8859-1")
+    last_progress = 0
+    
+    # Regex pattern to match pytest progress: [ 12%] or [12%] or [100%]
+    progress_pattern = re.compile(r'\[\s*(\d+)\s*%\]')
+    
+    try:
+        for line in iter(testProc.stdout.readline, ''):
+            if not line:
+                break
+                
+            outputLine = line.rstrip()
             logging.info(outputLine)
-            if "%]" in outputLine:
-                value = int(outputLine.split("[")[1].split("%]")[0])
-                # logging.info(f'testProgress value: {value}')
-                widgets["testProgress"].set(value / 100)
-                widgets["testShow"].configure(text=str(value) + "%")
-                master.update_idletasks()
-                total += 1
-                if ".py F" in outputLine:
-                    failed += 1
-
-    widgets["testShow"].configure(text=" PASSED " if failed == 0 else str(total - failed) + "/" + str(total))
-    # (out, err) = testProc.communicate()
-    # logging.info("check test output:", out)
+            
+            # Checks for progress percentage using regex.
+            match = progress_pattern.search(outputLine)
+            if match:
+                try:
+                    value = int(match.group(1))
+                    if value != last_progress:
+                        widgets["testProgress"].set(value / 100.0)
+                        widgets["testShow"].configure(text=f"{value}%")
+                        master.update_idletasks()
+                        last_progress = value
+                    total += 1
+                except (ValueError, AttributeError) as e:
+                    logging.warning(f"Failed to parse progress from line: {outputLine}, error: {e}")
+            
+            # Checks for test failures.
+            if ".py" in outputLine and ("FAILED" in outputLine or "ERROR" in outputLine or " F " in outputLine):
+                failed += 1
+                logging.warning(f"Test failure detected: {outputLine}")
+        
+        # Waits for process to complete.
+        testProc.wait()
+        
+        # Final status updates.
+        if testProc.returncode == 0:
+            widgets["testShow"].configure(text=" PASSED ")
+        else:
+            widgets["testShow"].configure(text=f" FAILED ({failed} failures)" if failed > 0 else " FAILED")
+            
+    except Exception as e:
+        logging.error(f"Error reading pytest output: {e}")
+        widgets["testShow"].configure(text=" ERROR ")
+    finally:
+        # Ensures the process is terminated.
+        if testProc.poll() is None:
+            testProc.terminate()
+            testProc.wait()
 
     os.chdir("..")
 
+
+def dumpSelectedCgraParam(yaml_path = "build/arch_selected_cgra.yaml"):
+    """
+    Dumps the selected CGRA parameter to a YAML file.
+    """
+    global selectedCgraParam
+    data = {
+        "multi_cgra_defaults": {
+            "rows": 1,
+            "columns": 1
+        },
+        "cgra_defaults": {
+            "rows": selectedCgraParam.rows,
+            "columns": selectedCgraParam.columns,
+            "configMemSize": selectedCgraParam.configMemSize
+        },
+        "tile_defaults": {
+            "num_registers": 16,
+            "fu_types": FlowList(fuTypeList)
+        },
+        "link_overrides": [],
+        "tile_overrides": []
+    }
+    yaml_path = os.path.join(os.path.dirname(__file__), "build/arch_selected_cgra.yaml")
+    with open(yaml_path, "w") as file:
+        yaml.dump(data, file, sort_keys=False, default_flow_style=False)
+    logging.info(f"Successfully dumped selected CGRA parameter to {yaml_path}")
 
 def clickGenerateVerilog():
     message = selectedCgraParam.getErrorMessage()
@@ -512,6 +650,7 @@ def clickGenerateVerilog():
         tkinter.messagebox.showerror(title="CGRA Model Checking", message=message)
         return
 
+    dumpArchYaml('arch.yaml')
     os.system("mkdir verilog")
     os.chdir("verilog")
 
@@ -592,21 +731,22 @@ def runYosys():
 
 
 def clickSynthesize():
+    dumpArchYaml('customized_arch.yaml')
     global selectedCgraParam
     global synthesisRunning
 
     if synthesisRunning:
         return
 
-    if not selectedCgraParam.verilogDone:
-        tkinter.messagebox.showerror(title="Sythesis", message="The verilog generation needs to be done first.")
-        return
+    # if not selectedCgraParam.verilogDone:
+    #     tkinter.messagebox.showerror(title="Sythesis", message="The verilog generation needs to be done first.")
+    #     return
 
     synthesisRunning = True
     synthesisTimerRun = threading.Thread(target=countSynthesisTime)
     synthesisTimerRun.start()
 
-    os.system("mkdir verilog")
+    os.system("mkdir -p verilog")
     os.chdir("verilog")
 
     # Cacti SPM power/area estimation:
@@ -662,6 +802,13 @@ def clickSynthesize():
     progress.start()
 
     os.chdir("../../build/verilog")
+    cur_dir = os.getcwd()
+
+    arch_file_path = os.path.join(cur_dir, '../customized_arch.yaml')
+    cmdline_opts = {'test_verilog': 'zeros'}
+    logging.info("⏳⏳⏳ Generating CgraTemplateRTL__provided__pickled.v......")
+    test_simplified_multi_cgra(cmdline_opts, arch_file_path)
+    os.system('cp CgraTemplateRTL__provided__pickled.v design.v')
     # mflowgen synthesis:
     os.system("../../tools/sv2v/bin/sv2v design.v > design_sv2v.v")
     progress = threading.Thread(target=setReportProgress, args=[40])
@@ -793,8 +940,8 @@ def dumpCgraParam2JSON(fileName, cgraParamJson):
                     if tile.fuDict[fuType] == 1:
                         curDict["supportedFUs"].append(fuType)
 
-            if (tile.hasFromMem() and tile.fuDict["Ld"] == 1) and \
-                    (tile.hasToMem() and tile.fuDict["St"] == 1):
+            if tile.hasFromMem() and (tile.fuDict["mem"] == 1 or tile.fuDict["mem_indexed"] == 1) and \
+                    tile.hasToMem() and (tile.fuDict["mem"] == 1 or tile.fuDict["mem_indexed"] == 1):
                 curDict["accessMem"] = True
 
         cgraParamJson["tiles"][str(tile.ID)] = curDict
@@ -1337,14 +1484,14 @@ def create_multi_cgra_config_panel(master):
     multiCgraRowsLabel.grid(row=3, column=0, padx=5, sticky="w")
     multiCgraRowsLabelEntry = customtkinter.CTkEntry(multiCgraConfigPanel, justify=tkinter.CENTER)
     multiCgraRowsLabelEntry.grid(row=3, column=1, padx=5)
-    multiCgraRowsLabelEntry.insert(0, str(3))
+    multiCgraRowsLabelEntry.insert(0, str(CGRA_ROWS))
     widgets["multiCgraRowsLabelEntry"] = multiCgraRowsLabelEntry
 
     multiCgraColumnsLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Multi-CGRA\nColumns:')
     multiCgraColumnsLabel.grid(row=4, column=0, padx=5, sticky="w")
     multiCgraColumnsEntry = customtkinter.CTkEntry(multiCgraConfigPanel, justify=tkinter.CENTER)
     multiCgraColumnsEntry.grid(row=4, column=1, padx=5)
-    multiCgraColumnsEntry.insert(0, str(3))
+    multiCgraColumnsEntry.insert(0, str(CGRA_COLS))
     widgets["multiCgraColumnsEntry"] = multiCgraColumnsEntry
 
     vectorLanesLabel = customtkinter.CTkLabel(multiCgraConfigPanel, text='Vector Lanes:')
@@ -2364,5 +2511,4 @@ master.grid_columnconfigure(5, weight=1)
 master.geometry("%dx%d" % (w - 10, h - 70))
 master.geometry("+%d+%d" % (0, 0))
 master.mainloop()
-
 

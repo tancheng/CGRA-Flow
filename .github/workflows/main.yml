@@ -274,10 +274,28 @@ jobs:
           echo "=== Run testbench for kernel: $kernel ==="
           case "$kernel" in
             fir)
-              ZEONICA_PROGRAM_YAML="$f" go run ./test/testbench/fir
+              ZEONICA_PROGRAM_YAML="$f" go test ./test/testbench/fir -run TestFir
               ;;
             # histogram)
-            #   ZEONICA_PROGRAM_YAML="$f" go run ./test/testbench/histogram
+            #   ZEONICA_PROGRAM_YAML="$f" go test ./test/testbench/histogram -run TestHistogram
+            #   ;;
+            # axpy)
+            #   ZEONICA_PROGRAM_YAML="$f" go test ./test/testbench/axpy -run TestAxpy
+            #   ;;
+            # bicg)
+            #   ZEONICA_PROGRAM_YAML="$f" go test ./test/testbench/bicg -run TestBicg
+            #   ;;
+            # gemm)
+            #   ZEONICA_PROGRAM_YAML="$f" go test ./test/testbench/gemm -run TestGemm
+            #   ;;
+            # gemv)
+            #   ZEONICA_PROGRAM_YAML="$f" go test ./test/testbench/gemv -run TestGemv
+            #   ;;
+            # spmv)
+            #   ZEONICA_PROGRAM_YAML="$f" go test ./test/testbench/spmv -run TestSpmv
+            #   ;;
+            # relu)
+            #   ZEONICA_PROGRAM_YAML="$f" go test ./test/testbench/relu -run TestRelu
             #   ;;
             *)
               echo "Skip unknown kernel: $kernel"

@@ -19,6 +19,9 @@
 [submodule "tools/cacti"]
 	path = tools/cacti
 	url = https://github.com/tancheng/cacti.git
+[submodule "zeonica"]
+	path = zeonica
+	url = https://github.com/sarchlab/zeonica.git
 [submodule "dataflow"]
 	path = dataflow
 	url = https://github.com/coredac/dataflow

@@ -8,6 +8,8 @@ import threading
 import time
 import tkinter
 import tkinter.messagebox
+import requests
+import ai_assistant
 from functools import partial
 from tkinter import filedialog as fd
 from common.constants import *
@@ -237,6 +239,446 @@ selectedCgraParam.set_cgra_param_callbacks(switchDataSPMOutLinks=switchDataSPMOu
                                            updateXbarCheckVars=updateXbarCheckVars,
                                            getFunCheckVars=getFunCheckVars,
                                            getXbarCheckVars=getXbarCheckVars)
+
+
+def apply_fu_types_to_cgra(fu_types):
+    """Apply FU types to the current selectedCgraParam tiles and update UI checkboxes."""
+    if not fu_types:
+        return
+    for tile in selectedCgraParam.tiles:
+        for fuType in fuTypeList:
+            tile.fuDict[fuType] = 1 if fuType in fu_types else 0
+    for fuType in fuTypeList:
+        if fuType in fuCheckVars:
+            fuCheckVars[fuType].set(1 if fuType in fu_types else 0)
+
+
+def display_ai_response(response, error):
+    """Display AI response in chat (called from main thread)."""
+    chatDisplay = widgets.get("chatDisplay")
+    sendButton = widgets.get("sendButton")
+    applyButton = widgets.get("applyConfigButton")
+    if not chatDisplay:
+        return
+
+    chatDisplay.configure(state="normal")
+
+    if error:
+        chatDisplay.insert(tkinter.END, f"AI: ⚠️ {error}\n")
+    else:
+        chatDisplay.insert(tkinter.END, f"AI: {response}\n")
+
+        # Check if response contains CGRA configuration
+        if ai_assistant.extract_cgra_config(response):
+            # Auto-apply balanced config as default
+            config = ai_assistant.lastRecommendedConfigs.get("balanced", {})
+            if config:
+                apply_config_by_mode("balanced")
+                clickUpdate(master)
+                # Apply FU types after clickUpdate to avoid being overwritten
+                fu_types = config.get("fu_types", [])
+                apply_fu_types_to_cgra(fu_types)
+                chatDisplay.configure(state="normal")
+                chatDisplay.insert(tkinter.END, "\n✅ Balanced configuration has been applied to update the CGRA.\n")
+                chatDisplay.insert(tkinter.END, "You can also click 'Apply AI Generated CGRA Design' to switch to a different configuration mode.\n")
+            if applyButton:
+                applyButton.configure(state="normal")
+
+    chatDisplay.insert(tkinter.END, "─" * 30 + "\n\n")
+    chatDisplay.configure(state="disabled")
+    chatDisplay.see(tkinter.END)
+
+    # Re-enable send button
+    if sendButton:
+        sendButton.configure(state="normal")
+
+
+def clickSendChat():
+    """Handle sending a chat message."""
+    chatInput = widgets.get("chatInput")
+    chatDisplay = widgets.get("chatDisplay")
+    sendButton = widgets.get("sendButton")
+    if not chatInput or not chatDisplay:
+        return
+
+    user_message = chatInput.get().strip()
+    if not user_message:
+        return
+
+    # Clear input and disable send button
+    chatInput.delete(0, tkinter.END)
+    if sendButton:
+        sendButton.configure(state="disabled")
+
+    # Display user message
+    chatDisplay.configure(state="normal")
+    chatDisplay.insert(tkinter.END, f"You: {user_message}\n")
+    chatDisplay.insert(tkinter.END, "─" * 30 + "\n")
+    chatDisplay.insert(tkinter.END, "AI: Thinking...\n")
+    chatDisplay.configure(state="disabled")
+    chatDisplay.see(tkinter.END)
+
+    # Call API in background thread
+    def on_response(response, error):
+        # Schedule UI update on main thread
+        chatDisplay.after(0, lambda: update_response(response, error))
+
+    def update_response(response, error):
+        chatDisplay.configure(state="normal")
+        # Remove "Thinking..." line
+        chatDisplay.delete("end-2l", "end-1l")
+        chatDisplay.configure(state="disabled")
+        display_ai_response(response, error)
+
+    thread = threading.Thread(target=ai_assistant.call_ai_api, args=(user_message, on_response))
+    thread.daemon = True
+    thread.start()
+
+
+def clickClearChat():
+    """Clear the chat history."""
+    chatDisplay = widgets.get("chatDisplay")
+    if chatDisplay:
+        chatDisplay.configure(state="normal")
+        chatDisplay.delete("1.0", tkinter.END)
+        chatDisplay.configure(state="disabled")
+    # Also clear conversation history
+    ai_assistant.aiChatConfig["chat_history"] = []
+
+
+def handle_chat_enter(event):
+    """Handle Enter key press in chat input."""
+    clickSendChat()
+    return "break"  # Prevent default behavior
+
+
+def on_provider_change(choice):
+    """Handle provider selection change."""
+    ai_assistant.aiChatConfig["provider"] = choice
+    ai_assistant.aiChatConfig["chat_history"] = []  # Clear history when switching provider
+
+    # Update model menu with provider's models
+    provider_config = ai_assistant.AI_PROVIDERS[choice]
+    models = provider_config["models"]
+    ai_assistant.aiChatConfig["model"] = models[0]
+
+    modelMenu = widgets.get("modelMenu")
+    if modelMenu:
+        modelMenu.configure(values=models)
+        modelMenu.set(models[0])
+
+    # Update API key from environment
+    env_key = provider_config["env_key"]
+    env_value = os.environ.get(env_key, "")
+    ai_assistant.aiChatConfig["api_key"] = env_value
+
+    apiKeyEntry = widgets.get("apiKeyEntry")
+    if apiKeyEntry:
+        apiKeyEntry.delete(0, tkinter.END)
+        if env_value:
+            apiKeyEntry.insert(0, env_value)
+
+    logging.info(f"AI provider changed to: {choice}")
+
+
+def on_model_change(choice):
+    """Handle model selection change."""
+    ai_assistant.aiChatConfig["model"] = choice
+    logging.info(f"AI model changed to: {choice}")
+
+
+def on_api_key_change(event=None):
+    """Handle API key input change."""
+    apiKeyEntry = widgets.get("apiKeyEntry")
+    if apiKeyEntry:
+        ai_assistant.aiChatConfig["api_key"] = apiKeyEntry.get().strip()
+
+
+def apply_config_by_mode(mode):
+    """Apply the specified mode configuration to the GUI."""
+
+    config = ai_assistant.lastRecommendedConfigs.get(mode, {})
+    if not config:
+        return False
+
+    try:
+        # Get configuration values (already validated)
+        rows = config.get("cgra_rows", 4)
+        columns = config.get("cgra_columns", 4)
+        data_mem = config.get("data_spm_kb", 8)
+        config_mem = config.get("configMemSize", 64)
+        mc_rows = config.get("multi_cgra_rows", 1)
+        mc_cols = config.get("multi_cgra_columns", 1)
+
+        # Update CGRA config entries
+        rowsEntry = widgets.get("rowsEntry")
+        columnsEntry = widgets.get("columnsEntry")
+        dataMemEntry = widgets.get("dataMemEntry")
+        configMemEntry = widgets.get("configMemEntry")
+
+        if rowsEntry:
+            rowsEntry.delete(0, tkinter.END)
+            rowsEntry.insert(0, str(rows))
+        if columnsEntry:
+            columnsEntry.delete(0, tkinter.END)
+            columnsEntry.insert(0, str(columns))
+        if dataMemEntry:
+            dataMemEntry.delete(0, tkinter.END)
+            dataMemEntry.insert(0, str(data_mem))
+        if configMemEntry:
+            configMemEntry.delete(0, tkinter.END)
+            configMemEntry.insert(0, str(config_mem))
+
+        # Update Multi-CGRA config entries if available
+        mcRowsEntry = widgets.get("multiCgraRowsLabelEntry")
+        mcColsEntry = widgets.get("multiCgraColumnsEntry")
+        if mcRowsEntry:
+            mcRowsEntry.delete(0, tkinter.END)
+            mcRowsEntry.insert(0, str(mc_rows))
+        if mcColsEntry:
+            mcColsEntry.delete(0, tkinter.END)
+            mcColsEntry.insert(0, str(mc_cols))
+
+        # Apply FU types to all tiles if specified
+        fu_types = config.get("fu_types", [])
+        fu_applied = False
+        if fu_types:
+            apply_fu_types_to_cgra(fu_types)
+            fu_applied = True
+
+        # Show success message
+        mode_labels = {"high_performance": "High Performance", "balanced": "Balanced", "low_power": "Low Power"}
+        mode_label = mode_labels.get(mode, mode)
+        chatDisplay = widgets.get("chatDisplay")
+        if chatDisplay:
+            chatDisplay.configure(state="normal")
+            chatDisplay.insert(tkinter.END, f"✓ {mode_label} Config Applied:\n")
+            chatDisplay.insert(tkinter.END, f"  CGRA: {rows}x{columns}\n")
+            chatDisplay.insert(tkinter.END, f"  Multi-CGRA: {mc_rows}x{mc_cols}\n")
+            chatDisplay.insert(tkinter.END, f"  Data SPM: {data_mem} KB\n")
+            chatDisplay.insert(tkinter.END, f"  Config Memory: {config_mem} entries\n")
+            if fu_applied:
+                chatDisplay.insert(tkinter.END, f"  FU Types: {', '.join(fu_types)}\n")
+            chatDisplay.insert(tkinter.END, "─" * 30 + "\n")
+            chatDisplay.configure(state="disabled")
+            chatDisplay.see(tkinter.END)
+
+        logging.info(f"Applied {mode} config: rows={rows}, cols={columns}")
+        return True
+
+    except Exception as e:
+        logging.error(f"Failed to apply config: {e}")
+        return False
+
+
+def apply_recommended_config():
+    """Show dialog to choose between high_performance, balanced, and low power config."""
+
+    has_perf = bool(ai_assistant.lastRecommendedConfigs.get("high_performance"))
+    has_bal = bool(ai_assistant.lastRecommendedConfigs.get("balanced"))
+    has_lp = bool(ai_assistant.lastRecommendedConfigs.get("low_power"))
+
+    if not has_perf and not has_bal and not has_lp:
+        tkinter.messagebox.showwarning("No Configuration",
+            "No recommended configuration available.\nAsk AI to recommend parameters first.")
+        return
+
+    # Create selection dialog
+    dialog = customtkinter.CTkToplevel()
+    dialog.title("Select Configuration Mode")
+    dialog.geometry("450x180")
+    dialog.transient()
+    # dialog.grab_set()
+    dialog.update_idletasks()
+    try:
+        dialog.grab_set()
+    except Exception as e:
+        print(f"Warning: Cannot set grab on dialog: {e}")
+        
+    label = customtkinter.CTkLabel(
+        dialog,
+        text="Choose configuration mode:",
+        font=customtkinter.CTkFont(size=14, weight="bold")
+    )
+    label.pack(pady=(15, 10))
+
+    btn_frame = customtkinter.CTkFrame(dialog)
+    btn_frame.pack(pady=10, padx=15, fill="x")
+
+    def apply_and_update(mode):
+        dialog.destroy()
+        apply_config_by_mode(mode)
+        clickUpdate(master)
+        fu_types = ai_assistant.lastRecommendedConfigs.get(mode, {}).get("fu_types", [])
+        apply_fu_types_to_cgra(fu_types)
+
+    def apply_perf():
+        apply_and_update("high_performance")
+
+    def apply_bal():
+        apply_and_update("balanced")
+
+    def apply_lp():
+        apply_and_update("low_power")
+
+    # Performance button
+    perf_btn = customtkinter.CTkButton(
+        btn_frame,
+        text="High Performance",
+        command=apply_perf,
+        state="normal" if has_perf else "disabled",
+        fg_color="#1565C0",
+        hover_color="#0D47A1",
+        height=40
+    )
+    perf_btn.pack(side="left", padx=3, expand=True, fill="x")
+
+    # Balanced button
+    bal_btn = customtkinter.CTkButton(
+        btn_frame,
+        text="Balanced",
+        command=apply_bal,
+        state="normal" if has_bal else "disabled",
+        fg_color="#F57C00",
+        hover_color="#E65100",
+        height=40
+    )
+    bal_btn.pack(side="left", padx=3, expand=True, fill="x")
+
+    # Low Power button
+    lp_btn = customtkinter.CTkButton(
+        btn_frame,
+        text="Low Power",
+        command=apply_lp,
+        state="normal" if has_lp else "disabled",
+        fg_color="#2E7D32",
+        hover_color="#1B5E20",
+        height=40
+    )
+    lp_btn.pack(side="left", padx=3, expand=True, fill="x")
+
+    # Cancel button
+    cancel_btn = customtkinter.CTkButton(
+        dialog,
+        text="Cancel",
+        command=dialog.destroy,
+        width=80
+    )
+    cancel_btn.pack(pady=10)
+
+
+def clickAutoConfig():
+    """Send auto-configuration request to AI."""
+    chatInput = widgets.get("chatInput")
+    chatDisplay = widgets.get("chatDisplay")
+
+    if not chatInput or not chatDisplay:
+        return
+
+    # Show prompt dialog for application description
+    dialog = customtkinter.CTkInputDialog(
+        text="Describe your application/kernel:\n(e.g., 'matrix multiplication', 'convolution for CNN', 'FFT processing')",
+        title="Auto Configure CGRA"
+    )
+    user_input = dialog.get_input()
+
+    if not user_input or not user_input.strip():
+        return
+
+    # Create the auto-config request message
+    auto_config_prompt = f"Please recommend optimal CGRA parameters for: {user_input.strip()}"
+
+    # Insert the prompt into chat input and send
+    chatInput.delete(0, tkinter.END)
+    chatInput.insert(0, auto_config_prompt)
+    clickSendChat()
+
+
+def clickAIAnalyzeCurrentState():
+    """Analyze current kernel/mapping state and send to AI for recommendations."""
+    chatDisplay = widgets.get("chatDisplay")
+    if not chatDisplay:
+        return
+
+    # Check if mapping has been done
+    map_ii_entry = widgets.get("mapIIEntry")
+    has_mapping = map_ii_entry and map_ii_entry.get() and map_ii_entry.get().strip() != ""
+
+    if not has_mapping or selectedCgraParam.DFGNodeCount <= 0:
+        tkinter.messagebox.showinfo(
+            "Mapping Required",
+            " Please first enter a kernel and complete the compilation and mapping work in the Kernel panel.\n"
+            "Then click this button again for AI analysis."
+        )
+        return
+
+    # Gather mapping results
+    current_rows = widgets.get("rowsEntry").get() if widgets.get("rowsEntry") else "4"
+    current_cols = widgets.get("columnsEntry").get() if widgets.get("columnsEntry") else "4"
+    config_mem = widgets.get("configMemEntry").get() if widgets.get("configMemEntry") else "64"
+    data_mem = widgets.get("dataMemEntry").get() if widgets.get("dataMemEntry") else "8"
+
+    kernel_name = selectedCgraParam.targetKernelName or "unknown"
+    dfg_nodes = selectedCgraParam.DFGNodeCount
+    rec_mii = widgets.get("recMIIEntry").get() if widgets.get("recMIIEntry") else "0"
+    res_mii = widgets.get("resMIIEntry").get() if widgets.get("resMIIEntry") else "0"
+    map_ii = map_ii_entry.get()
+
+    try:
+        speedup = dfg_nodes / int(map_ii)
+    except:
+        speedup = 0
+
+    # Build prompt for AI
+    analyze_prompt = f"""Based on the following CGRA mapping results, analyze and recommend a better configuration:
+
+## Current Configuration
+- CGRA Size: {current_rows}x{current_cols}
+- Config Memory: {config_mem}
+- Data SPM: {data_mem} KB
+
+## Mapping Results
+- Kernel: {kernel_name}
+- DFG Node Count: {dfg_nodes}
+- RecMII (recurrence): {rec_mii}
+- ResMII (resource): {res_mii}
+- Mapping II (actual): {map_ii}
+- Speedup: {speedup:.2f}x
+
+## Analysis Required
+1. Is Mapping II close to the theoretical optimum (RecMII/ResMII)?
+2. If there's a gap, what might be the bottleneck?
+3. What configuration would improve high_performance?
+
+Please provide specific CGRA parameter recommendations."""
+
+    # Show in chat
+    chatDisplay.configure(state="normal")
+    chatDisplay.insert(tkinter.END, f"You: Analyze {kernel_name} mapping\n")
+    chatDisplay.insert(tkinter.END, f"  CGRA: {current_rows}x{current_cols}, ")
+    chatDisplay.insert(tkinter.END, f"DFG: {dfg_nodes} nodes\n")
+    chatDisplay.insert(tkinter.END, f"  II: {map_ii} (Rec:{rec_mii}, Res:{res_mii})\n")
+    chatDisplay.insert(tkinter.END, "─" * 30 + "\n")
+    chatDisplay.configure(state="disabled")
+    chatDisplay.see(tkinter.END)
+
+    # Send to AI
+    def on_response(response, error):
+        chatDisplay.configure(state="normal")
+        if error:
+            chatDisplay.insert(tkinter.END, f"Error: {error}\n")
+        else:
+            chatDisplay.insert(tkinter.END, f"AI: {response}\n")
+            if ai_assistant.extract_cgra_config(response):
+                widgets["applyConfigButton"].configure(state="normal")
+        chatDisplay.insert(tkinter.END, "─" * 30 + "\n\n")
+        chatDisplay.configure(state="disabled")
+        chatDisplay.see(tkinter.END)
+
+    import threading
+    thread = threading.Thread(target=lambda: ai_assistant.call_ai_api(analyze_prompt, on_response))
+    thread.daemon = True
+    thread.start()
 
 
 def clickSPMPortDisable():
@@ -2090,6 +2532,183 @@ def create_layout_pannel(master):
     return layoutPannel
 
 
+def create_chat_panel(master):
+    """Create the AI Assistant chat panel."""
+    chatPanel = customtkinter.CTkFrame(master, width=300)
+    chatPanel.grid_propagate(0)
+
+    # Configure grid weights
+    chatPanel.grid_rowconfigure(0, weight=0)  # Title row
+    chatPanel.grid_rowconfigure(1, weight=0)  # Provider row
+    chatPanel.grid_rowconfigure(2, weight=0)  # API Key row
+    chatPanel.grid_rowconfigure(3, weight=0)  # Model config row
+    chatPanel.grid_rowconfigure(4, weight=1)  # Chat display (expandable)
+    chatPanel.grid_rowconfigure(5, weight=0)  # Auto-config buttons row
+    chatPanel.grid_rowconfigure(6, weight=0)  # Input area
+    chatPanel.grid_columnconfigure(0, weight=1)
+
+    # Title label
+    chatLabel = customtkinter.CTkLabel(
+        chatPanel,
+        text='AI Assistant',
+        font=customtkinter.CTkFont(size=FRAME_LABEL_FONT_SIZE, weight="bold")
+    )
+    chatLabel.grid(row=0, column=0, padx=(5, 0), pady=(5, 0), sticky="nw")
+
+    # Provider selection frame
+    providerFrame = customtkinter.CTkFrame(chatPanel)
+    providerFrame.grid(row=1, column=0, padx=5, pady=(5, 0), sticky="ew")
+    providerFrame.grid_columnconfigure(1, weight=1)
+
+    providerLabel = customtkinter.CTkLabel(providerFrame, text="Provider:")
+    providerLabel.grid(row=0, column=0, padx=(5, 5), pady=3)
+
+    providerVar = tkinter.StringVar(value=ai_assistant.aiChatConfig["provider"])
+    providerMenu = customtkinter.CTkOptionMenu(
+        providerFrame,
+        variable=providerVar,
+        values=list(ai_assistant.AI_PROVIDERS.keys()),
+        command=on_provider_change,
+        width=180
+    )
+    providerMenu.grid(row=0, column=1, padx=(0, 5), pady=3, sticky="ew")
+    widgets["providerMenu"] = providerMenu
+
+    # API Key configuration frame
+    apiFrame = customtkinter.CTkFrame(chatPanel)
+    apiFrame.grid(row=2, column=0, padx=5, pady=(5, 0), sticky="ew")
+    apiFrame.grid_columnconfigure(1, weight=1)
+
+    apiKeyLabel = customtkinter.CTkLabel(apiFrame, text="API Key:")
+    apiKeyLabel.grid(row=0, column=0, padx=(5, 5), pady=3)
+
+    apiKeyEntry = customtkinter.CTkEntry(apiFrame, placeholder_text="Enter API Key...", show="*")
+    apiKeyEntry.grid(row=0, column=1, padx=(0, 5), pady=3, sticky="ew")
+    # Pre-fill with environment variable if available
+    if ai_assistant.aiChatConfig["api_key"]:
+        apiKeyEntry.insert(0, ai_assistant.aiChatConfig["api_key"])
+    apiKeyEntry.bind("<FocusOut>", on_api_key_change)
+    apiKeyEntry.bind("<Return>", on_api_key_change)
+    widgets["apiKeyEntry"] = apiKeyEntry
+
+    # Model configuration frame
+    configFrame = customtkinter.CTkFrame(chatPanel)
+    configFrame.grid(row=3, column=0, padx=5, pady=(5, 5), sticky="ew")
+    configFrame.grid_columnconfigure(1, weight=1)
+
+    # Model selection
+    modelLabel = customtkinter.CTkLabel(configFrame, text="Model:")
+    modelLabel.grid(row=0, column=0, padx=(5, 5), pady=3)
+
+    current_provider = ai_assistant.aiChatConfig["provider"]
+    current_models = ai_assistant.AI_PROVIDERS[current_provider]["models"]
+    modelVar = tkinter.StringVar(value=ai_assistant.aiChatConfig["model"])
+    modelMenu = customtkinter.CTkOptionMenu(
+        configFrame,
+        variable=modelVar,
+        values=current_models,
+        command=on_model_change,
+        width=180
+    )
+    modelMenu.grid(row=0, column=1, padx=(0, 5), pady=3, sticky="ew")
+    widgets["modelMenu"] = modelMenu
+
+    # Chat display area (scrollable textbox)
+    chatDisplay = customtkinter.CTkTextbox(
+        chatPanel,
+        wrap="word",
+        state="disabled",
+        font=customtkinter.CTkFont(size=12)
+    )
+    chatDisplay.grid(row=4, column=0, padx=5, pady=(0, 5), sticky="nsew")
+    widgets["chatDisplay"] = chatDisplay
+
+    # Show welcome message
+    chatDisplay.configure(state="normal")
+    chatDisplay.insert(tkinter.END, "CGRA-Flow AI Assistant\n")
+    chatDisplay.insert(tkinter.END, "─" * 30 + "\n")
+    chatDisplay.insert(tkinter.END, "• Auto Config: Describe your\n")
+    chatDisplay.insert(tkinter.END, "  application for recommendations\n")
+    chatDisplay.insert(tkinter.END, "• Analyze Mapping: Run mapping\n")
+    chatDisplay.insert(tkinter.END, "  in Kernel panel first, then\n")
+    chatDisplay.insert(tkinter.END, "  get AI optimization advice\n")
+    chatDisplay.insert(tkinter.END, "─" * 30 + "\n\n")
+    chatDisplay.configure(state="disabled")
+
+    # Action buttons frame (3 rows, 1 column)
+    autoConfigFrame = customtkinter.CTkFrame(chatPanel)
+    autoConfigFrame.grid(row=5, column=0, padx=5, pady=(0, 5), sticky="ew")
+    autoConfigFrame.grid_columnconfigure(0, weight=1)
+
+    # Model CGRA given kernel
+    autoConfigButton = customtkinter.CTkButton(
+        autoConfigFrame,
+        text="Generate CGRA from Given Kernel",
+        command=clickAutoConfig,
+        fg_color="#2E7D32",
+        hover_color="#1B5E20"
+    )
+    autoConfigButton.grid(row=0, column=0, padx=5, pady=(5, 2), sticky="ew")
+    widgets["autoConfigButton"] = autoConfigButton
+
+    # Apply AI Generated CGRA Design
+    applyConfigButton = customtkinter.CTkButton(
+        autoConfigFrame,
+        text="Apply AI-Generated CGRA Design",
+        command=apply_recommended_config,
+        state="disabled",
+        fg_color="#1565C0",
+        hover_color="#0D47A1"
+    )
+    applyConfigButton.grid(row=1, column=0, padx=5, pady=2, sticky="ew")
+    widgets["applyConfigButton"] = applyConfigButton
+
+    # Analyze Mapping
+    analyzeMappingButton = customtkinter.CTkButton(
+        autoConfigFrame,
+        text="Analyze CGRA Mapping Report",
+        command=clickAIAnalyzeCurrentState,
+        fg_color="#F57C00",
+        hover_color="#E65100"
+    )
+    analyzeMappingButton.grid(row=2, column=0, padx=5, pady=(2, 5), sticky="ew")
+    widgets["analyzeMappingButton"] = analyzeMappingButton
+
+    # Input frame
+    inputFrame = customtkinter.CTkFrame(chatPanel)
+    inputFrame.grid(row=6, column=0, padx=5, pady=(0, 5), sticky="ew")
+    inputFrame.grid_columnconfigure(0, weight=1)
+    inputFrame.grid_columnconfigure(1, weight=0)
+    inputFrame.grid_columnconfigure(2, weight=0)
+
+    # Input entry
+    chatInput = customtkinter.CTkEntry(inputFrame, placeholder_text="Ask a question...")
+    chatInput.grid(row=0, column=0, padx=(5, 5), pady=5, sticky="ew")
+    chatInput.bind("<Return>", handle_chat_enter)
+    widgets["chatInput"] = chatInput
+
+    # Send button
+    sendButton = customtkinter.CTkButton(
+        inputFrame,
+        text="Send",
+        width=60,
+        command=clickSendChat
+    )
+    sendButton.grid(row=0, column=1, padx=(0, 5), pady=5)
+    widgets["sendButton"] = sendButton
+
+    # Clear button
+    clearButton = customtkinter.CTkButton(
+        inputFrame,
+        text="Clear",
+        width=60,
+        command=clickClearChat
+    )
+    clearButton.grid(row=0, column=2, padx=(0, 5), pady=5)
+
+    return chatPanel
+
+
 """
     canvas = customtkinter.CTkCanvas(layoutPannel, bg=CANVAS_BG_COLOR, bd=0, highlightthickness=0)
     scrollbar = customtkinter.CTkScrollbar(layoutPannel, orientation="horizontal", command=canvas.xview)
@@ -2382,6 +3001,7 @@ def check_ui_ready(
         param_panel: customtkinter.CTkFrame,
         data_panel: customtkinter.CTkFrame,
         layout_panel: customtkinter.CTkFrame,
+        chat_panel: customtkinter.CTkFrame,
         window: customtkinter.CTkToplevel,
 ):
     panels = [
@@ -2393,6 +3013,7 @@ def check_ui_ready(
         param_panel,
         data_panel,
         layout_panel,
+        chat_panel,
     ]
 
     if all(panel.winfo_ismapped() for panel in panels):
@@ -2411,6 +3032,7 @@ def show_all_ui(master: customtkinter.CTk, window: customtkinter.CTkToplevel):
     paramPannel = create_param_pannel(master)
     dataPannel = create_test_pannel(master)
     layoutPannel = create_layout_pannel(master)
+    chatPanel = create_chat_panel(master)
     multiCgraPanel.grid(row=0, column=0, padx=(0, 5), sticky="nsew")
     multiCgraConfigPanel.grid(row=0, column=1, sticky="nsew")
     kernelPannel.grid(row=1, column=0, padx=(0, 5), pady=(5, 0), sticky="nsew")
@@ -2418,6 +3040,7 @@ def show_all_ui(master: customtkinter.CTk, window: customtkinter.CTkToplevel):
     # paramPannel.grid(row=0, column=4, columnspan=2, sticky="nsew")
     dataPannel.grid(row=1, column=4, pady=(5, 0), sticky="nsew")
     layoutPannel.grid(row=1, column=5, padx=(5, 0), pady=(5, 0), sticky="nsew")
+    chatPanel.grid(row=0, column=6, rowspan=2, padx=(5, 0), pady=(0, 0), sticky="nsew")
     # Once kernel is drawn stop the check loop after 100ms.
     if (kernelPannel.winfo_ismapped()):
         master.after(100, window.destroy())
@@ -2425,7 +3048,7 @@ def show_all_ui(master: customtkinter.CTk, window: customtkinter.CTkToplevel):
     else:
         master.after(2000,
                      lambda: check_ui_ready(master, multiCgraPanel, multiCgraConfigPanel, kernelPannel, mappingPannel,
-                                            cgraPannel, paramPannel, dataPannel, layoutPannel, window))
+                                            cgraPannel, paramPannel, dataPannel, layoutPannel, chatPanel, window))
 
 
 # paramPadPosX = GRID_WIDTH + MEM_WIDTH + LINK_LENGTH + INTERVAL * 3
@@ -2481,7 +3104,7 @@ threading.Thread(target=show_all_ui(master, overlay), daemon=True).start()
 # # layout
 # create_layout_pannel(master)
 # The width and height of the entire window
-default_width = 1650
+default_width = 1950
 default_height = 1000
 window_size(master, default_width, default_height)
 # master.grid_rowconfigure(0, weight=1)
@@ -2492,6 +3115,7 @@ master.grid_columnconfigure(2, weight=5)
 master.grid_columnconfigure(3, weight=1)
 master.grid_columnconfigure(4, weight=1)
 master.grid_columnconfigure(5, weight=1)
+master.grid_columnconfigure(6, weight=1)  # AI Chat panel column
 # logging.info(master.winfo_width())
 # logging.info(master.winfo_height())
 # w, h = master.winfo_screenwidth(), master.winfo_screenheight()

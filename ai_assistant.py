@@ -58,7 +58,7 @@ aiChatConfig = {
 - Memory: mem, mem_indexed, constant
 - Other: return, grant, alloca, type_conv
 
-IMPORTANT: By default, all FU types should be enabled in every tile. Only remove FU types if the user explicitly asks for power optimization or minimal configuration.
+IMPORTANT: By default, all FU types should be enabled in every tile whenever we design a CGRA.
 The full FU list is: ["add", "mul", "div", "fadd", "fmul", "fdiv", "logic", "cmp", "sel", "type_conv", "vfmul", "fadd_fadd", "fmul_fadd", "loop_control", "phi", "constant", "mem", "mem_indexed", "shift", "return", "alloca", "grant"]
 
 When recommending CGRA configurations, provide THREE options:

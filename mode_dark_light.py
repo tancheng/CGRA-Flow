@@ -1519,7 +1519,7 @@ def clickMapDFG():
             tkinter.messagebox.showerror(title="DFG mapping", message="The kernel name is not selected yet.")
         return
 
-    if selectedCgraParam.rows == 1 and selectedCgraParam.columns == 1:
+    if paramCGRA.rows == 1 and paramCGRA.columns == 1:
         os.chdir("..")
         tkinter.messagebox.showerror(title="DFG mapping", message="Please model the CGRA architecture with more than 1 tile.")
         return
@@ -1582,6 +1582,7 @@ def create_cgra_pannel(master, rows, columns):
     # Use solid black board to let the pannel look better
     cgraPannel = customtkinter.CTkFrame(master)
     # cgraPannel = tkinter.LabelFrame(master, text='CGRA', bd=BORDER, relief='groove')
+    cgraPannel.grid(row=0, column=0, rowspan=1, columnspan=1, padx=(5, 5), pady=(5, 0), sticky="nsew")
     # cgraPannel.pack()
     # cgraPannel.grid_propagate(0)
     # create label for cgraPannel
@@ -2491,10 +2492,10 @@ master.geometry("+%d+%d" % (0, 0))
 
 main_frame = customtkinter.CTkFrame(master)
 
-overlay = customtkinter.CTkToplevel(master)  
+overlay = customtkinter.CTkToplevel(master)
 overlay.geometry("%dx%d" % (w-10, h-70))
-overlay.transient(master)  
-overlay.grab_set()  
+overlay.transient(master)
+overlay.grab_set()
 
 loading_label = customtkinter.CTkLabel(overlay, text="Loading...", font=("Arial", 24, "bold"))
 loading_label.place(relx=0.5, rely=0.4, anchor="center")

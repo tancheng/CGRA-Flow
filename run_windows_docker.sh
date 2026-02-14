@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-IMAGE=cgra/neura-flow:20260114
+IMAGE=cgra/neura-flow:latest
 
-CONTAINER=neuraflow20260114
+CONTAINER=neuraflow
 
 XSOCK=/tmp/.X11-unix
 

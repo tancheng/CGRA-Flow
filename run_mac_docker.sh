@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-CONTAINER=cgra/neura-flow:20260114
+CONTAINER=cgra/neura-flow:latest
 NIC=en0
 
 # Grab the ip address of this box

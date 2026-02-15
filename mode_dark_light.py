@@ -274,7 +274,8 @@ def display_ai_response(response, error):
             config = ai_assistant.lastRecommendedConfigs.get("balanced", {})
             if config:
                 apply_config_by_mode("balanced")
-                clickUpdate(master)
+                updateMultiCgraPanelOnly(master)  # Update Multi-CGRA panel without resetting Per-CGRA entries
+                clickUpdate(master)  # Update Per-CGRA panel with AI values
                 # Apply FU types after clickUpdate to avoid being overwritten
                 fu_types = config.get("fu_types", [])
                 apply_fu_types_to_cgra(fu_types)
@@ -508,7 +509,8 @@ def apply_recommended_config():
     def apply_and_update(mode):
         dialog.destroy()
         apply_config_by_mode(mode)
-        clickUpdate(master)
+        updateMultiCgraPanelOnly(master)  # Update Multi-CGRA panel without resetting Per-CGRA entries
+        clickUpdate(master)  # Update Per-CGRA panel with AI values
         fu_types = ai_assistant.lastRecommendedConfigs.get(mode, {}).get("fu_types", [])
         apply_fu_types_to_cgra(fu_types)
 
@@ -1982,6 +1984,30 @@ def clickMultiCgraUpdate(root):
     multiCgraPanel.grid(row=0, column=0, padx=(0, 5), sticky="nsew")
     create_cgra_pannel(root, selectedCgraParam.rows, selectedCgraParam.columns)
     create_param_pannel(root)
+
+
+def updateMultiCgraPanelOnly(root):
+    """Only update Multi-CGRA panel visualization without resetting Per-CGRA entries."""
+    cgraRows = int(widgets["multiCgraRowsLabelEntry"].get())
+    cgraCols = int(widgets["multiCgraColumnsEntry"].get())
+
+    global multiCgraParam
+    global selectedCgraParam
+
+    multiCgraParam = MultiCGRAParam(rows=cgraRows, cols=cgraCols, globalWidgets=widgets)
+    multiCgraParam.setSelectedCgra(0, 0)
+    selectedCgraParam = multiCgraParam.getSelectedCgra()
+    selectedCgraParam.set_cgra_param_callbacks(switchDataSPMOutLinks=switchDataSPMOutLinks,
+                                               updateFunCheckoutButtons=updateFunCheckoutButtons,
+                                               updateFunCheckVars=updateFunCheckVars,
+                                               updateXbarCheckbuttons=updateXbarCheckbuttons,
+                                               updateXbarCheckVars=updateXbarCheckVars,
+                                               getFunCheckVars=getFunCheckVars,
+                                               getXbarCheckVars=getXbarCheckVars)
+
+    # Only update Multi-CGRA panel, don't touch Per-CGRA panels
+    multiCgraPanel = create_multi_cgra_panel(root, cgraRows, cgraCols)
+    multiCgraPanel.grid(row=0, column=0, padx=(0, 5), sticky="nsew")
 
 
 def create_cgra_pannel(master, rows, columns):

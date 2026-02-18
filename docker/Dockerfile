@@ -37,9 +37,9 @@ RUN git config --global url."https://github.com/".insteadOf "git@github.com:" \
 
 # Builds C++ Tools (CGRA-Mapper, Cacti, sv2v)
 RUN cd /WORK_REPO/CGRA-Flow/CGRA-Mapper && \
-    mkdir build && cd build && cmake .. && make -j$(nproc) \
-    && cd /WORK_REPO/CGRA-Flow/tools/cacti && make -j$(nproc) \
-    && cd /WORK_REPO/CGRA-Flow/tools/sv2v && make -j$(nproc)
+    mkdir build && cd build && cmake .. && make -j1 \
+    && cd /WORK_REPO/CGRA-Flow/tools/cacti && make -j1 \
+    && cd /WORK_REPO/CGRA-Flow/tools/sv2v && make -j1
 
 # Setup Zeonica (Install Go Dependencies)
 RUN cd /WORK_REPO/CGRA-Flow/zeonica && \

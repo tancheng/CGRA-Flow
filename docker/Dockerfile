@@ -6,11 +6,14 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PYMTL_VERILATOR_INCLUDE_DIR=/WORK_REPO/verilator/share/verilator/include \
     YOSYS_EXE="/OpenROAD-flow-scripts/tools/install/yosys/bin/yosys" \
     OPENROAD_EXE="/OpenROAD-flow-scripts/tools/install/OpenROAD/bin/openroad" \
-    LLVM_RELEASE_URL="https://github.com/tancheng/CGRA-Flow/releases/download/LLVM%406146a88/llvm-project-6146a88-prebuild.tar.xz"
+    LLVM_RELEASE_URL="https://github.com/tancheng/CGRA-Flow/releases/download/LLVM%406146a88/llvm-project-6146a88-prebuild.tar.xz" \
+    GO_VERSION="1.22.1"
+
 ENV PATH="/WORK_REPO/CGRA-Flow/tools/sv2v/bin:$PATH"
 ENV PATH="/WORK_REPO/CGRA-Flow/tools/OpenROAD-flow-scripts/tools/install/OpenROAD/bin:$PATH"
 ENV PATH="/WORK_REPO/verilator/bin/:$PATH"
 ENV PATH="/WORK_REPO/llvm-project/bin:$PATH"
+ENV PATH="/usr/local/go/bin:$PATH"
 
 SHELL ["/bin/bash", "-c"]
 
@@ -21,16 +24,26 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget curl git cmake make build-essential ninja-build \
     && curl -sSL https://get.haskellstack.org/ | sh
 
+# Install Go (Required for Zeonica)
+RUN wget https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz \
+    && tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz \
+    && rm go${GO_VERSION}.linux-amd64.tar.gz
+
 # Setups Workspace and Clones Repo.
 WORKDIR /WORK_REPO
-RUN git clone --recursive https://github.com/tancheng/CGRA-Flow.git \
+RUN git config --global url."https://github.com/".insteadOf "git@github.com:" \
+    && git clone --recursive https://github.com/tancheng/CGRA-Flow.git \
     && ln -s /OpenROAD-flow-scripts/ /WORK_REPO/CGRA-Flow/tools/
 
 # Builds C++ Tools (CGRA-Mapper, Cacti, sv2v)
 RUN cd /WORK_REPO/CGRA-Flow/CGRA-Mapper && \
-    mkdir build && cd build && cmake .. && make -j$(nproc) \
-    && cd /WORK_REPO/CGRA-Flow/tools/cacti && make -j$(nproc) \
-    && cd /WORK_REPO/CGRA-Flow/tools/sv2v && make -j$(nproc)
+    mkdir build && cd build && cmake .. && make -j1 \
+    && cd /WORK_REPO/CGRA-Flow/tools/cacti && make -j1 \
+    && cd /WORK_REPO/CGRA-Flow/tools/sv2v && make -j1
+
+# Setup Zeonica (Install Go Dependencies)
+RUN cd /WORK_REPO/CGRA-Flow/zeonica && \
+    go mod download
 
 # Installs Verilator (Pre-compiled binary)
 RUN wget https://github.com/tancheng/pymtl-verilator/raw/master/verilator-travis-4.036.tar.gz \
@@ -40,7 +53,7 @@ RUN wget https://github.com/tancheng/pymtl-verilator/raw/master/verilator-travis
 # Python Environment Setup
 RUN python3.11 -m venv /WORK_REPO/venv \
     && source /WORK_REPO/venv/bin/activate \
-    && pip3 install --no-cache-dir py==1.11.0 wheel py-markdown-table pillow customtkinter PyYAML lit \
+    && pip3 install --no-cache-dir py==1.11.0 wheel py-markdown-table pillow customtkinter PyYAML lit requests \
     && pip3 install --no-cache-dir -U git+https://github.com/tancheng/pymtl3.1@yo-struct-list-fix \
     && cd /WORK_REPO/CGRA-Flow/tools/mflowgen && pip3 install -e . \
     && rm -rf /root/.cache/pip

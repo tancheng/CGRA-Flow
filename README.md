@@ -47,7 +47,7 @@ The Neura artifact is available on the [neura-asplos-ae](https://github.com/tanc
 
 As CGRA-Flow requires GUI, a script is provided for setting up the display:
 ```sh
- docker pull cgra/neura-flow:20260114
+ docker pull cgra/neura-flow:latest
 
  # For Mac users:
  sh ./run_mac_docker.sh
@@ -62,8 +62,8 @@ As CGRA-Flow requires GUI, a script is provided for setting up the display:
 
 Otherwise, if you don't need the GUI, development can be performed in the container with the environment well set up:
 ```sh
- docker pull cgra/neura-flow:20260114
- docker run -it cgra/neura-flow:20260114
+ docker pull cgra/neura-flow:latest
+ docker run -it cgra/neura-flow:latest
  source /WORK_REPO/venv/bin/activate
 ```
 
@@ -72,8 +72,10 @@ Building Docker Image from Dockerfile
 If you prefer to build the Docker image locally:
 
 ```sh
- # Build the Docker image
- docker build -t cgra-flow:latest .
+ # For Intel/AMD CPU(x86_64)
+ docker build -t cgra/neura-flow:latest .
+ # For Apple Silicon(arm64)
+ docker buildx build --platform linux/amd64 -t cgra/neura-flow:latest .
 ```
 
 Execution
@@ -103,8 +105,8 @@ in the Docker container. This allow you to edit code on your host machine while 
 the container environment.
 Update the Docker run command to mount your local repository(take `run_windows_docker.sh` as an example):
 ```shell
-IMAGE=cgra/cgra-flow:20251112
-CONTAINER=mycgraflow
+IMAGE=cgra/neura-flow:latest
+CONTAINER=neuraflow
 XSOCK=/tmp/.X11-unix
 # for developer: mount the upstream repo to the container.
 # Please update the path to the actual path on your machine.

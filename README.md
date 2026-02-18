@@ -72,8 +72,10 @@ Building Docker Image from Dockerfile
 If you prefer to build the Docker image locally:
 
 ```sh
- # Build the Docker image
- docker build -t cgra-flow:latest .
+ # For Intel/AMD CPU(x86_64)
+ docker build -t cgra/neura-flow:latest .
+ # For Apple Silicon(arm64)
+ docker buildx build --platform linux/amd64 -t cgra/neura-flow:latest .
 ```
 
 Execution

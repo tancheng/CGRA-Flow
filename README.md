@@ -124,13 +124,12 @@ sudo docker run \
 Citation
 --------------------------------------------------------------------------
 ```
-@inproceedings{tan2020opencgra,
-  title={OpenCGRA: An open-source unified framework for modeling, testing, and evaluating CGRAs},
-  author={Tan, Cheng and Xie, Chenhao and Li, Ang and Barker, Kevin J and Tumeo, Antonino},
-  booktitle={2020 IEEE 38th International Conference on Computer Design (ICCD)},
-  pages={381--388},
-  year={2020},
-  organization={IEEE}
+@inproceedings{tan2026neura,
+  title={Neura: A Unified Framework for Hierarchical and Adaptive CGRAs},
+  author={Tan, Cheng and Jiang, Miaomiao and Sun, Yuqi and Yin, Ruihong and Ou, Yanghui and Zhong, Qing and Ju, Lei and Zhang, Jeff},
+  booktitle={Proceedings of the 31st ACM International Conference on Architectural Support for Programming Languages and Operating Systems, Volume 2},
+  pages={1285--1300},
+  year={2026}
 }
 ```
 
@@ -143,10 +142,3 @@ CGRA-Flow is offered under the terms of the Open Source Initiative BSD 3-Clause 
   - http://choosealicense.com/licenses/bsd-3-clause
   - http://opensource.org/licenses/BSD-3-Clause
 
-
-
-OpenAI GPT (coming soon)
---------------------------------------------------------------------------
-[Arch Wizard](https://chat.openai.com/g/g-fUWqOuKFe-arch-wizard).
-
-![](https://github.com/tancheng/CGRA-Flow/assets/6756658/07db560a-65aa-4bed-8f0a-f0b3c07df893)
